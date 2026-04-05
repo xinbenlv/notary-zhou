@@ -1,0 +1,20 @@
+---
+import { siteConfig } from '../config';
+---
+
+<footer>
+  <div class="container">
+    <a href="/" class="logo footer-logo">
+      {siteConfig.name} <span class="logo-dot"></span>
+    </a>
+    <p class="footer-text">
+      {siteConfig.owner.fullNameEn} &bull; California Commission {siteConfig.commissionNumber}<br />
+      Not an attorney. Cannot give legal advice.<br />
+      &copy; {siteConfig.copyrightYear} NotaryZhou.com. All rights reserved.
+    </p>
+  </div>
+</footer>
+
+{siteConfig.isDraft && (
+  <div class="draft-footer-banner">{siteConfig.draftFooterText}</div>
+)}

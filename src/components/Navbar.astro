@@ -1,0 +1,30 @@
+---
+import { siteConfig } from '../config';
+---
+
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        {siteConfig.name} <span class="logo-dot"></span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#services">Services 服务</a></li>
+        <li><a href="#about">About 关于</a></li>
+        <li><a href="#faq">FAQ 常见问题</a></li>
+      </ul>
+      {siteConfig.isDraft ? (
+        <span class="btn btn-disabled" style="padding: 10px 24px; font-size: 14px;">
+          Coming Soon 即将开放
+        </span>
+      ) : (
+        <a href="#book" class="btn btn-yellow" style="padding: 10px 24px; font-size: 14px;">
+          <div class="bilingual-inline">
+            <span class="lang-en">Book Now</span>
+            <span class="lang-zh" style="color: inherit; opacity: 0.8;">预约</span>
+          </div>
+        </a>
+      )}
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,92 @@
+---
+import { siteConfig } from '../config';
+---
+
+<section id="services" class="services-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="bilingual-pair">
+        <h2>What document are you notarizing?</h2>
+        <span class="lang-zh" style="font-size: 20px;">您需要公证什么文件？</span>
+      </div>
+    </div>
+
+    <div class="services-grid">
+      <!-- Acknowledgments -->
+      <div class="service-card">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </div>
+        <div class="service-content bilingual-pair">
+          <h3 class="lang-en">Acknowledgments</h3>
+          <span class="lang-zh">签名确认公证</span>
+          <p style="margin-top: 8px;">Deeds, trusts, and agreements confirming the signer's identity and willingness.</p>
+        </div>
+      </div>
+
+      <!-- Jurats -->
+      <div class="service-card">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
+        <div class="service-content bilingual-pair">
+          <h3 class="lang-en">Jurats</h3>
+          <span class="lang-zh">宣誓书公证</span>
+          <p style="margin-top: 8px;">Affidavits and depositions requiring you to swear or affirm the truth of the document.</p>
+        </div>
+      </div>
+
+      <!-- Copy Certification -->
+      <div class="service-card">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </div>
+        <div class="service-content bilingual-pair">
+          <h3 class="lang-en">Copy Certification</h3>
+          <span class="lang-zh">副本认证</span>
+          <p style="margin-top: 8px;">Certifying that a copy of an original document is a true, exact, and complete reproduction (Power of Attorney only in CA).</p>
+        </div>
+      </div>
+
+      <!-- Real Estate -->
+      <div class="service-card">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        </div>
+        <div class="service-content bilingual-pair">
+          <h3 class="lang-en">Real Estate / Loan</h3>
+          <span class="lang-zh">房产/贷款文件</span>
+          <p style="margin-top: 8px;">Refinances, buyer/seller packages, HELOCs, and commercial real estate documents.</p>
+        </div>
+      </div>
+
+      <!-- Apostille -->
+      <div class="service-card">
+        <div class="service-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <div class="service-content bilingual-pair">
+          <h3 class="lang-en">Apostille Processing</h3>
+          <span class="lang-zh">海牙认证代办</span>
+          <p style="margin-top: 8px;">Assistance with California Secretary of State authentication for international documents.</p>
+        </div>
+      </div>
+
+      <!-- Mobile Service CTA -->
+      <div class="service-card service-card-green">
+        <div class="service-icon" style="background-color: rgba(255,255,255,0.1); border: none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </div>
+        <div class="service-content">
+          <h3 style="color: white;">Need Mobile Service?</h3>
+          <p style="color: rgba(255,255,255,0.8); margin-top: 8px; margin-bottom: 16px;">
+            We travel to your home, office, hospital, or coffee shop in {siteConfig.serviceAreas.join(', ')} counties.
+          </p>
+          <a href="#book" style="color: var(--brand-yellow); text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 4px;">
+            Check Travel Fees <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"></path></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

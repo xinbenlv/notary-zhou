@@ -1,0 +1,9 @@
+---
+import { siteConfig } from '../config';
+---
+
+{siteConfig.isDraft && (
+  <div class="draft-watermark">
+    <span class="draft-watermark-text">DRAFT</span>
+  </div>
+)}

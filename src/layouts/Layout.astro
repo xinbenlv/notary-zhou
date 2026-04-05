@@ -1,0 +1,72 @@
+---
+import { siteConfig } from '../config';
+import DraftBanner from '../components/DraftBanner.astro';
+import DraftWatermark from '../components/DraftWatermark.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = siteConfig.title, description = siteConfig.description } = Astro.props;
+const ogImage = `${siteConfig.url}/images/george-zhou.jpg`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={siteConfig.url} />
+
+    <!-- OG -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={siteConfig.url} />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    {siteConfig.isDraft && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": siteConfig.name,
+      "description": siteConfig.description,
+      "url": siteConfig.url,
+      "telephone": siteConfig.phone,
+      "email": siteConfig.email,
+      "image": ogImage,
+      "areaServed": siteConfig.serviceAreas.map(area => ({
+        "@type": "AdministrativeArea",
+        "name": `${area} County, CA`
+      })),
+      "priceRange": "$$",
+      "address": {
+        "@type": "PostalAddress",
+        "addressRegion": "CA",
+        "addressCountry": "US"
+      }
+    })} />
+  </head>
+  <body class={siteConfig.isDraft ? 'has-draft-banner' : ''}>
+    <DraftBanner />
+    <DraftWatermark />
+    <slot />
+  </body>
+</html>

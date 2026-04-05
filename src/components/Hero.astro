@@ -1,0 +1,53 @@
+---
+import { siteConfig } from '../config';
+---
+
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-content">
+      <div class="tag" style="margin-bottom: 24px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-terra)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        Mobile Notary &bull; Bay Area
+      </div>
+      <h1>Trusted Notary<br />Services</h1>
+      <h2 class="zh-title">专业、可靠的加州公证服务</h2>
+      <p class="hero-desc">
+        Fluent in English and Mandarin. Providing accurate, mobile, and in-office notarization for real estate, legal, and business documents across the San Francisco Bay Area.
+      </p>
+      <div class="hero-actions">
+        {siteConfig.isDraft ? (
+          <span class="btn btn-disabled">Coming Soon 即将开放</span>
+        ) : (
+          <a href="#book" class="btn btn-green">Schedule Appointment</a>
+        )}
+        <a href={`mailto:${siteConfig.email}`} class="btn" style="background: white; border: 1px solid var(--border-soft);">
+          Contact Us
+        </a>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-value">NNA</span>
+          <span class="stat-label">Certified &amp; Background Screened</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">$100k</span>
+          <span class="stat-label">E&amp;O Insurance</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <svg class="blob-bg" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+        <path d="M433.5,296.5C418,349,363,391,304.5,417.5C246,444,184,455,133,425C82,395,42,324,31.5,251.5C21,179,40,105,86,64.5C132,24,205,17,273.5,23.5C342,30,406,50,436.5,99.5C467,149,449,244,433.5,296.5Z"></path>
+      </svg>
+
+      <div class="image-primary">
+        <img src="/images/george-zhou.jpg" alt={`${siteConfig.owner.fullNameEn} - Notary Public`} />
+      </div>
+      <div class="image-secondary">
+        <img src="/images/george-zhou.jpg" alt="Notary Stamp and Documents" style="object-position: center 60%;" />
+      </div>
+    </div>
+  </div>
+</section>
