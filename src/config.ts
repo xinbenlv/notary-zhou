@@ -21,7 +21,12 @@ export const siteConfig = {
 
   isDraft: true,
   draftBannerText:
-    '⚠️ DRAFT — This website is under construction and is for preview purposes only. Notary services are NOT yet available.',
+    '⚠️ PREVIEW — George Zhou has passed the California Notary Public Exam. Commission pending — services will be available once all state requirements are fulfilled.',
   draftFooterText:
-    'This site is a preview only. Business operations have not commenced. Do not rely on any information displayed.',
+    'This site is a preview only. Notary commission is pending. Business operations have not commenced. Do not rely on any information displayed.',
+
+  // Credentials status (set to actual values once obtained)
+  nnaStatus: 'Pending' as const,
+  eoInsuranceStatus: 'Pending' as const,
+  bondStatus: 'Pending' as const,
 } as const;

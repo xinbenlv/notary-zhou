@@ -12,7 +12,9 @@ import { siteConfig } from '../config';
       <h1>Trusted Notary<br />Services</h1>
       <h2 class="zh-title">专业、可靠的加州公证服务</h2>
       <p class="hero-desc">
-        Fluent in English and Mandarin. Providing accurate, mobile, and in-office notarization for real estate, legal, and business documents across the San Francisco Bay Area.
+        {siteConfig.isDraft
+          ? 'Fluent in English and Mandarin. George Zhou will provide accurate, mobile, and in-office notarization for real estate, legal, and business documents across the San Francisco Bay Area.'
+          : 'Fluent in English and Mandarin. Providing accurate, mobile, and in-office notarization for real estate, legal, and business documents across the San Francisco Bay Area.'}
       </p>
       <div class="hero-actions">
         {siteConfig.isDraft ? (
@@ -26,14 +28,29 @@ import { siteConfig } from '../config';
       </div>
 
       <div class="stats-row">
-        <div class="stat-item">
-          <span class="stat-value">NNA</span>
-          <span class="stat-label">Certified &amp; Background Screened</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-value">$100k</span>
-          <span class="stat-label">E&amp;O Insurance</span>
-        </div>
+        {siteConfig.isDraft ? (
+          <>
+            <div class="stat-item">
+              <span class="stat-value" style="color: var(--brand-terra);">✓ Exam Passed</span>
+              <span class="stat-label">CA Notary Public Exam</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value" style="color: var(--text-muted); font-size: 18px;">Pending</span>
+              <span class="stat-label">Commission &amp; Bond</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div class="stat-item">
+              <span class="stat-value">NNA</span>
+              <span class="stat-label">Certified &amp; Background Screened</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">$100k</span>
+              <span class="stat-label">E&amp;O Insurance</span>
+            </div>
+          </>
+        )}
       </div>
     </div>
 
