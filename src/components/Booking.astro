@@ -46,9 +46,13 @@ import { siteConfig } from '../config';
           </div>
           <h3>Coming Soon</h3>
           <p class="lang-zh" style="font-size: 18px; color: var(--brand-green);">即将开放</p>
-          <p>Online scheduling will be available once our notary commission is active. Please check back soon!</p>
+          <p>
+            Online scheduling is coming soon. Meanwhile, please email us at
+            <a href={`mailto:${siteConfig.email}`} style="color: var(--brand-green);">{siteConfig.email}</a>
+            to book an appointment.
+          </p>
           <p style="font-size: 14px; color: var(--text-muted);">
-            预约系统将在公证执照生效后开放，请稍后再来！
+            在线预约系统即将上线，现阶段请先通过邮件与我们预约。
           </p>
         </div>
       </div>

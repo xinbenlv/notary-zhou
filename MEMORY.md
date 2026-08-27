@@ -3,7 +3,7 @@
 ## Project Overview
 - **Owner**: George (Guojin) Zhou — Victor's father
 - **Business**: Notary Public services, Bay Area (Santa Clara, San Mateo, Alameda counties)
-- **Status**: George passed CA Notary Exam on 2026-04-04. Commission NOT yet issued — pending background check, $15k surety bond, oath filing.
+- **Status**: COMMISSIONED ✅ — Commission #2557299, expires 2030-05-30, oath/bond filed in Santa Clara County (verified in CA SOS active-notary listing 2026-08-27). Registered address: 1111 W El Camino Real Ste 133x178, Sunnyvale (mail suite).
 - **Website**: https://notaryzhou.com (password-protected preview)
 
 ## 2026-04-04 — Initial Build
@@ -55,12 +55,29 @@
 3. `dd67341` — feat: add password gate for preview access
 4. `d8ec35d` — fix: password gate - remove logo, switch to full Chinese
 
-## TODO (When Commission Arrives)
-- [ ] Update `src/config.ts`: set `isDraft: false`, fill in real phone, commission number, email
-- [ ] Remove password gate (or set `isDraft: false` to auto-disable)
-- [ ] Change `noindex` to `index, follow`
-- [ ] Replace placeholder stats with real NNA cert + E&O insurance amounts
+## 2026-08-27 — Footer Disclaimer & Fee Schedule
+
+- **§8219.5 statutory notice** added to footer, bilingual EN/ZH, conspicuous styling (site advertises in Chinese → notice legally required, verbatim statutory wording). Penalty for omission: ≥1yr suspension, permanent revocation on 2nd offense.
+- **US-vs-China notarization distinction** added (US notary ≠ 中国公证处; no content certification; Apostille may be needed for use in China).
+- **Fee schedule per Gov Code §8211** (verified current as of Aug 2026 via leginfo): acknowledgment/jurat $15/signature, POA certified copy $15, deposition $30+$7+$7; free by law: vote-by-mail envelopes, veteran benefit claims (policy: fully free if client comes to Lakewood Park area; mobile → travel fee only). Linked to leginfo with text-fragment URL; "statute controls if amended" caveat in both languages.
+- **Travel fee policy**: round-trip Uber estimate from Lakewood Park, Sunnyvale, quoted & agreed at booking. LEGAL in CA — travel fees unregulated by §8211, but must be disclosed/agreed in advance and itemized separately from notarial fees.
+- Footer commission line now conditional: draft → "application pending — not yet commissioned" (avoids "#PENDING" looking like an issued number); live → "Commission {number}".
+- Fee data centralized in `src/config.ts` (`fees`, `feeStatuteUrl`, `feesLastVerified{,Zh}`, `travelOrigin{En,Zh}`).
+
+## 2026-08-27 — Commission Received, Site Switched to Live
+
+- Found commission in CA SOS active-notary.txt (official daily export): **#2557299, expires 05/30/2030, Santa Clara County (code 43)**.
+- `isDraft: false` — auto-flips: noindex removed, footer/hero present tense, Navbar "Book Now".
+- Hero stats replaced (placeholder "NNA / $100k E&O" would have been false advertising) with verified facts: commission number + $15k surety bond on file.
+- Phone placeholder removed; JSON-LD `telephone` now conditional on `siteConfig.phone` being set.
+- Booking copy updated: "email us meanwhile" (online scheduling still TODO).
+- Privacy: Chinese text uses "George (GJ) Zhou" (`owner.nameZhDisplay`), never 周国锦.
+- Footer identity line: "Commission #2557299 (Santa Clara County) · Expires May 30, 2030".
+
+## TODO
+- [ ] Fill in real phone in `src/config.ts` (currently '' → hidden) and confirm info@notaryzhou.com mailbox actually receives mail
 - [ ] Enable booking (Calendly/Cal.com integration)
+- [ ] Real NNA cert + E&O insurance → restore hero stats when actually obtained
 - [ ] Consider ITU trademark filing for "Notary Zhou"
 - [ ] Add Google Business Profile
 - [ ] Get George's professional headshot for hero image

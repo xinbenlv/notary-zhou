@@ -1,7 +1,5 @@
 ---
 import { siteConfig } from '../config';
-import DraftBanner from '../components/DraftBanner.astro';
-import DraftWatermark from '../components/DraftWatermark.astro';
 import PasswordGate from '../components/PasswordGate.astro';
 import '../styles/global.css';
 
@@ -50,7 +48,7 @@ const ogImage = `${siteConfig.url}/images/george-zhou.jpg`;
       "name": siteConfig.name,
       "description": siteConfig.description,
       "url": siteConfig.url,
-      "telephone": siteConfig.phone,
+      ...(siteConfig.phone ? { "telephone": siteConfig.phone } : {}),
       "email": siteConfig.email,
       "image": ogImage,
       "areaServed": siteConfig.serviceAreas.map(area => ({
@@ -65,10 +63,8 @@ const ogImage = `${siteConfig.url}/images/george-zhou.jpg`;
       }
     })} />
   </head>
-  <body class={siteConfig.isDraft ? 'has-draft-banner' : ''}>
+  <body>
     <PasswordGate />
-    <DraftBanner />
-    <DraftWatermark />
     <slot />
   </body>
 </html>
