@@ -19,7 +19,7 @@ export const siteConfig = {
 
   serviceAreas: ['Santa Clara', 'San Mateo', 'Alameda'],
 
-  previewPassword: '20260404',
+  previewPassword: '', // 留空 = 不显示密码门；填入字符串即可重新开启
   isDraft: true,
   draftBannerText:
     '⚠️ PREVIEW — George Zhou has passed the California Notary Public Exam. Commission pending — services will be available once all state requirements are fulfilled.',

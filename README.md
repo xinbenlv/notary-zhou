@@ -15,7 +15,7 @@
 
 - 🌏 全站中英双语排版
 - 📱 完全响应式（手机、平板、桌面）
-- 🔒 密码预览模式（Commission 尚未下发）
+- 🔒 密码预览模式（可选，当前已关闭；在 `config.ts` 填入 `previewPassword` 即可开启）
 - 🏷️ 草稿模式 + 合规性提示横幅
 - 🔍 SEO 基础：JSON-LD LocalBusiness 结构化数据、sitemap、meta 标签、og:image
 - 📋 配置集中化（`src/config.ts`）— 改一个文件即可从草稿切到正式上线
