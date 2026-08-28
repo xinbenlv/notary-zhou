@@ -1,0 +1,87 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import { siteConfig } from '../config';
+import { glossary, glossaryGroups, type GlossaryGroup } from '../glossary';
+
+const groups = (Object.keys(glossaryGroups) as GlossaryGroup[])
+  .map((key) => ({ key, meta: glossaryGroups[key], terms: glossary.filter((t) => t.group === key) }))
+  .filter((g) => g.terms.length > 0);
+
+const path = '/glossary/';
+const title = `公证术语表 | ${siteConfig.nameZh} ${siteConfig.name}`;
+const description =
+  '加州公证常用英文术语的中文对照与释义：Acknowledgment、Jurat、Apostille、POA、公证证词、法定收费上限等，附加州法条依据与延伸阅读。';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'DefinedTermSet',
+      name: '公证术语表',
+      description,
+      inLanguage: 'zh-CN',
+      url: `${siteConfig.url}${path}`,
+      hasDefinedTerm: glossary.map((t) => ({
+        '@type': 'DefinedTerm',
+        name: t.en,
+        alternateName: t.zh,
+        description: t.def,
+        inDefinedTermSet: `${siteConfig.url}${path}`,
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: siteConfig.nameZh, item: `${siteConfig.url}/` },
+        { '@type': 'ListItem', position: 2, name: '公证术语表', item: `${siteConfig.url}${path}` },
+      ],
+    },
+  ],
+};
+---
+
+<Layout lang="zh" title={title} description={description} path={path} jsonLd={jsonLd}>
+  <Navbar lang="zh" />
+  <main class="articles-index">
+    <div class="container">
+      <header class="articles-hero">
+        <h1>公证术语表</h1>
+        <p>
+          文件上的英文术语，往往在中文里没有严格对应的词。这里按场景列出常见术语的中英对照与释义，注明加州法条依据，并链到展开细说的文章。
+        </p>
+        <nav class="glossary-jump" aria-label="术语分类">
+          {groups.map((g) => <a href={`#${g.key}`}>{g.meta.label}</a>)}
+        </nav>
+      </header>
+
+      {groups.map((g) => (
+        <section class="articles-group" id={g.key}>
+          <h2>{g.meta.label}</h2>
+          <p class="glossary-intro">{g.meta.intro}</p>
+          <dl class="glossary-list">
+            {g.terms.map((t) => (
+              <div class="glossary-item">
+                <dt>
+                  <span class="glossary-en">{t.en}</span>
+                  <span class="glossary-zh">{t.zh}</span>
+                </dt>
+                <dd>
+                  <p>{t.def}</p>
+                  <p class="glossary-meta">
+                    {t.cite && <span class="glossary-cite">{t.cite}</span>}
+                    {t.slug && <a href={`/articles/${t.slug}/`}>展开细说 →</a>}
+                  </p>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
+
+      <p class="article-back"><a href="/articles/">← 返回公证知识</a></p>
+    </div>
+  </main>
+  <Footer lang="zh" />
+</Layout>

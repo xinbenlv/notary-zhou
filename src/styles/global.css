@@ -967,6 +967,10 @@ footer {
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
   .services-grid {
     grid-template-columns: 1fr;
   }
@@ -982,10 +986,132 @@ footer {
   .article-body {
     font-size: 16px;
   }
-  .nav-links {
-    display: none;
-  }
   .hero-content h1 {
     font-size: 40px;
+  }
+  .hero-grid {
+    min-width: 0;
+  }
+  .hero-visual {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
+/* Glossary */
+/* 注意：全局 `nav { position: fixed }` 是裸元素选择器，会命中页面内的
+   任何 <nav>。此处显式复位，避免跳转标签浮到站点导航栏上。 */
+.glossary-jump {
+  position: static;
+  width: auto;
+  z-index: auto;
+  pointer-events: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.glossary-jump a {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--brand-green);
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: 7px 16px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.glossary-jump a:hover {
+  border-color: var(--brand-terra);
+  color: var(--brand-terra);
+}
+
+.glossary-intro {
+  color: var(--text-muted);
+  font-size: 15px;
+  margin: -8px 0 20px;
+}
+
+.glossary-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.glossary-item {
+  background-color: var(--bg-white);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  transition: border-color 0.2s ease;
+}
+
+.glossary-item:hover {
+  border-color: var(--brand-terra);
+}
+
+.glossary-item dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.glossary-en {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--brand-green);
+}
+
+.glossary-zh {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.glossary-item dd {
+  margin: 0;
+}
+
+.glossary-item dd p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-dark);
+}
+
+.glossary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.glossary-cite {
+  font-size: 12px;
+  color: var(--text-muted);
+  background-color: var(--bg-alt);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+}
+
+.glossary-meta a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-green);
+  text-decoration: none;
+}
+
+.glossary-meta a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .glossary-list {
+    grid-template-columns: 1fr;
   }
 }
