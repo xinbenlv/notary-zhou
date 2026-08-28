@@ -1,5 +1,48 @@
 ---
 import { siteConfig } from '../config';
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = {
+  en: {
+    heading: 'New to notarization?',
+    explainer:
+      'Think of a notary as an impartial witness. We verify your identity, ensure you are signing willingly, and observe the signing of your document.',
+    explainerStrong: 'Do not sign your document before we meet.',
+    bringTitle: 'What to bring:',
+    bringItems: [
+      'The complete document (unsigned)',
+      "Valid Government-issued ID (Driver's License or Passport)",
+      'Payment (Cash, Venmo, Zelle, or Credit Card)',
+    ],
+    faqCta: 'Read Notary FAQ',
+    selectDay: 'Select a day',
+    comingSoon: 'Coming Soon',
+    comingSoonDesc: 'Online scheduling is coming soon. Meanwhile, please email us at',
+    comingSoonDescEnd: 'to book an appointment.',
+  },
+  zh: {
+    heading: '第一次办理公证？',
+    explainer:
+      '公证员相当于一位中立的见证人。我们负责核验您的身份、确认您是自愿签署，并现场见证您在文件上签字。',
+    explainerStrong: '请务必等到与我们见面时再签署文件。',
+    bringTitle: '请携带：',
+    bringItems: [
+      '完整的文件（尚未签字）',
+      '有效的政府签发证件（驾照或护照）',
+      '付款方式（现金、Venmo、Zelle 或信用卡）',
+    ],
+    faqCta: '查看常见问题',
+    selectDay: '选择日期',
+    comingSoon: '即将开放',
+    comingSoonDesc: '在线预约系统即将上线，现阶段请先发送邮件至',
+    comingSoonDescEnd: '与我们预约。',
+  },
+}[lang];
 ---
 
 <section id="book" class="booking-section">
@@ -10,49 +53,37 @@ import { siteConfig } from '../config';
         <div class="info-graphic">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         </div>
-        <div class="bilingual-pair" style="margin-bottom: 16px;">
-          <h2>New to notarization?</h2>
-          <span class="lang-zh" style="font-size: 20px; color: var(--text-muted); margin-top: -12px; margin-bottom: 16px;">第一次办理公证？</span>
-        </div>
-        <p>Think of a notary as an impartial witness. We verify your identity, ensure you are signing willingly, and observe the signing of your document. <strong>Do not sign your document before we meet.</strong></p>
+        <h2 style="margin-bottom: 16px;">{t.heading}</h2>
+        <p>{t.explainer} <strong>{t.explainerStrong}</strong></p>
 
         <div class="faq-box">
           <h4>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-terra)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            What to bring:
+            {t.bringTitle}
           </h4>
           <ul style="margin-left: 28px; color: var(--text-muted); font-size: 14px; line-height: 1.8;">
-            <li>The complete document (unsigned)</li>
-            <li>Valid Government-issued ID (Driver's License or Passport)</li>
-            <li>Payment (Cash, Venmo, Zelle, or Credit Card)</li>
+            {t.bringItems.map((item) => <li>{item}</li>)}
           </ul>
         </div>
 
         <a href="#faq" class="btn btn-green" style="margin-top: 32px; align-self: flex-start;">
-          Read Notary FAQ
+          {t.faqCta}
         </a>
       </div>
 
       <!-- Calendar Side — Coming Soon -->
       <div class="calendar-side">
-        <div class="bilingual-pair" style="margin-bottom: 32px;">
-          <h3 style="font-size: 24px; font-weight: 600;">Select a day</h3>
-          <span class="lang-zh">选择日期</span>
-        </div>
+        <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 32px;">{t.selectDay}</h3>
 
         <div class="coming-soon-placeholder">
           <div class="icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--brand-green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
           </div>
-          <h3>Coming Soon</h3>
-          <p class="lang-zh" style="font-size: 18px; color: var(--brand-green);">即将开放</p>
+          <h3>{t.comingSoon}</h3>
           <p>
-            Online scheduling is coming soon. Meanwhile, please email us at
+            {t.comingSoonDesc}
             <a href={`mailto:${siteConfig.email}`} style="color: var(--brand-green);">{siteConfig.email}</a>
-            to book an appointment.
-          </p>
-          <p style="font-size: 14px; color: var(--text-muted);">
-            在线预约系统即将上线，现阶段请先通过邮件与我们预约。
+            {t.comingSoonDescEnd}
           </p>
         </div>
       </div>

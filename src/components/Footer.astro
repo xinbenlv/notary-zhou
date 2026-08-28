@@ -1,126 +1,168 @@
 ---
 import { siteConfig } from '../config';
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = {
+  en: {
+    disclaimerTitle: 'Disclaimer',
+    usCnTitle: 'U.S. vs. China Notarization',
+    feesTitle: 'Fees',
+  },
+  zh: {
+    disclaimerTitle: '免责声明 · Disclaimer',
+    usCnTitle: '中美「公证」的区别',
+    feesTitle: '收费标准',
+  },
+}[lang];
+
+const noticeEn =
+  'I am not an attorney licensed to practice law and may not give legal advice about immigration or any other legal matters or accept fees for legal advice.';
+const noticeZh =
+  '本人并非持有执照的执业律师，不得就移民或任何其他法律事务提供法律意见，亦不得就法律意见收取费用。';
+
+const commissionedEn = `${siteConfig.owner.fullNameEn} is a notary public commissioned by the Secretary of State of the State of California, United States of America ("California"), Commission ${siteConfig.commissionNumber}, governed by California law (Government Code sections 8200–8230 and related statutes).`;
+const draftEn = `Once commissioned, ${siteConfig.owner.fullNameEn} will serve as a notary public commissioned by the Secretary of State of the State of California, United States of America ("California"), governed by California law (Government Code sections 8200–8230 and related statutes).`;
+const commissionedZh = `${siteConfig.owner.nameZhDisplay} 是由美利坚合众国加利福尼亚州（通称「加州」）州务卿（Secretary of State）委任的公证员（Notary Public，委任编号 ${siteConfig.commissionNumber}，有效期至${siteConfig.commissionExpiresZh}），受《加州政府法典》第 8200–8230 条及相关法律约束。`;
+const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为由美利坚合众国加利福尼亚州（通称「加州」）州务卿（Secretary of State）委任的公证员（Notary Public）执业，受《加州政府法典》第 8200–8230 条及相关法律约束。`;
 ---
 
 <footer>
   <div class="container">
     <div class="footer-disclaimer">
-      <h3 class="disclaimer-title">Disclaimer &bull; 免责声明</h3>
+      <h3 class="disclaimer-title">{t.disclaimerTitle}</h3>
       <!-- Required notice — Cal. Gov. Code §8219.5 (non-attorney advertising in a
-           language other than English; must appear in English and that language) -->
+           language other than English; must appear in English and that language).
+           On the Chinese page this notice therefore stays bilingual. -->
       <div class="disclaimer-notice">
-        <p>
-          I am not an attorney licensed to practice law and may not give legal
-          advice about immigration or any other legal matters or accept fees for
-          legal advice.
-        </p>
-        <p lang="zh">
-          本人并非持有执照的执业律师，不得就移民或任何其他法律事务提供法律意见，亦不得就法律意见收取费用。
-        </p>
+        {lang === 'en' ? (
+          <p>{noticeEn}</p>
+        ) : (
+          <>
+            <p>{noticeEn}</p>
+            <p lang="zh">{noticeZh}</p>
+          </>
+        )}
       </div>
 
       <div class="disclaimer-section">
-        <h4>U.S. vs. China Notarization &bull; 中美「公证」的区别</h4>
-        <p>
-          {
-            siteConfig.isDraft
-              ? `Once commissioned, ${siteConfig.owner.fullNameEn} will serve as a notary public commissioned by the Secretary of State of the State of California, United States of America ("California"), governed by California law (Government Code sections 8200–8230 and related statutes).`
-              : `${siteConfig.owner.fullNameEn} is a notary public commissioned by the Secretary of State of the State of California, United States of America ("California"), Commission ${siteConfig.commissionNumber}, governed by California law (Government Code sections 8200–8230 and related statutes).`
-          }
-        </p>
-        <p lang="zh">
-          {
-            siteConfig.isDraft
-              ? `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为由美利坚合众国加利福尼亚州（通称「加州」）州务卿（Secretary of State）委任的公证员（Notary Public）执业，受《加州政府法典》第 8200–8230 条及相关法律约束。`
-              : `${siteConfig.owner.nameZhDisplay} 是由美利坚合众国加利福尼亚州（通称「加州」）州务卿（Secretary of State）委任的公证员（Notary Public，委任编号 ${siteConfig.commissionNumber}，有效期至${siteConfig.commissionExpiresZh}），受《加州政府法典》第 8200–8230 条及相关法律约束。`
-          }
-        </p>
-        <p>
-          A U.S. Notary Public is fundamentally different from a notary office
-          (公证处) in China. A California notarization only verifies the identity
-          of the signer and witnesses the signing of a document — it does not
-          examine or certify the truthfulness or legality of the document's
-          contents, and it is not equivalent to, nor a substitute for,
-          notarization by a Chinese notary office or consular authentication by a
-          Chinese embassy or consulate. Documents intended for use in China
-          typically require an Apostille (Hague authentication) or other
-          procedures — please verify requirements with the receiving institution.
-        </p>
-        <p lang="zh">
-          美国公证员（Notary Public）与中国公证处的公证性质完全不同。加州公证仅核验签署人身份并见证文件签署，不对文件内容的真实性、合法性进行审查或证明；其效力不等同于、也不能替代中国公证处出具的公证书或中国驻美使领馆的领事认证。拟在中国境内使用的文件，通常还需办理海牙认证（Apostille）或其他手续，请务必向文件接收机构核实具体要求。
-        </p>
+        <h4>{t.usCnTitle}</h4>
+        {lang === 'en' ? (
+          <>
+            <p>{siteConfig.isDraft ? draftEn : commissionedEn}</p>
+            <p>
+              A U.S. Notary Public is fundamentally different from a notary office
+              (公证处) in China. A California notarization only verifies the identity
+              of the signer and witnesses the signing of a document — it does not
+              examine or certify the truthfulness or legality of the document's
+              contents, and it is not equivalent to, nor a substitute for,
+              notarization by a Chinese notary office or consular authentication by a
+              Chinese embassy or consulate. Documents intended for use in China
+              typically require an Apostille (Hague authentication) or other
+              procedures — please verify requirements with the receiving institution.
+            </p>
+          </>
+        ) : (
+          <>
+            <p lang="zh">{siteConfig.isDraft ? draftZh : commissionedZh}</p>
+            <p lang="zh">
+              美国公证员（Notary Public）与中国公证处的公证性质完全不同。加州公证仅核验签署人身份并见证文件签署，不对文件内容的真实性、合法性进行审查或证明；其效力不等同于、也不能替代中国公证处出具的公证书或中国驻美使领馆的领事认证。拟在中国境内使用的文件，通常还需办理海牙认证（Apostille）或其他手续，请务必向文件接收机构核实具体要求。
+            </p>
+          </>
+        )}
       </div>
 
       <div class="disclaimer-section">
-        <h4>Fees &bull; 收费标准</h4>
-        <p>
-          Notarial fees follow the maximum fees set by California law (<a
-            href={siteConfig.feeStatuteUrl}
-            target="_blank"
-            rel="noopener noreferrer">Cal. Gov. Code &sect;8211</a
-          >), currently:
-        </p>
-        <p lang="zh">
-          公证费按加州法律（<a
-            href={siteConfig.feeStatuteUrl}
-            target="_blank"
-            rel="noopener noreferrer">《加州政府法典》第 8211 条</a
-          >）规定的法定上限收取，现行标准如下：
-        </p>
+        <h4>{t.feesTitle}</h4>
+        {lang === 'en' ? (
+          <p>
+            Notarial fees follow the maximum fees set by California law (<a
+              href={siteConfig.feeStatuteUrl}
+              target="_blank"
+              rel="noopener noreferrer">Cal. Gov. Code &sect;8211</a
+            >), currently:
+          </p>
+        ) : (
+          <p lang="zh">
+            公证费按加州法律（<a
+              href={siteConfig.feeStatuteUrl}
+              target="_blank"
+              rel="noopener noreferrer">《加州政府法典》第 8211 条</a
+            >）规定的法定上限收取，现行标准如下：
+          </p>
+        )}
+        <!-- Fee schedule is part of the §8219.5 notice — bilingual on the Chinese page -->
         <ul>
-          {
-            siteConfig.fees.map((f) => (
+          {siteConfig.fees.map((f) =>
+            lang === 'en' ? (
+              <li>
+                {f.en} — {f.feeEn}
+              </li>
+            ) : (
               <li>
                 {f.en} {f.zh} — {f.fee}
               </li>
-            ))
-          }
+            )
+          )}
         </ul>
-        <p>
-          As required by law, no notarial fee is charged for vote-by-mail
-          ballot identification envelopes or for a U.S. military veteran's
-          application or claim for veterans' benefits. For these documents, we
-          are glad to make the service entirely free if you meet us near
-          {siteConfig.travelOriginEn} — for mobile service, only the travel fee
-          below applies. The amounts above are the statutory maximums as of
-          {siteConfig.feesLastVerified} and may change if the law is amended —
-          the current statute controls.
-        </p>
-        <p lang="zh">
-          依法律规定，邮寄选票身份信封的签名公证、美国退伍军人福利申请文件的公证不收公证费；此类文件若您愿意前来
-          {siteConfig.travelOriginZh}
-          附近与我们会面，我们乐意完全免费提供服务（如需上门，仅收取下述交通费）。以上为截至{
-            siteConfig.feesLastVerifiedZh
-          }的法定上限，如法律修订，以最新法规为准。
-        </p>
-        <p>
-          <strong>Mobile (travel) service:</strong> in addition to the notarial
-          fees above, a separate travel fee applies. It is calculated from the
-          estimated round-trip Uber fare between {siteConfig.travelOriginEn} and
-          your location, quoted to you and agreed upon in advance at booking.
-          Travel fees are not notarial fees and are not regulated by
-          &sect;8211.
-        </p>
-        <p lang="zh">
-          <strong>上门服务：</strong>除上述公证费外，另收取交通费。交通费按预约时
-          Uber 显示的 {siteConfig.travelOriginZh}
-          至您所在地点的往返预估车费计算，在预约时向您报价并经您同意后收取。交通费不属于公证费，不受第
-          8211 条约束。
-        </p>
+        {lang === 'en' ? (
+          <>
+            <p>
+              As required by law, no notarial fee is charged for vote-by-mail
+              ballot identification envelopes or for a U.S. military veteran's
+              application or claim for veterans' benefits. For these documents, we
+              are glad to make the service entirely free if you meet us near
+              {siteConfig.travelOriginEn} — for mobile service, only the travel fee
+              below applies. The amounts above are the statutory maximums as of
+              {siteConfig.feesLastVerified} and may change if the law is amended —
+              the current statute controls.
+            </p>
+            <p>
+              <strong>Mobile (travel) service:</strong> in addition to the notarial
+              fees above, a separate travel fee applies. It is calculated from the
+              estimated round-trip Uber fare between {siteConfig.travelOriginEn} and
+              your location, quoted to you and agreed upon in advance at booking.
+              Travel fees are not notarial fees and are not regulated by
+              &sect;8211.
+            </p>
+          </>
+        ) : (
+          <>
+            <p lang="zh">
+              依法律规定，邮寄选票身份信封的签名公证、美国退伍军人福利申请文件的公证不收公证费；此类文件若您愿意前来
+              {siteConfig.travelOriginZh}
+              附近与我们会面，我们乐意完全免费提供服务（如需上门，仅收取下述交通费）。以上为截至{
+                siteConfig.feesLastVerifiedZh
+              }的法定上限，如法律修订，以最新法规为准。
+            </p>
+            <p lang="zh">
+              <strong>上门服务：</strong>除上述公证费外，另收取交通费。交通费按预约时
+              Uber 显示的 {siteConfig.travelOriginZh}
+              至您所在地点的往返预估车费计算，在预约时向您报价并经您同意后收取。交通费不属于公证费，不受第
+              8211 条约束。
+            </p>
+          </>
+        )}
       </div>
     </div>
 
-    <a href="/" class="logo footer-logo">
+    <a href={lang === 'en' ? '/' : '/zh/'} class="logo footer-logo">
       {siteConfig.name} <span class="logo-dot"></span>
     </a>
 
     <p class="footer-text">
       {siteConfig.owner.fullNameEn} &bull;
-      {
-        siteConfig.isDraft
-          ? 'Notary commission application pending — not yet commissioned 公证员资格申请审核中，尚未取得资格'
+      {lang === 'en'
+        ? siteConfig.isDraft
+          ? 'Notary commission application pending — not yet commissioned'
           : `California Notary Public, Commission ${siteConfig.commissionNumber} (${siteConfig.commissionCounty} County) · Expires ${siteConfig.commissionExpiresEn}`
-      }<br />
+        : siteConfig.isDraft
+          ? '公证员资格申请审核中，尚未取得资格'
+          : `加州公证员 · 委任编号 ${siteConfig.commissionNumber}（${siteConfig.commissionCounty} 县）· 有效期至${siteConfig.commissionExpiresZh}`}<br />
       &copy; {siteConfig.copyrightYear} NotaryZhou.com. All rights reserved.
     </p>
   </div>

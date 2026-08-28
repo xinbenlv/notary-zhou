@@ -3,6 +3,9 @@ export const siteConfig = {
   title: 'Notary Zhou | Bilingual Bay Area Notary',
   description:
     'Professional bilingual (English & Mandarin) notary public services in the San Francisco Bay Area. Mobile and in-office notarization for real estate, legal, and business documents.',
+  titleZh: 'Notary Zhou | 湾区中英双语公证',
+  descriptionZh:
+    '旧金山湾区专业中英双语公证服务（Notary Public）。提供房产、法律及商业文件的上门与办公室公证。',
   url: 'https://notaryzhou.com',
 
   phone: '', // 留空 = 不显示；填入真实号码后自动进入 JSON-LD
@@ -33,21 +36,25 @@ export const siteConfig = {
     {
       en: 'Acknowledgment',
       zh: '签名认证',
+      feeEn: '$15 per signature',
       fee: '$15 per signature 每个签名',
     },
     {
       en: 'Jurat (including oath or affirmation)',
       zh: '宣誓书公证（含宣誓）',
+      feeEn: '$15 per signature',
       fee: '$15 per signature 每个签名',
     },
     {
       en: 'Certified copy of a Power of Attorney',
       zh: '授权委托书核证副本',
+      feeEn: '$15 per copy',
       fee: '$15 per copy 每份',
     },
     {
       en: 'Deposition services',
       zh: '庭外取证（Deposition）',
+      feeEn: '$30, plus $7 oath + $7 certificate',
       fee: '$30, plus $7 oath + $7 certificate 另加宣誓 $7、证书 $7',
     },
   ],

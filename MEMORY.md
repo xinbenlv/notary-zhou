@@ -74,6 +74,15 @@
 - Privacy: Chinese text uses "George (GJ) Zhou" (`owner.nameZhDisplay`), never 周国锦.
 - Footer identity line: "Commission #2557299 (Santa Clara County) · Expires May 30, 2030".
 
+## 2026-08-27 — i18n Split: Separate EN / ZH Pages
+
+- Replaced inline bilingual (EN + zh subtitle) layout with **Astro i18n routing**: `/` = English, `/zh/` = Chinese; language switcher pill in navbar (中文 ↔ English).
+- All components take a `lang` prop with colocated `t = {en, zh}[lang]` dicts; shared `Lang` type + `langPath`/`otherLang` helpers in `src/i18n.ts`.
+- SEO: per-language `<html lang>`, title/description (`titleZh`/`descriptionZh` in config), canonical, `og:locale`, `hreflang` alternates (en/zh/x-default), sitemap i18n config.
+- **§8219.5 compliance kept**: the Chinese page advertises in Chinese, so the non-attorney notice AND the §8211 fee schedule remain bilingual (EN+ZH) on `/zh/`; everything else there is Chinese-only. English page is English-only (公证处 appears only as quoted term in the US-vs-China explainer).
+- New Chinese copy written for service card descriptions, booking explainer, and "what to bring" list (previously English-only).
+- `fees[]` gained `feeEn` (English-only string for EN page); combined `fee` string still used on ZH page.
+
 ## TODO
 - [ ] Fill in real phone in `src/config.ts` (currently '' → hidden) and confirm info@notaryzhou.com mailbox actually receives mail
 - [ ] Enable booking (Calendly/Cal.com integration)

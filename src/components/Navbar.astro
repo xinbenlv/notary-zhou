@@ -1,30 +1,57 @@
 ---
 import { siteConfig } from '../config';
+import { langPath, otherLang, type Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = {
+  en: {
+    services: 'Services',
+    about: 'About',
+    faq: 'FAQ',
+    book: 'Book Now',
+    comingSoon: 'Coming Soon',
+    switchLabel: '中文',
+  },
+  zh: {
+    services: '服务',
+    about: '关于',
+    faq: '常见问题',
+    book: '立即预约',
+    comingSoon: '即将开放',
+    switchLabel: 'English',
+  },
+}[lang];
+const home = langPath(lang);
+const switchHref = langPath(otherLang(lang));
 ---
 
 <nav>
   <div class="container">
     <div class="nav-inner">
-      <a href="/" class="logo">
+      <a href={home} class="logo">
         {siteConfig.name} <span class="logo-dot"></span>
       </a>
       <ul class="nav-links">
-        <li><a href="#services">Services 服务</a></li>
-        <li><a href="#about">About 关于</a></li>
-        <li><a href="#faq">FAQ 常见问题</a></li>
+        <li><a href="#services">{t.services}</a></li>
+        <li><a href="#about">{t.about}</a></li>
+        <li><a href="#faq">{t.faq}</a></li>
       </ul>
-      {siteConfig.isDraft ? (
-        <span class="btn btn-disabled" style="padding: 10px 24px; font-size: 14px;">
-          Coming Soon 即将开放
-        </span>
-      ) : (
-        <a href="#book" class="btn btn-yellow" style="padding: 10px 24px; font-size: 14px;">
-          <div class="bilingual-inline">
-            <span class="lang-en">Book Now</span>
-            <span class="lang-zh" style="color: inherit; opacity: 0.8;">预约</span>
-          </div>
-        </a>
-      )}
+      <div class="flex items-center gap-sm">
+        <a href={switchHref} class="lang-switch">{t.switchLabel}</a>
+        {siteConfig.isDraft ? (
+          <span class="btn btn-disabled" style="padding: 10px 24px; font-size: 14px;">
+            {t.comingSoon}
+          </span>
+        ) : (
+          <a href="#book" class="btn btn-yellow" style="padding: 10px 24px; font-size: 14px;">
+            {t.book}
+          </a>
+        )}
+      </div>
     </div>
   </div>
 </nav>

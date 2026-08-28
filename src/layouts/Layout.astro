@@ -1,32 +1,43 @@
 ---
 import { siteConfig } from '../config';
+import { langPath, type Lang } from '../i18n';
 import PasswordGate from '../components/PasswordGate.astro';
 import '../styles/global.css';
 
 interface Props {
+  lang?: Lang;
   title?: string;
   description?: string;
 }
 
-const { title = siteConfig.title, description = siteConfig.description } = Astro.props;
+const { lang = 'en' } = Astro.props;
+const {
+  title = lang === 'zh' ? siteConfig.titleZh : siteConfig.title,
+  description = lang === 'zh' ? siteConfig.descriptionZh : siteConfig.description,
+} = Astro.props;
 const ogImage = `${siteConfig.url}/images/george-zhou.jpg`;
+const canonical = `${siteConfig.url}${langPath(lang)}`;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang === 'zh' ? 'zh-CN' : 'en'}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={siteConfig.url} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="en" href={`${siteConfig.url}/`} />
+    <link rel="alternate" hreflang="zh" href={`${siteConfig.url}/zh/`} />
+    <link rel="alternate" hreflang="x-default" href={`${siteConfig.url}/`} />
 
     <!-- OG -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
-    <meta property="og:url" content={siteConfig.url} />
+    <meta property="og:url" content={canonical} />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content={lang === 'zh' ? 'zh_CN' : 'en_US'} />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -46,8 +57,8 @@ const ogImage = `${siteConfig.url}/images/george-zhou.jpg`;
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
       "name": siteConfig.name,
-      "description": siteConfig.description,
-      "url": siteConfig.url,
+      "description": description,
+      "url": canonical,
       ...(siteConfig.phone ? { "telephone": siteConfig.phone } : {}),
       "email": siteConfig.email,
       "image": ogImage,

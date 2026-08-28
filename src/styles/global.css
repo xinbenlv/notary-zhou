@@ -79,6 +79,23 @@ body {
   font-size: 0.9em;
 }
 
+.lang-switch {
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text-muted);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: 9px 18px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.lang-switch:hover {
+  color: var(--text-dark);
+  border-color: var(--text-dark);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

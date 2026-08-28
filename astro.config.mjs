@@ -7,5 +7,17 @@ export default defineConfig({
   site: 'https://notaryzhou.com',
   output: 'static',
   adapter: vercel(),
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      i18n: {
+        defaultLocale: 'en',
+        locales: { en: 'en', zh: 'zh-CN' },
+      },
+    }),
+  ],
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'zh'],
+    routing: { prefixDefaultLocale: false },
+  },
 });

@@ -1,5 +1,36 @@
 ---
 import { siteConfig } from '../config';
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = {
+  en: {
+    tag: 'Mobile Notary • Bay Area',
+    descDraft:
+      'Fluent in English and Mandarin. George Zhou will provide accurate, mobile, and in-office notarization for real estate, legal, and business documents across the San Francisco Bay Area.',
+    desc: 'Fluent in English and Mandarin. Providing accurate, mobile, and in-office notarization for real estate, legal, and business documents across the San Francisco Bay Area.',
+    comingSoon: 'Coming Soon',
+    schedule: 'Schedule Appointment',
+    contact: 'Contact Us',
+    commissionLabel: 'CA Notary Commission',
+    bondLabel: 'Surety Bond on File',
+  },
+  zh: {
+    tag: '上门公证 • 湾区',
+    descDraft:
+      '中英文流利双语服务。George Zhou 取得资格后，将为旧金山湾区客户提供准确可靠的上门及办公室公证，涵盖房产、法律与商业文件。',
+    desc: '中英文流利双语服务。为旧金山湾区客户提供准确可靠的上门及办公室公证，涵盖房产、法律与商业文件。',
+    comingSoon: '即将开放',
+    schedule: '预约公证',
+    contact: '联系我们',
+    commissionLabel: '加州公证员委任编号',
+    bondLabel: '法定保证金已备案',
+  },
+}[lang];
 ---
 
 <section class="hero">
@@ -7,23 +38,24 @@ import { siteConfig } from '../config';
     <div class="hero-content">
       <div class="tag" style="margin-bottom: 24px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-terra)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-        Mobile Notary &bull; Bay Area
+        {t.tag}
       </div>
-      <h1>Trusted Notary<br />Services</h1>
-      <h2 class="zh-title">专业、可靠的加州公证服务</h2>
+      {lang === 'en' ? (
+        <h1>Trusted Notary<br />Services</h1>
+      ) : (
+        <h1>专业、可靠的<br />加州公证服务</h1>
+      )}
       <p class="hero-desc">
-        {siteConfig.isDraft
-          ? 'Fluent in English and Mandarin. George Zhou will provide accurate, mobile, and in-office notarization for real estate, legal, and business documents across the San Francisco Bay Area.'
-          : 'Fluent in English and Mandarin. Providing accurate, mobile, and in-office notarization for real estate, legal, and business documents across the San Francisco Bay Area.'}
+        {siteConfig.isDraft ? t.descDraft : t.desc}
       </p>
       <div class="hero-actions">
         {siteConfig.isDraft ? (
-          <span class="btn btn-disabled">Coming Soon 即将开放</span>
+          <span class="btn btn-disabled">{t.comingSoon}</span>
         ) : (
-          <a href="#book" class="btn btn-green">Schedule Appointment</a>
+          <a href="#book" class="btn btn-green">{t.schedule}</a>
         )}
         <a href={`mailto:${siteConfig.email}`} class="btn" style="background: white; border: 1px solid var(--border-soft);">
-          Contact Us
+          {t.contact}
         </a>
       </div>
 
@@ -31,11 +63,11 @@ import { siteConfig } from '../config';
         <div class="stats-row">
           <div class="stat-item">
             <span class="stat-value">{siteConfig.commissionNumber}</span>
-            <span class="stat-label">CA Notary Commission 加州公证员委任编号</span>
+            <span class="stat-label">{t.commissionLabel}</span>
           </div>
           <div class="stat-item">
             <span class="stat-value">$15k</span>
-            <span class="stat-label">Surety Bond on File 法定保证金已备案</span>
+            <span class="stat-label">{t.bondLabel}</span>
           </div>
         </div>
       )}
