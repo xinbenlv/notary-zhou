@@ -491,7 +491,7 @@
             <span>依法免收（{{ waivedActs }} 签名处）</span><span style="color:#1E7A46">−$0</span>
           </div>
           <div class="line" v-if="location === 'mobile'">
-            <span>交通费 往返约 {{ selTravel.mi2 }} mi / {{ selTravel.min2 }} 分钟</span><span>${{ grand - notaryFee }}</span>
+            <span>交通费 往返车程约 {{ selTravel.min2 }} 分钟</span><span>${{ grand - notaryFee }}</span>
           </div>
           <div class="line" v-else>
             <span>交通费（Lakewood Park 会面）</span><span>$0</span>
@@ -502,7 +502,7 @@
 
       <label class="agree">
         <input type="checkbox" v-model="agreed" />
-        <span>我已阅读并同意<b>取消与退款政策</b>及<b>交通费说明</b>：48 小时前取消全额退款；48 小时内取消退公证费、交通费退一半；爽约或因证件问题无法完成公证，退公证费、交通费不退。</span>
+        <span>我已阅读并同意<b>取消与退款政策</b>及<b>交通费说明</b>：48 小时前取消全额退款；24–48 小时取消退公证费、交通费退一半；24 小时内取消、爽约或因证件问题无法完成公证，退公证费、交通费不退。</span>
       </label>
 
       <div class="nav">
@@ -525,6 +525,11 @@ const { createApp, reactive, computed, watch, nextTick } = Vue;
 
 // 出发地：正式版应改为精确坐标并放入配置
 const ORIGIN_ADDR = 'Lakewood Park, Sunnyvale, CA 94089';
+
+// 交通费只按行车时间计（不计里程）：起步 $5 + 往返分钟数 × 单价。
+// 单价由实测标定：Lakewood Park → SFO 单程 28 分钟、约 $65 打车 → (65−5)/28 ≈ 2.15
+const TRAVEL_BASE = 5;
+const TRAVEL_PER_MIN = 2.15;
 
 // mockup 用：key 来自 ?gmapskey=… 或 localStorage，绝不写进代码库
 function gmapsKey() {
@@ -794,7 +799,7 @@ createApp({
       const minOut = Math.round(g.min * peakMult(hour));
       const backHour = hour + Math.ceil((serviceMin.value + minOut) / 60);
       const minBack = Math.round(g.min * peakMult(backHour));
-      const raw = 5 + 1.4 * g.mi * 2 + 0.45 * (minOut + minBack);
+      const raw = TRAVEL_BASE + TRAVEL_PER_MIN * (minOut + minBack);
       return { mi2: g.mi * 2, min2: minOut + minBack, raw, minOut, minBack };
     }
     // 总价：Stripe 手续费 gross-up 全部落在交通费行；Park 会面则完全吸收
@@ -851,7 +856,7 @@ createApp({
         `去程 ${t.minOut} 分钟 / 回程 ${t.minBack} 分钟（演示高峰系数）`,
         `出发 ${fmt(dep)} → 服务 ${fmt(state.slotHour * 60)}–${fmt(state.slotHour * 60 + serviceMin.value)} → 返回 ${fmt(ret)}`,
         `日历 block：${fmt(dep)}–${fmt(ret)}（含前后 15 分钟 buffer）`,
-        `交通费原始 = 5 + 1.4×${t.mi2} + 0.45×${t.min2} = $${t.raw.toFixed(2)}`,
+        `交通费原始 = ${TRAVEL_BASE} + ${TRAVEL_PER_MIN}×${t.min2} 分钟 = $${t.raw.toFixed(2)}（只计行车时间）`,
         `合计 = ceil5((${notaryFee.value} + ${t.raw.toFixed(2)} + 0.30) / 0.971) = $${grand.value}`,
         `（Stripe 手续费与取整并入交通费行；公证费行恒为法定 $15×n）`,
       ].join('\n');
