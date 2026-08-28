@@ -124,11 +124,12 @@ const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为�
             </p>
             <p>
               <strong>Mobile (travel) service:</strong> in addition to the notarial
-              fees above, a separate travel fee applies. It is calculated from the
-              estimated round-trip Uber fare between {siteConfig.travelOriginEn} and
-              your location, quoted to you and agreed upon in advance at booking.
-              Travel fees are not notarial fees and are not regulated by
-              &sect;8211.
+              fees above, a separate travel fee applies. It is estimated from the
+              round-trip drive time between {siteConfig.travelOriginEn} and your
+              signing location, priced comparably to an Uber/Lyft ride, and quoted
+              to you and agreed upon in advance at booking. If you meet us at
+              {siteConfig.travelOriginEn}, the travel fee is waived. Travel fees
+              are not notarial fees and are not regulated by &sect;8211.
             </p>
           </>
         ) : (
@@ -141,9 +142,10 @@ const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为�
               }的法定上限，如法律修订，以最新法规为准。
             </p>
             <p lang="zh">
-              <strong>上门服务：</strong>除上述公证费外，另收取交通费。交通费按预约时
-              Uber 显示的 {siteConfig.travelOriginZh}
-              至您所在地点的往返预估车费计算，在预约时向您报价并经您同意后收取。交通费不属于公证费，不受第
+              <strong>上门服务：</strong>除上述公证费外，另收取交通费。交通费按预约时从
+              {siteConfig.travelOriginZh}
+              至您上门公证地点的往返时间预估，价格与 Uber/Lyft
+              近似，在预约时向您报价并经您同意后收取；如果您前往 {siteConfig.travelOriginZh}，则免去交通费。交通费不属于公证费，不受第
               8211 条约束。
             </p>
           </>
