@@ -1115,3 +1115,80 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* 参考来源：默认折叠 */
+.article-body .references {
+  margin: 2.4em 0 0;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-white);
+}
+
+.article-body .references-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 22px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  border-radius: var(--radius-md);
+}
+
+/* 去掉浏览器默认三角，换成自绘箭头 */
+.article-body .references-summary::-webkit-details-marker {
+  display: none;
+}
+
+.article-body .references-summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.2s ease;
+}
+
+.article-body .references[open] .references-summary::after {
+  transform: rotate(-135deg) translate(-2px, -2px);
+}
+
+.article-body .references-summary:hover {
+  background-color: var(--bg-alt);
+}
+
+.article-body .references-label {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--brand-green);
+}
+
+.article-body .references-count {
+  font-size: 13px;
+  color: var(--text-muted);
+  background-color: var(--bg-alt);
+  border-radius: var(--radius-pill);
+  padding: 3px 12px;
+}
+
+.article-body .references-body {
+  padding: 4px 22px 20px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--text-muted);
+}
+
+.article-body .references-body ul {
+  margin-bottom: 0;
+}
+
+/* 从正文链接跳过来时高亮对应条目，便于定位 */
+.article-body .references-body li:target,
+.article-body .references-body li:has(span[id]:target) {
+  background-color: #FDF3D9;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 6px #FDF3D9;
+}
