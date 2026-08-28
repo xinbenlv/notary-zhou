@@ -69,7 +69,7 @@
   .card .rowtop .tag { font-size: 12px; color: var(--text-muted); font-weight: 600; }
   .card .rowtop button { border: 0; background: none; color: var(--brand-terra); font-size: 12px; cursor: pointer; }
   label.f { display: block; font-size: 12px; color: var(--text-muted); margin: 8px 0 4px; }
-  input[type="text"], input[type="date"], select {
+  input[type="text"], input[type="date"], input[type="email"], input[type="tel"], select {
     width: 100%;
     padding: 9px 10px;
     border: 1px solid var(--border-soft);
@@ -111,6 +111,10 @@
   .chip.add { background: none; border-style: dashed; color: var(--text-muted); cursor: pointer; }
   .chip.add.new { color: var(--brand-green); font-weight: 600; }
   .chiphint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .inline-row { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+  .inline-row input { flex: 1; min-width: 0; }
+  .inline-row .mini { white-space: nowrap; }
+  .mini:disabled { opacity: .4; cursor: not-allowed; }
 
   .newform {
     background: var(--bg-cream); border: 1px dashed var(--border-soft);
@@ -476,8 +480,40 @@
       <p class="sub">请核对信息。支付成功后即完成预约，确认邮件将发送给您。</p>
 
       <div class="card">
+        <div class="rowtop"><span class="tag">联系方式</span></div>
+
+        <label class="f">邮箱（接收确认函与日历邀请，需验证）</label>
+        <div class="inline-row">
+          <input type="email" v-model.trim="email" :disabled="emailVerified"
+            placeholder="you@example.com" autocomplete="email" @input="onEmailInput" />
+          <button class="mini" v-if="!emailVerified" :disabled="!emailValid || cooldown > 0" @click="sendCode">
+            {{ cooldown > 0 ? cooldown + ' 秒' : (emailSent ? '重发' : '发送验证码') }}
+          </button>
+        </div>
+
+        <template v-if="emailSent && !emailVerified">
+          <label class="f">邮件中的 6 位验证码</label>
+          <div class="inline-row">
+            <input type="text" v-model.trim="emailCode" maxlength="6" inputmode="numeric"
+              placeholder="000000" @input="emailErr = ''" />
+            <button class="mini" :disabled="emailCode.length !== 6" @click="verifyCode">验证</button>
+          </div>
+          <p class="chiphint">演示模式：验证码为 <b>{{ demoCode }}</b>（正式版通过邮件发送，5 分钟内有效）</p>
+        </template>
+
+        <p class="addrstate ok" v-if="emailVerified">✓ 邮箱已验证：{{ email }}</p>
+        <p class="addrstate bad" v-else-if="emailErr">✕ {{ emailErr }}</p>
+
+        <label class="f">手机号（当天联系用）</label>
+        <input type="tel" v-model.trim="phone" placeholder="(408) 555-0123" autocomplete="tel" />
+        <p class="chiphint" v-if="phone && !phoneValid" style="color:var(--brand-terra)">请填写 10 位美国手机号。</p>
+        <p class="chiphint" v-else>上门当天如需联系或临时变动，我们会拨打此号码。</p>
+      </div>
+
+      <div class="card">
         <div class="sum">
           <div class="line"><span>时间</span><span>{{ prettyDate }} {{ prettySlot }}</span></div>
+          <div class="line"><span>联系</span><span>{{ email }}<template v-if="phone"> · {{ phone }}</template></span></div>
           <div class="line"><span>地点</span><span>{{ location === 'park' ? 'Sunnyvale Lakewood Park' : address }}</span></div>
           <div class="line"><span>签署人</span><span>{{ signers.map(p => p.name).join(' · ') }}</span></div>
           <div class="line" v-for="d in docs" :key="d.id">
@@ -511,8 +547,9 @@
 
       <div class="nav">
         <button class="btn ghost" @click="step = 3">←</button>
-        <button class="btn primary" :disabled="!agreed" @click="pay">确认并支付 ${{ grand }}</button>
+        <button class="btn primary" :disabled="!canPay" @click="pay">确认并支付 ${{ grand }}</button>
       </div>
+      <p class="hint" v-if="!canPay">{{ !emailVerified ? '请先验证邮箱。' : (!phoneValid ? '请填写手机号。' : '请勾选同意取消与退款政策。') }}</p>
       <p class="holdnote">🔒 时段为您保留 15 分钟 · 支付由 Stripe 安全处理</p>
 
       <details class="debug">
@@ -627,6 +664,9 @@ createApp({
       dateStr: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10),
       slotHour: null,
       agreed: false,
+      email: '', emailCode: '', emailSent: false, emailVerified: false, emailErr: '',
+      demoCode: '', cooldown: 0,
+      phone: '',
     });
 
     const typeOf = (d) => d.typeKey === 'other' ? OTHER_TYPE : DOC_TYPES.find(t => t.key === d.typeKey);
@@ -903,6 +943,54 @@ createApp({
       }));
     const step2ok = computed(() => state.location === 'park' || !!state.resolved);
 
+    // ── 联系方式与邮箱验证 ─────────────────────────────────────
+    // 演示：验证码在前端生成并直接显示。正式版必须由服务端生成、随邮件发送，
+    // 服务端保存 hash + 有效期（5 分钟）+ 尝试次数与发送频率限制，前端只提交待校验的码。
+    const emailValid = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(state.email));
+    const phoneDigits = computed(() => state.phone.replace(/\D/g, ''));
+    const phoneValid = computed(() => phoneDigits.value.length === 10 ||
+      (phoneDigits.value.length === 11 && phoneDigits.value[0] === '1'));
+    const canPay = computed(() => state.agreed && state.emailVerified && phoneValid.value);
+
+    let cooldownTimer = null;
+    function startCooldown(sec) {
+      state.cooldown = sec;
+      clearInterval(cooldownTimer);
+      cooldownTimer = setInterval(() => {
+        state.cooldown -= 1;
+        if (state.cooldown <= 0) clearInterval(cooldownTimer);
+      }, 1000);
+    }
+
+    function sendCode() {
+      if (!emailValid.value || state.cooldown > 0) return;
+      state.demoCode = String(Math.floor(100000 + Math.random() * 900000));
+      state.emailSent = true;
+      state.emailCode = '';
+      state.emailErr = '';
+      startCooldown(60);
+    }
+
+    function verifyCode() {
+      if (state.emailCode === state.demoCode) {
+        state.emailVerified = true;
+        state.emailErr = '';
+        clearInterval(cooldownTimer);
+        state.cooldown = 0;
+      } else {
+        state.emailErr = '验证码不正确，请重新输入或重发。';
+      }
+    }
+
+    // 改了邮箱就要重新验证
+    function onEmailInput() {
+      state.emailVerified = false;
+      state.emailSent = false;
+      state.emailCode = '';
+      state.emailErr = '';
+      state.demoCode = '';
+    }
+
     const prettyDate = computed(() => {
       const d = new Date(state.dateStr + 'T00:00');
       return `${d.getMonth() + 1}月${d.getDate()}日（周${'日一二三四五六'[d.getDay()]}）`;
@@ -982,8 +1070,9 @@ createApp({
       totalActs, waivedActs, paidActs, notaryFee, serviceMin,
       geo, daySlots, selTravel, grand, SLOT_HOURS,
       step1ok, step2ok,
+      emailValid, phoneValid, canPay, sendCode, verifyCode, onEmailInput,
       prettyDate, prettySlot, debugInfo,
-      pay: () => alert(`演示：此处跳转 Stripe Checkout，金额 $${grand.value}。\n支付成功后：锁定时段、写入日历（含去程/回程 block）、发送确认邮件。`),
+      pay: () => alert(`演示：此处跳转 Stripe Checkout，金额 $${grand.value}。\n支付成功后：锁定时段、写入日历（把 ${state.email} 加为参会人，由 Google 自动发送邀请与提醒）、发送确认邮件。`),
     };
   },
 }).mount('#app');
