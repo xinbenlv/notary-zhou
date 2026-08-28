@@ -43,9 +43,10 @@ const switchHref = langPath(otherLang(lang));
         </a>
       )}
       <ul class="nav-links">
-        <li><a href="#services">{t.services}</a></li>
-        <li><a href="#about">{t.about}</a></li>
-        <li><a href="#faq">{t.faq}</a></li>
+        <li><a href={`${home}#services`}>{t.services}</a></li>
+        <li><a href={`${home}#about`}>{t.about}</a></li>
+        <li><a href={`${home}#faq`}>{t.faq}</a></li>
+        {lang === 'zh' && <li><a href="/articles/">公证知识</a></li>}
       </ul>
       <div class="flex items-center gap-sm">
         <a href={switchHref} class="lang-switch">{t.switchLabel}</a>
@@ -54,7 +55,7 @@ const switchHref = langPath(otherLang(lang));
             {t.comingSoon}
           </span>
         ) : (
-          <a href="#book" class="btn btn-yellow" style="padding: 10px 24px; font-size: 14px;">
+          <a href={`${home}#book`} class="btn btn-yellow" style="padding: 10px 24px; font-size: 14px;">
             {t.book}
           </a>
         )}

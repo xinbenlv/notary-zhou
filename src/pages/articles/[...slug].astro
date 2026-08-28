@@ -1,0 +1,107 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import ArticleDisclaimer from '../../components/ArticleDisclaimer.astro';
+import { siteConfig } from '../../config';
+import { articleCategories, formatDate } from '../../articles';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles', ({ data }) => !data.draft);
+  return articles.map((article) => ({ params: { slug: article.id }, props: { article } }));
+}
+
+const { article } = Astro.props;
+const { Content } = await render(article);
+const d = article.data;
+const path = `/articles/${article.id}/`;
+const canonical = `${siteConfig.url}${path}`;
+const ogImage = d.cover ? `${siteConfig.url}${d.cover}` : undefined;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Article',
+      headline: d.title,
+      description: d.description,
+      inLanguage: 'zh-CN',
+      datePublished: d.pubDate.toISOString().slice(0, 10),
+      ...(d.updatedDate ? { dateModified: d.updatedDate.toISOString().slice(0, 10) } : {}),
+      ...(ogImage ? { image: ogImage } : {}),
+      mainEntityOfPage: canonical,
+      author: {
+        '@type': 'Person',
+        name: siteConfig.owner.fullNameEn,
+        url: siteConfig.url,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: siteConfig.name,
+        url: siteConfig.url,
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: siteConfig.nameZh, item: `${siteConfig.url}/` },
+        { '@type': 'ListItem', position: 2, name: '公证知识', item: `${siteConfig.url}/articles/` },
+        { '@type': 'ListItem', position: 3, name: d.title, item: canonical },
+      ],
+    },
+  ],
+};
+---
+
+<Layout
+  lang="zh"
+  title={`${d.title} | ${siteConfig.nameZh}`}
+  description={d.description}
+  path={path}
+  ogImage={ogImage}
+  ogType="article"
+  jsonLd={jsonLd}
+>
+  <Navbar lang="zh" />
+  <main class="article-page">
+    <div class="container">
+      <div class="article-wrap">
+        <p class="article-meta">
+          <a href="/articles/">公证知识</a>
+          <span>·</span>
+          <span>{articleCategories[d.category].label}</span>
+          <span>·</span>
+          <span>{formatDate(d.pubDate)}</span>
+        </p>
+        <h1>{d.title}</h1>
+        <p class="article-desc">{d.description}</p>
+        {d.cover && (
+          <img
+            class="article-cover"
+            src={d.cover}
+            alt={d.coverAlt ?? d.title}
+            width="1200"
+            height="630"
+          />
+        )}
+        <article class="article-body" lang="zh">
+          <Content />
+        </article>
+
+        <ArticleDisclaimer />
+
+        <div class="article-cta">
+          <div>
+            <h3>需要湾区中文上门公证？</h3>
+            <p>Santa Clara · San Mateo · Alameda 三县上门，中文沟通每一份文件。</p>
+          </div>
+          <a href="/#book" class="btn btn-yellow">立即预约</a>
+        </div>
+
+        <p class="article-back"><a href="/articles/">← 返回公证知识</a></p>
+      </div>
+    </div>
+  </main>
+  <Footer lang="zh" />
+</Layout>

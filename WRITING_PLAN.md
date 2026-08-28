@@ -11,7 +11,7 @@
 
 ### 认知与信任线
 
-- [ ] **1. 《美国公证员和中国公证处，根本不是一回事——新移民最容易误解的一件事》**
+- [ ] **1. 《美国公证员和中国公证处，根本不是一回事——新移民最容易误解的一件事》**（草稿，待审阅：`src/content/articles/us-notary-vs-china-notary.md`）
   纠正最常见的概念混淆：加州 Notary Public 只验证签名身份，不做实体内容公证。
 - [ ] **6. 《Acknowledgment 还是 Jurat？选错公证类型，文件可能被退回》**
   解释两种最基本公证的区别，以及为什么公证员不能替你选。
@@ -247,6 +247,32 @@ Notary Public（公证员）· Notarization（公证）· Acknowledgment（签�
 **29. Trust Transfer Deed**
 - Glossary：Trust Transfer Deed（信托过户契据）· Change in ownership exclusion（所有权变更豁免）· PCOR
 - 来源：[Rev. & Tax. Code §62(d)](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=RTC&sectionNum=62) · [BOE Prop 19](https://www.boe.ca.gov/prop19/) · [Santa Clara County Clerk-Recorder](https://clerkrecorder.santaclaracounty.gov/recording-documents/recording-real-estate) ⚠️反爬
+
+---
+
+## 技术约定与工作流
+
+### 渲染与 SEO
+
+文章走 Astro Content Collections，在**构建期**编译成纯静态 HTML（生产页面零 JavaScript），搜索引擎抓原始 HTML 即可拿到全文，无需执行脚本。每篇自带 `Article` + `BreadcrumbList` 结构化数据与 canonical，并自动进 sitemap。这已是 SEO 最优形态，无需改成前端渲染或其他方案。
+
+### 中文加粗
+
+`astro.config.mjs` 已启用 [`remark-cjk-friendly`](https://www.npmjs.com/package/remark-cjk-friendly)，`**核验身份。**法律要求…` 这类中文写法可正常加粗，无需把标点移到 `**` 之外。
+
+背景：CommonMark 的 right-flanking 规则规定，收尾的 `**` 若前面紧挨标点、后面又紧跟非标点非空白字符（中文里就是汉字），不构成合法收尾定界符，加粗会整段失效、页面原样显示星号——而这恰是中文最自然的写法。该插件按 CJK 习惯放宽了判定。校验脚本仍会检查渲染结果中有无残留星号作为兜底。
+
+### 构建速度
+
+实测：5 篇 1.2 秒，105 篇 2.9 秒。日常写作用 `npm run dev`（热更新，即时生效，无需构建）；提交前跑一次校验即可，不需要增量构建机制。
+
+### 每篇完成前必须运行
+
+```bash
+npm run check:articles
+```
+
+`scripts/check-articles.mjs` 在构建产物上检查：未渲染的行内标记、引用锚点是否两跳闭合（内链有对应锚点、锚点也有人引用）、配图文件是否真实存在、免责声明是否就位、源文件是否都生成了页面。
 
 ---
 

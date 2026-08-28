@@ -8,15 +8,22 @@ interface Props {
   lang?: Lang;
   title?: string;
   description?: string;
+  /** Canonical path for non-homepage pages (e.g. `/articles/foo/`). */
+  path?: string;
+  ogImage?: string;
+  ogType?: string;
+  /** Overrides the default LocalBusiness JSON-LD (e.g. Article schema). */
+  jsonLd?: object;
 }
 
-const { lang = 'zh' } = Astro.props;
+const { lang = 'zh', path, ogType = 'website', jsonLd } = Astro.props;
 const {
   title = lang === 'zh' ? siteConfig.titleZh : siteConfig.title,
   description = lang === 'zh' ? siteConfig.descriptionZh : siteConfig.description,
 } = Astro.props;
-const ogImage = `${siteConfig.url}/images/george-zhou.jpg`;
-const canonical = `${siteConfig.url}${langPath(lang)}`;
+const ogImage = Astro.props.ogImage ?? `${siteConfig.url}/images/george-zhou.jpg`;
+const canonical = `${siteConfig.url}${path ?? langPath(lang)}`;
+const isHomepage = !path;
 ---
 
 <!doctype html>
@@ -30,16 +37,20 @@ const canonical = `${siteConfig.url}${langPath(lang)}`;
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="zh" href={`${siteConfig.url}/`} />
-    <link rel="alternate" hreflang="en" href={`${siteConfig.url}/en/`} />
-    <link rel="alternate" hreflang="x-default" href={`${siteConfig.url}/`} />
+    {isHomepage && (
+      <>
+        <link rel="alternate" hreflang="zh" href={`${siteConfig.url}/`} />
+        <link rel="alternate" hreflang="en" href={`${siteConfig.url}/en/`} />
+        <link rel="alternate" hreflang="x-default" href={`${siteConfig.url}/`} />
+      </>
+    )}
 
     <!-- OG -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:locale" content={lang === 'zh' ? 'zh_CN' : 'en_US'} />
 
     <!-- Twitter -->
@@ -56,7 +67,7 @@ const canonical = `${siteConfig.url}${langPath(lang)}`;
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
     <!-- JSON-LD -->
-    <script type="application/ld+json" set:html={JSON.stringify({
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd ?? {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
       "name": siteConfig.name,

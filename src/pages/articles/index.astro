@@ -1,0 +1,63 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import Footer from '../../components/Footer.astro';
+import { siteConfig } from '../../config';
+import { articleCategories, formatDate, type ArticleCategory } from '../../articles';
+
+const articles = (await getCollection('articles', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const groups = (Object.entries(articleCategories) as [ArticleCategory, { label: string; order: number }][])
+  .sort((a, b) => a[1].order - b[1].order)
+  .map(([key, meta]) => ({ key, meta, items: articles.filter((a) => a.data.category === key) }))
+  .filter((g) => g.items.length > 0);
+
+const title = `公证知识 | ${siteConfig.nameZh} ${siteConfig.name}`;
+const description =
+  '面向湾区华人的公证科普：加州公证（Notary Public）怎么办、文件回国使用（海牙认证 Apostille、委托书、声明）、房产贷款与生前信托签约中的公证问题，逐篇讲清，并附权威法律来源。';
+---
+
+<Layout lang="zh" title={title} description={description} path="/articles/">
+  <Navbar lang="zh" />
+  <main class="articles-index">
+    <div class="container">
+      <header class="articles-hero">
+        <h1>公证知识</h1>
+        <p>
+          面向湾区华人的公证科普。每篇文章聚焦一个真实场景——文件回国使用、房产贷款签约、家庭与养老文件——并注明加州法律与政府官方来源，供您核对。
+        </p>
+      </header>
+
+      {groups.map((g) => (
+        <section class="articles-group">
+          <h2>{g.meta.label}</h2>
+          <div class="articles-grid">
+            {g.items.map((a) => (
+              <a class="article-card" href={`/articles/${a.id}/`}>
+                {a.data.cover && (
+                  <img
+                    src={a.data.cover}
+                    alt={a.data.coverAlt ?? a.data.title}
+                    loading="lazy"
+                    width="1200"
+                    height="630"
+                  />
+                )}
+                <div class="article-card-body">
+                  <span class="article-card-tag">{g.meta.label}</span>
+                  <h3>{a.data.title}</h3>
+                  <p>{a.data.description}</p>
+                  <span class="article-card-date">{formatDate(a.data.pubDate)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  </main>
+  <Footer lang="zh" />
+</Layout>
