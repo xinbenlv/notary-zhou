@@ -32,9 +32,16 @@ const switchHref = langPath(otherLang(lang));
 <nav>
   <div class="container">
     <div class="nav-inner">
-      <a href={home} class="logo">
-        {siteConfig.name} <span class="logo-dot"></span>
-      </a>
+      {lang === 'zh' ? (
+        <a href={home} class="logo logo-stacked">
+          <span class="logo-main">{siteConfig.nameZh} <span class="logo-dot"></span></span>
+          <span class="logo-sub">{siteConfig.name}</span>
+        </a>
+      ) : (
+        <a href={home} class="logo">
+          {siteConfig.name} <span class="logo-dot"></span>
+        </a>
+      )}
       <ul class="nav-links">
         <li><a href="#services">{t.services}</a></li>
         <li><a href="#about">{t.about}</a></li>

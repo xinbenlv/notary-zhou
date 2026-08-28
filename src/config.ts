@@ -1,5 +1,6 @@
 export const siteConfig = {
   name: 'Notary Zhou',
+  nameZh: '周公证员',
   title: 'Notary Zhou | Bay Area Mobile Notary',
   description:
     'Professional Mandarin-speaking mobile notary public services in the San Francisco Bay Area. Notarization for real estate, legal, and business documents.',
