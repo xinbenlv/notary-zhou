@@ -86,12 +86,24 @@
     background: var(--bg-alt); border: 1px solid var(--border-soft);
     border-radius: 999px; padding: 4px 8px 4px 10px; font-size: 12.5px;
   }
-  .chip b { font-weight: 600; cursor: pointer; }
-  .chip .cnt {
-    color: var(--brand-green); background: var(--brand-yellow);
-    border-radius: 6px; padding: 0 4px; margin-left: 4px; font-size: 11px;
+  .chip b { font-weight: 600; }
+  .chip .step {
+    display: inline-flex; align-items: center; gap: 2px;
+    background: var(--bg-white); border: 1px solid var(--border-soft);
+    border-radius: 999px; padding: 1px;
   }
-  .chip button {
+  .chip .step button {
+    border: 0; background: none; color: var(--brand-green);
+    width: 20px; height: 20px; border-radius: 50%;
+    font-size: 14px; line-height: 1; cursor: pointer; font-weight: 700;
+  }
+  .chip .step button:hover:not(:disabled) { background: var(--bg-alt); }
+  .chip .step button:disabled { color: var(--border-soft); cursor: not-allowed; }
+  .chip .step i {
+    font-style: normal; min-width: 14px; text-align: center;
+    font-size: 12.5px; font-weight: 600;
+  }
+  .chip button.rm {
     border: 0; background: var(--border-soft); color: var(--text-muted);
     width: 16px; height: 16px; border-radius: 50%; line-height: 14px;
     font-size: 11px; cursor: pointer;
@@ -257,15 +269,20 @@
           <label class="f">签署人</label>
           <div class="chips">
             <span class="chip" v-for="s in d.parts" :key="s.pid">
-              <b @click="bump(d, s)">{{ nameOf(s.pid) }}<span class="cnt" v-if="s.count > 1">×{{ s.count }}</span></b>
-              <button @click="detach(d, s.pid)">×</button>
+              <b>{{ nameOf(s.pid) }}</b>
+              <span class="step">
+                <button :disabled="s.count <= 1" @click="s.count = Math.max(1, s.count - 1)" aria-label="减少签名处">−</button>
+                <i>{{ s.count }}</i>
+                <button :disabled="s.count >= 10" @click="s.count = Math.min(10, s.count + 1)" aria-label="增加签名处">+</button>
+              </span>
+              <button class="rm" @click="detach(d, s.pid)" aria-label="移除签署人">×</button>
             </span>
             <span class="chip add" v-for="p in docAddable(d)" :key="'a' + p.id" @click="attach(d, p.id)">
               ＋ {{ p.name }}
             </span>
             <span class="chip add new" @click="d.adding = !d.adding">＋ 新签署人</span>
           </div>
-          <p class="chiphint" v-if="d.parts.length > 0">同一人需在此文件签署多处（如个人＋受托人双重身份）？点击其姓名调整签名处数。</p>
+          <p class="chiphint" v-if="d.parts.length > 0">数字为该签署人在本文件上需公证的签名处数；同一人以双重身份签署两处（如个人＋受托人）时请用 + 增加。</p>
 
           <div class="newform" v-if="d.adding">
             <label class="f" style="margin-top:0">英文法定姓名（与证件一致）</label>
@@ -644,7 +661,6 @@ createApp({
       docAddable: (d) => state.signers.filter(p => p.name && !d.parts.some(x => x.pid === p.id)),
       attach: (d, pid) => d.parts.push({ pid, count: 1 }),
       detach: (d, pid) => d.parts = d.parts.filter(x => x.pid !== pid),
-      bump: (d, s) => { s.count = s.count >= 4 ? 1 : s.count + 1; },
       createSigner: (d) => {
         if (!d.newName) return;
         const p = { id: ++uid, name: d.newName, idType: d.newId };
