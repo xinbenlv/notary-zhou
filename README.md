@@ -48,7 +48,7 @@ npm run build   # 产物在 dist/
 ## 待办
 
 - [ ] `public/robots.txt` 还在 `Disallow: /`——站点已上线但搜索引擎抓不到
-- [ ] 在线预约：Booking 区目前只有邮箱占位，待接 Calendly / Cal.com
+- [ ] 在线预约：Booking 区目前只有邮箱占位。方案为自建（Google Calendar 查忙闲/写事件 + Google Maps 算车程 + Stripe 收款），不使用 Calendly / Cal.com；交互原型见 `public/mockups/booking.html`
 - [ ] NNA 认证、E&O 保险（`config.ts` 中仍为 `Pending`）
 - [ ] Google Business Profile
 

@@ -92,7 +92,7 @@
 
 ## TODO
 - [ ] Fill in real phone in `src/config.ts` (currently '' → hidden) and confirm info@notaryzhou.com mailbox actually receives mail
-- [ ] Enable booking (Calendly/Cal.com integration)
+- [ ] Enable booking — self-built flow (Google Calendar + Google Maps + Stripe); Cal.com/Calendly ruled out (can't do address-based pricing or re-price on reschedule). Interactive mockup: `public/mockups/booking.html`
 - [ ] Real NNA cert + E&O insurance → restore hero stats when actually obtained
 - [ ] Consider ITU trademark filing for "Notary Zhou"
 - [ ] Add Google Business Profile
