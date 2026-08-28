@@ -361,18 +361,18 @@
       <h2>第 2 步 · 地点</h2>
       <p class="sub">前往我们的服务点可免交通费，上门服务按往返车程估算交通费。</p>
 
-      <label class="radio" :class="{sel: location === 'park'}">
-        <input type="radio" value="park" v-model="location" />
-        <span>
-          <span class="t">我前往 Sunnyvale Lakewood Park</span>
-          <span class="d">免交通费，只收公证费。具体见面位置将在确认邮件中提供。</span>
-        </span>
-      </label>
       <label class="radio" :class="{sel: location === 'mobile'}">
         <input type="radio" value="mobile" v-model="location" />
         <span>
           <span class="t">上门服务（家中 / 办公室 / 医院等）</span>
           <span class="d">另收交通费：按预约时段的往返车程估算，价格与 Uber/Lyft 近似，支付前锁定。</span>
+        </span>
+      </label>
+      <label class="radio" :class="{sel: location === 'park'}">
+        <input type="radio" value="park" v-model="location" />
+        <span>
+          <span class="t">我前往 Sunnyvale Lakewood Park</span>
+          <span class="d">免交通费，只收公证费。具体见面位置将在确认邮件中提供。</span>
         </span>
       </label>
 
@@ -386,10 +386,19 @@
           <option v-for="p in DEMO_PLACES" :value="p.label"></option>
         </datalist>
 
+        <div class="combo" v-if="suggestions.length">
+          <div class="panel" style="position:static;margin-top:4px">
+            <div class="opt" v-for="s in suggestions" :key="s.id" @mousedown.prevent="pickPlace(s)">
+              <span>{{ s.text }}</span>
+            </div>
+          </div>
+        </div>
+
         <p class="addrstate ok" v-if="resolved">
           ✓ 已核验地址：<span class="fixed">{{ resolved.label }}</span>
         </p>
         <p class="addrstate bad" v-else-if="addrError">✕ {{ addrError }}</p>
+        <p class="addrstate" style="color:var(--text-muted)" v-else-if="addrBusy">正在核验地址…</p>
 
         <div class="maproute" v-if="resolved">
           <div id="route-map" class="canvas" :class="{demo: mapsMode === 'demo'}">
@@ -529,7 +538,7 @@ function loadGoogleMaps(key) {
     const s = document.createElement('script');
     s.async = true;
     s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) +
-            '&libraries=places&language=zh-CN&region=US&callback=__gmapsReady';
+            '&libraries=places,geometry,marker&language=zh-CN&region=US&callback=__gmapsReady';
     s.onerror = () => reject(new Error('脚本加载失败'));
     document.head.appendChild(s);
     setTimeout(() => reject(new Error('加载超时')), 12000);
@@ -592,10 +601,12 @@ createApp({
       step: 1,
       signers: [],        // {id, name, idType} — 随文件按需创建，可复用
       docs: [newDoc()],
-      location: 'park',
+      location: 'mobile',    // 上门为默认（主营业务）
       address: '',
       resolved: null,        // {label, mi, min, placeId?} — 仅核验通过的地址可继续
       addrError: '',
+      addrBusy: false,
+      suggestions: [],
       mapsMode: gmapsKey() ? 'live' : 'demo',
       mapsError: '',
       dateStr: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10),
@@ -648,69 +659,119 @@ createApp({
       }
     }
 
-    let mapObj = null, renderer = null, autocompleteAttached = false;
+    // 实时模式走「Places API (New) + Routes API」REST 接口——新项目已不再提供
+    // 旧版 places-backend / directions-backend（返回 REQUEST_DENIED）。
+    // 注意：正式版的算价必须放在服务端，前端只负责显示，否则金额可被篡改。
+    let mapObj = null, routeLine = null, acTimer = null;
 
-    // 实时模式：用 Directions 结果回填规范化地址 + 实际里程/时长，并渲染路线
-    async function routeAndRender(destination, fallbackLabel) {
+    async function fetchSuggestions(input) {
+      const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': gmapsKey() },
+        body: JSON.stringify({
+          input,
+          includedRegionCodes: ['us'],
+          locationBias: { circle: { center: { latitude: 37.4057, longitude: -122.0180 }, radius: 50000 } },  // 上限 50km
+        }),
+      });
+      if (!res.ok) throw new Error('autocomplete ' + res.status);
+      const j = await res.json();
+      return (j.suggestions || [])
+        .filter(s => s.placePrediction)
+        .map(s => ({ id: s.placePrediction.placeId, text: s.placePrediction.text.text }));
+    }
+
+    // Routes API：返回规范化后的距离/预测时长和用于绘图的 polyline
+    async function routeAndRender(placeId, label) {
+      state.addrBusy = true;
       try {
-        const svc = new google.maps.DirectionsService();
-        const res = await svc.route({
-          origin: ORIGIN_ADDR,
-          destination,
-          travelMode: google.maps.TravelMode.DRIVING,
-          drivingOptions: {
-            departureTime: new Date(Date.now() + 3600 * 1000),
-            trafficModel: google.maps.TrafficModel.BEST_GUESS,
+        const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Goog-Api-Key': gmapsKey(),
+            'X-Goog-FieldMask': 'routes.duration,routes.staticDuration,routes.distanceMeters,routes.polyline.encodedPolyline',
           },
+          body: JSON.stringify({
+            origin: { address: ORIGIN_ADDR },
+            destination: { placeId },
+            travelMode: 'DRIVE',
+            routingPreference: 'TRAFFIC_AWARE',
+            departureTime: new Date(Date.now() + 3600 * 1000).toISOString(),
+          }),
         });
-        const leg = res.routes[0].legs[0];
+        const j = await res.json();
+        if (!res.ok || !j.routes || !j.routes.length) throw new Error((j.error || {}).message || '无可行路线');
+        const r = j.routes[0];
         state.resolved = {
-          label: leg.end_address || fallbackLabel,
-          mi: Math.round(leg.distance.value / 1609.34),
-          min: Math.round((leg.duration_in_traffic || leg.duration).value / 60),
+          label,
+          mi: Math.round(r.distanceMeters / 1609.34),
+          min: Math.round(parseInt(r.staticDuration) / 60),        // 基准取畅通时长
+          minTraffic: Math.round(parseInt(r.duration) / 60),
+          placeId,
         };
         state.addrError = '';
         await nextTick();
-        const el = document.getElementById('route-map');
-        if (el) {
-          mapObj = new google.maps.Map(el, { mapTypeControl: false, streetViewControl: false, fullscreenControl: false });
-          renderer = new google.maps.DirectionsRenderer({ map: mapObj, polylineOptions: { strokeColor: '#1B3B32', strokeWeight: 5 } });
-          renderer.setDirections(res);
-        }
+        drawRoute(r.polyline && r.polyline.encodedPolyline);
       } catch (e) {
         state.resolved = null;
-        state.addrError = '无法规划到该地址的路线，请确认地址是否完整（含城市、州）。';
+        state.addrError = '无法规划到该地址的路线（' + e.message + '），请换一个更完整的地址。';
+      } finally {
+        state.addrBusy = false;
       }
     }
 
-    function attachAutocomplete() {
-      if (autocompleteAttached || state.mapsMode !== 'live') return;
-      const input = document.getElementById('addr-input');
-      if (!input || !window.google || !google.maps.places) return;
-      try {
-        const ac = new google.maps.places.Autocomplete(input, {
-          componentRestrictions: { country: 'us' },
-          fields: ['formatted_address', 'place_id', 'geometry'],
-          types: ['address'],
-        });
-        ac.addListener('place_changed', () => {
-          const place = ac.getPlace();
-          if (!place || !place.place_id) { state.addrError = '请从下拉建议中选择一个地址。'; return; }
-          state.address = place.formatted_address || state.address;
-          routeAndRender({ placeId: place.place_id }, place.formatted_address);
-        });
-        autocompleteAttached = true;
-      } catch (e) {
-        // 新版 key 不支持 legacy Autocomplete：退回「失焦时用 Directions 核验」
-        autocompleteAttached = true;
-      }
+    function drawRoute(encoded) {
+      const el = document.getElementById('route-map');
+      if (!el || !window.google || !encoded) return;
+      const path = google.maps.geometry.encoding.decodePath(encoded);
+      mapObj = new google.maps.Map(el, {
+        mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
+        zoomControl: true, disableDefaultUI: false,
+      });
+      if (routeLine) routeLine.setMap(null);
+      routeLine = new google.maps.Polyline({ path, strokeColor: '#1B3B32', strokeWeight: 5, strokeOpacity: 0.9, map: mapObj });
+      // 用像素尺寸的符号，避免按米计的圆在长途路线下小到看不见
+      const dot = (pos, color, title) => new google.maps.Marker({
+        position: pos, map: mapObj, title, zIndex: 5,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE, scale: 7,
+          fillColor: color, fillOpacity: 1, strokeColor: '#FFFFFF', strokeWeight: 2,
+        },
+      });
+      dot(path[0], '#1B3B32', 'Lakewood Park');
+      dot(path[path.length - 1], '#D88465', '上门地点');
+      const b = new google.maps.LatLngBounds();
+      path.forEach(p => b.extend(p));
+      mapObj.fitBounds(b, 24);
+    }
+
+    function pickPlace(s) {
+      state.address = s.text;
+      state.suggestions = [];
+      routeAndRender(s.id, s.text);
+    }
+
+    function onAddrInput() {
+      state.resolved = null;
+      state.addrError = '';
+      if (state.mapsMode !== 'live') { state.suggestions = []; return; }
+      clearTimeout(acTimer);
+      const v = state.address;
+      if (!v || v.length < 3) { state.suggestions = []; return; }
+      acTimer = setTimeout(async () => {
+        try { state.suggestions = await fetchSuggestions(v); }
+        catch (e) { state.suggestions = []; state.addrError = '地址搜索失败：' + e.message; }
+      }, 300);
     }
 
     function resolveAddress() {
       if (state.location !== 'mobile' || !state.address) return;   // 任何非空输入都要给出核验结论
       if (state.resolved) return;                 // 已核验，避免重复请求
       if (state.mapsMode === 'demo') return resolveDemo();
-      routeAndRender(state.address, state.address);
+      if (!state.suggestions.length && !state.addrBusy) {
+        state.addrError = '请从下拉建议中选择一个地址（需精确到街道）。';
+      }
     }
 
     watch(() => state.step === 2 && state.location === 'mobile', async (on) => {
@@ -719,7 +780,6 @@ createApp({
       if (state.mapsMode !== 'live') return;
       try {
         await loadGoogleMaps(gmapsKey());
-        attachAutocomplete();
       } catch (e) {
         state.mapsMode = 'demo';
         state.mapsError = e.message;
@@ -842,8 +902,7 @@ createApp({
         d.parts.push({ pid: p.id, count: 1 });
         d.newName = ''; d.newId = ID_TYPES[0]; d.adding = false;
       },
-      onAddrInput: () => { state.resolved = null; state.addrError = ''; },
-      resolveAddress,
+      onAddrInput, resolveAddress, pickPlace,
       totalActs, waivedActs, paidActs, notaryFee, serviceMin,
       geo, daySlots, selTravel, grand,
       step1ok, step2ok,
