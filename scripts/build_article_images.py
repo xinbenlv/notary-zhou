@@ -68,6 +68,49 @@ def wrap_title(title, draw, max_width, size):
     return lines
 
 
+def trim_uniform_bands(im, max_frac=0.14, flat_sd=4.0, step=10.0):
+    """裁掉模型常在上下（偶尔左右）留下的近乎纯色边带。
+
+    这类色带本是给裁切预留的出血区，但当它与画面之间形成明显阶跃时，
+    在页面上会读成意外的白边。判定：最外一行/列极均匀（标准差小），
+    且与稍往里处存在明显亮度阶跃，则逐步内收。
+    """
+    from PIL import ImageStat
+
+    g = im.convert("L")
+    w, h = im.size
+
+    def row_stats(y):
+        s = ImageStat.Stat(g.crop((0, y, w, y + 1)))
+        return s.mean[0], s.stddev[0]
+
+    def col_stats(x):
+        s = ImageStat.Stat(g.crop((x, 0, x + 1, h)))
+        return s.mean[0], s.stddev[0]
+
+    def scan(n, stats, limit):
+        """从边缘向内找到色带结束的位置"""
+        m0, s0 = stats(0 if n == 0 else n)
+        if s0 > flat_sd:
+            return 0
+        i = 0
+        while i < limit:
+            m, s = stats(i)
+            if s > flat_sd or abs(m - m0) > step:
+                break
+            i += 1
+        return i if i < limit else 0
+
+    top = scan(0, lambda i: row_stats(i), int(h * max_frac))
+    bot = scan(0, lambda i: row_stats(h - 1 - i), int(h * max_frac))
+    left = scan(0, lambda i: col_stats(i), int(w * max_frac))
+    right = scan(0, lambda i: col_stats(w - 1 - i), int(w * max_frac))
+
+    if not (top or bot or left or right):
+        return im
+    return im.crop((left, top, w - right, h - bot))
+
+
 def detect_text_zone(im, min_frac=0.34, max_frac=0.56):
     """探测插画从哪一列开始，据此决定标题可用宽度。
 
@@ -94,6 +137,7 @@ def detect_text_zone(im, min_frac=0.34, max_frac=0.56):
 
 def build_cover(src_png, out_path, kicker, title, subtitle, wordmark="周公证员"):
     im = Image.open(src_png).convert("RGB")
+    im = trim_uniform_bands(im)
     w, h = im.size
     # 只裁需要调整的那一维，保留生成时的左右构图（插画在右、左侧留白给标题）
     target_ratio = OG_W / OG_H
@@ -157,10 +201,20 @@ def build_cover(src_png, out_path, kicker, title, subtitle, wordmark="周公证�
 
 def build_section(src_png, out_path):
     im = Image.open(src_png).convert("RGB")
+    im = trim_uniform_bands(im)
     w, h = im.size
-    target_h = int(w / 1.5)  # 裁成精确 3:2
-    top = max(0, (h - target_h) // 2)
-    im = im.crop((0, top, w, top + target_h)).resize((SECTION_W, SECTION_H), Image.LANCZOS)
+    # 裁成精确 3:2：裁掉多出来的那一维即可。裁边带后图可能比目标更"扁"，
+    # 此时若仍按高度裁会越界，PIL 会补边而不是缩放——那会凭空造出黑边。
+    target = SECTION_W / SECTION_H
+    if w / h > target:          # 偏宽 → 裁宽度
+        new_w = round(h * target)
+        left = (w - new_w) // 2
+        im = im.crop((left, 0, left + new_w, h))
+    else:                        # 偏高 → 裁高度
+        new_h = round(w / target)
+        top = (h - new_h) // 2
+        im = im.crop((0, top, w, top + new_h))
+    im = im.resize((SECTION_W, SECTION_H), Image.LANCZOS)
     save_jpg(im, out_path)
     return out_path
 
