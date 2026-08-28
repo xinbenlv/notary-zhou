@@ -175,8 +175,8 @@
   }
   .radio.sel { border-color: var(--brand-green); outline: 1px solid var(--brand-green); }
   .radio input { margin-top: 3px; }
-  .radio .t { font-size: 14px; font-weight: 600; }
-  .radio .d { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+  .radio .t { display: block; font-size: 14px; font-weight: 600; }
+  .radio .d { display: block; font-size: 12.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
 
   .slots { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
   .slot {
@@ -188,6 +188,32 @@
   .slot.sel small { color: var(--brand-yellow); }
   .slot:disabled { opacity: .4; cursor: not-allowed; }
   .peakhint { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
+  .maproute { margin-top: 10px; }
+  .maproute .canvas {
+    height: 190px; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border-soft); background: var(--bg-alt);
+  }
+  .maproute .canvas.demo {
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .legline { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; margin-top: 8px; }
+  .legline b { font-weight: 600; }
+  .peakbar {
+    display: flex; gap: 6px; align-items: flex-start;
+    background: #FDF4E3; border: 1px solid #F3E0B8; border-radius: 8px;
+    padding: 8px 10px; margin-top: 8px; font-size: 11.5px; color: #7A5A16; line-height: 1.5;
+  }
+  .addrstate { font-size: 12px; margin-top: 6px; line-height: 1.5; }
+  .addrstate.ok { color: #1E7A46; }
+  .addrstate.bad { color: var(--brand-terra); }
+  .addrstate .fixed { color: var(--text-dark); font-weight: 600; }
+  .keynote {
+    font-size: 11px; color: var(--text-muted); margin-top: 8px;
+    background: var(--bg-alt); border-radius: 8px; padding: 7px 9px; line-height: 1.5;
+  }
+  .keynote code { font-size: 10.5px; background: var(--bg-white); padding: 1px 4px; border-radius: 4px; }
 
   .sum .line { display: flex; justify-content: space-between; font-size: 13.5px; padding: 4px 0; gap: 12px; }
   .sum .line span:first-child { color: var(--text-muted); }
@@ -352,16 +378,49 @@
 
       <div class="card" v-if="location === 'mobile'">
         <label class="f">上门地址</label>
-        <input type="text" v-model.trim="address" list="demo-addr" placeholder="街道地址、城市（演示：试试 Cupertino / SFO / San Francisco）" />
-        <datalist id="demo-addr">
+        <input id="addr-input" type="text" v-model.trim="address"
+          :list="mapsMode === 'demo' ? 'demo-addr' : null"
+          :placeholder="mapsMode === 'live' ? '输入街道地址，从下拉建议中选择…' : '演示模式：请选择下方城市之一'"
+          @input="onAddrInput" @keydown.enter.prevent="resolveAddress" @blur="resolveAddress" />
+        <datalist id="demo-addr" v-if="mapsMode === 'demo'">
           <option v-for="p in DEMO_PLACES" :value="p.label"></option>
         </datalist>
-        <p class="peakhint" v-if="address">
-          演示估算：单程约 {{ geo.mi }} 英里 / 畅通约 {{ geo.min }} 分钟（正式版将使用 Google 路线预测）
+
+        <p class="addrstate ok" v-if="resolved">
+          ✓ 已核验地址：<span class="fixed">{{ resolved.label }}</span>
         </p>
+        <p class="addrstate bad" v-else-if="addrError">✕ {{ addrError }}</p>
+
+        <div class="maproute" v-if="resolved">
+          <div id="route-map" class="canvas" :class="{demo: mapsMode === 'demo'}">
+            <svg v-if="mapsMode === 'demo'" viewBox="0 0 300 150" width="100%" height="100%">
+              <path d="M40 115 C 110 105, 120 45, 250 40" fill="none"
+                stroke="#1B3B32" stroke-width="3" stroke-dasharray="7 5" stroke-linecap="round" />
+              <circle cx="40" cy="115" r="7" fill="#1B3B32" />
+              <circle cx="250" cy="40" r="7" fill="#D88465" />
+              <text x="40" y="137" font-size="10" fill="#6B726C" text-anchor="middle">Lakewood Park</text>
+              <text x="250" y="26" font-size="10" fill="#6B726C" text-anchor="middle">上门地点</text>
+              <text x="292" y="137" font-size="9.5" fill="#6B726C" text-anchor="end">示意图 · 非实际路线</text>
+            </svg>
+          </div>
+          <div class="legline">
+            <span>Lakewood Park → 上门地点（单程）</span>
+            <b>{{ resolved.mi }} 英里 · 约 {{ resolved.min }} 分钟</b>
+          </div>
+          <div class="peakbar">
+            <span>⏱</span>
+            <span>此为畅通时段基准值。实际车程与交通费会按 <b>Google 对您所选时段的预测路况</b>自动调整（下一步每个时段会显示对应总价），高峰时段更高。</span>
+          </div>
+        </div>
+
+        <p class="keynote" v-if="mapsMode === 'demo'">
+          演示模式：未配置 Google Maps API key，地址与车程取自内置示例表。
+          试用真实地图请在网址后加 <code>?gmapskey=你的KEY</code>。
+        </p>
+        <p class="keynote" v-else-if="mapsError">Google Maps 加载失败（{{ mapsError }}），已退回演示模式。</p>
       </div>
 
-      <p class="hint" v-if="!step2ok">请填写上门地址。</p>
+      <p class="hint" v-if="!step2ok">请填写并核验上门地址。</p>
       <div class="nav">
         <button class="btn ghost" @click="step = 1">←</button>
         <button class="btn primary" :disabled="!step2ok" @click="step = 3">下一步 →</button>
@@ -452,7 +511,30 @@
 </div>
 
 <script>
-const { createApp, reactive, computed } = Vue;
+const { createApp, reactive, computed, watch, nextTick } = Vue;
+
+// 出发地：正式版应改为精确坐标并放入配置
+const ORIGIN_ADDR = 'Lakewood Park, Sunnyvale, CA 94089';
+
+// mockup 用：key 来自 ?gmapskey=… 或 localStorage，绝不写进代码库
+function gmapsKey() {
+  const q = new URLSearchParams(location.search).get('gmapskey');
+  if (q) { try { localStorage.setItem('notaryGmapsKey', q); } catch (e) {} return q; }
+  try { return localStorage.getItem('notaryGmapsKey') || ''; } catch (e) { return ''; }
+}
+function loadGoogleMaps(key) {
+  return new Promise((resolve, reject) => {
+    if (window.google && window.google.maps) return resolve();
+    window.__gmapsReady = () => resolve();
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) +
+            '&libraries=places&language=zh-CN&region=US&callback=__gmapsReady';
+    s.onerror = () => reject(new Error('脚本加载失败'));
+    document.head.appendChild(s);
+    setTimeout(() => reject(new Error('加载超时')), 12000);
+  });
+}
 
 const ID_TYPES = ['加州驾照 / 加州 ID', '美国护照', '中国护照', '其他国家护照', '其他州驾照', '美国军人证件'];
 
@@ -512,6 +594,10 @@ createApp({
       docs: [newDoc()],
       location: 'park',
       address: '',
+      resolved: null,        // {label, mi, min, placeId?} — 仅核验通过的地址可继续
+      addrError: '',
+      mapsMode: gmapsKey() ? 'live' : 'demo',
+      mapsError: '',
       dateStr: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10),
       slotHour: null,
       agreed: false,
@@ -546,15 +632,103 @@ createApp({
     const notaryFee = computed(() => state.docs.reduce((s, d) => s + docFee(d), 0));
     const serviceMin = computed(() => Math.max(15, Math.ceil(totalActs.value / 3) * 15));
 
-    const geo = computed(() => {
+    const geo = computed(() => state.resolved || { mi: 0, min: 0 });
+
+    // ── 地址核验 ────────────────────────────────────────────────
+    // 演示模式：只认内置示例表，认不出就报错（绝不静默按默认里程计价）
+    function resolveDemo() {
       const a = state.address.toLowerCase();
       const hit = DEMO_PLACES.find(p => a.includes(p.q));
-      return hit || { mi: 12, min: 20 };
-    });
+      if (hit) {
+        state.resolved = { label: hit.label + '（演示数据）', mi: hit.mi, min: hit.min };
+        state.addrError = '';
+      } else {
+        state.resolved = null;
+        state.addrError = '演示模式无法识别该地址，请选择：' + DEMO_PLACES.map(p => p.label).join('、');
+      }
+    }
+
+    let mapObj = null, renderer = null, autocompleteAttached = false;
+
+    // 实时模式：用 Directions 结果回填规范化地址 + 实际里程/时长，并渲染路线
+    async function routeAndRender(destination, fallbackLabel) {
+      try {
+        const svc = new google.maps.DirectionsService();
+        const res = await svc.route({
+          origin: ORIGIN_ADDR,
+          destination,
+          travelMode: google.maps.TravelMode.DRIVING,
+          drivingOptions: {
+            departureTime: new Date(Date.now() + 3600 * 1000),
+            trafficModel: google.maps.TrafficModel.BEST_GUESS,
+          },
+        });
+        const leg = res.routes[0].legs[0];
+        state.resolved = {
+          label: leg.end_address || fallbackLabel,
+          mi: Math.round(leg.distance.value / 1609.34),
+          min: Math.round((leg.duration_in_traffic || leg.duration).value / 60),
+        };
+        state.addrError = '';
+        await nextTick();
+        const el = document.getElementById('route-map');
+        if (el) {
+          mapObj = new google.maps.Map(el, { mapTypeControl: false, streetViewControl: false, fullscreenControl: false });
+          renderer = new google.maps.DirectionsRenderer({ map: mapObj, polylineOptions: { strokeColor: '#1B3B32', strokeWeight: 5 } });
+          renderer.setDirections(res);
+        }
+      } catch (e) {
+        state.resolved = null;
+        state.addrError = '无法规划到该地址的路线，请确认地址是否完整（含城市、州）。';
+      }
+    }
+
+    function attachAutocomplete() {
+      if (autocompleteAttached || state.mapsMode !== 'live') return;
+      const input = document.getElementById('addr-input');
+      if (!input || !window.google || !google.maps.places) return;
+      try {
+        const ac = new google.maps.places.Autocomplete(input, {
+          componentRestrictions: { country: 'us' },
+          fields: ['formatted_address', 'place_id', 'geometry'],
+          types: ['address'],
+        });
+        ac.addListener('place_changed', () => {
+          const place = ac.getPlace();
+          if (!place || !place.place_id) { state.addrError = '请从下拉建议中选择一个地址。'; return; }
+          state.address = place.formatted_address || state.address;
+          routeAndRender({ placeId: place.place_id }, place.formatted_address);
+        });
+        autocompleteAttached = true;
+      } catch (e) {
+        // 新版 key 不支持 legacy Autocomplete：退回「失焦时用 Directions 核验」
+        autocompleteAttached = true;
+      }
+    }
+
+    function resolveAddress() {
+      if (state.location !== 'mobile' || !state.address) return;   // 任何非空输入都要给出核验结论
+      if (state.resolved) return;                 // 已核验，避免重复请求
+      if (state.mapsMode === 'demo') return resolveDemo();
+      routeAndRender(state.address, state.address);
+    }
+
+    watch(() => state.step === 2 && state.location === 'mobile', async (on) => {
+      if (!on) return;
+      await nextTick();
+      if (state.mapsMode !== 'live') return;
+      try {
+        await loadGoogleMaps(gmapsKey());
+        attachAutocomplete();
+      } catch (e) {
+        state.mapsMode = 'demo';
+        state.mapsError = e.message;
+      }
+    }, { immediate: true });
 
     // 交通费：$5 起步 + $1.4/mi + $0.45/min，去回程分别按各自时段的演示高峰系数
     function travelAt(hour) {
-      if (state.location === 'park') return { mi2: 0, min2: 0, raw: 0, minOut: 0, minBack: 0 };
+      if (state.location === 'park' || !state.resolved) return { mi2: 0, min2: 0, raw: 0, minOut: 0, minBack: 0 };
       const g = geo.value;
       const minOut = Math.round(g.min * peakMult(hour));
       const backHour = hour + Math.ceil((serviceMin.value + minOut) / 60);
@@ -591,7 +765,7 @@ createApp({
         if (r === 'copy' || r === 'depo') return true;
         return d.parts.length > 0;
       }));
-    const step2ok = computed(() => state.location === 'park' || state.address.length > 3);
+    const step2ok = computed(() => state.location === 'park' || !!state.resolved);
 
     const prettyDate = computed(() => {
       const d = new Date(state.dateStr + 'T00:00');
@@ -668,6 +842,8 @@ createApp({
         d.parts.push({ pid: p.id, count: 1 });
         d.newName = ''; d.newId = ID_TYPES[0]; d.adding = false;
       },
+      onAddrInput: () => { state.resolved = null; state.addrError = ''; },
+      resolveAddress,
       totalActs, waivedActs, paidActs, notaryFee, serviceMin,
       geo, daySlots, selTravel, grand,
       step1ok, step2ok,
