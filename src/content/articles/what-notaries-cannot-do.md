@@ -104,6 +104,24 @@ coverAlt: 插图：一张公证员的工作台，前方一条低矮的分隔绳�
 
 所以在医院、养老院这类场合，一位守规矩的公证员看到老人当天状态不好，会建议改期，而不是"先签了再说"。这类场景要怎么准备，我们另有一篇细讲。
 
+## 公证员自己有利害关系时，不能办这笔公证
+
+前面几条讲的是公证员**能力**的边界，这一条讲的是**立场**的边界。[《加州政府法典》第 8224 条](#ref-gov-8224)的第一句话很干脆：
+
+> A notary public who has a direct financial or beneficial interest in a transaction shall not perform any notarial act in connection with such transaction.
+
+（在一笔交易中拥有直接财产利益或受益权的公证员，不得就该交易办理任何公证行为。）
+
+自己是买方或卖方、能从这份文件里分到钱、给自己的签名盖章——这些都出局。道理很直白：公证员是那个中立的见证者，一旦他在结果里有份，见证就不成其为见证。
+
+不过这里有个常被误解的地方，值得单独点明。**同一条法律紧接着写道**，公证员[以代理人、雇员、保险人、律师、托管方或放款方的身份](#ref-gov-8224)为交易中有利害关系的一方服务时，**不视为**拥有直接财产利益：
+
+> …a notary public has no direct financial or beneficial interest in a transaction where the notary public acts in the capacity of an agent, employee, insurer, attorney, escrow, or lender for a person having a direct financial or beneficial interest in the transaction.
+
+所以"我的律师能不能替我公证""escrow 公司的人能不能公证"这类问题，在加州的答案通常是可以——律师楼里由持有公证员委任的律师为客户的信托、授权书办理公证，是常规做法。真正让他出局的不是"他替你做事"，而是"他自己在这笔交易里有份"。
+
+顺带说一句，这跟职业伦理是两回事：法律允许，不等于在每个场合都妥当。文件日后若被质疑（遗产规划文件尤其常见），一位与该事毫无关系的第三方公证员，比经办人自己盖章更经得起追问。
+
 ## 碰上了该怎么办
 
 | 你想办的事 | 加州公证员 | 依据 |
@@ -144,3 +162,4 @@ coverAlt: 插图：一张公证员的工作台，前方一条低矮的分隔绳�
 - <span id="ref-hsc-103545"></span>加州《健康与安全法典》第 103545 条（生命记录的核证副本只能由登记官出具）— [leginfo 法条原文](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=HSC&sectionNum=103545#:~:text=may%20be%20made%20only%20by%20the%20State%20Registrar)。支持句（全文）："Certified copies of birth, fetal death, death, and marriage records may be made only by the State Registrar, by duly appointed and acting local registrars during their term of office, and by county recorders." — 查证于 2026-08-28（互联网档案馆无该页快照，故此处为纯文本日期）
 - <span id="ref-handbook"></span>加州州务卿《公证员手册》（Notary Public Handbook），2026 年 1 月版 — [州务卿官网 PDF 全文](https://notary.cdn.sos.ca.gov/forms/notary-handbook-current.pdf)（[手册页面](https://www.sos.ca.gov/notary/handbook)）。支持句：第 8 页"Acts Constituting the Practice of Law"节——"California notaries are prohibited from performing any duties that may be construed as the practice of law. Among the acts which constitute the practice of law are the preparation, drafting, or selection or determination of the kind of any legal document, or giving advice in relation to any legal documents or matters. If asked to perform such tasks, a California notary public should decline and refer the requester to an attorney."；第 17–18 页授权委托书副本核证的建议格式与到场要求；第 18–19 页"Tangible Copy Certification"（《政府法典》第 27201.1 条）；第 19 页"the notary public must refuse to notarize the document"（文件不完整时）；第 23 页"A notary public can notarize a signature on a document in a foreign language with which the notary public is not familiar, since a notary public’s function only relates to the signature and not the content of the document."与"An interpreter should not be used, as vital information could be lost in the translation. If a notary public is unable to communicate with a customer, the customer should be referred to a notary public who speaks the customer’s language."；第 27 页"A video image or other form of non-physical representation is not considered as personal appearance in front of the notary public under current California law."、"Senate Bill 696, the Online Notarization Act, is not set to commence until January 1, 2030…"及"Certified copies of birth, fetal death, death, and marriage records (vital records) may be made only by the State Registrar…"。 — 查证于 [2026-08-28](https://web.archive.org/web/20260806194157/https://notary.cdn.sos.ca.gov/forms/notary-handbook-current.pdf)
 - <span id="ref-sos-notary"></span>加州州务卿 — [Notary Public 官方页](https://www.sos.ca.gov/notary#:~:text=grants%20four-year%20notary%20public%20commissions)。支持句："The Secretary of State grants four-year notary public commissions to qualified persons."；页面设有"Submit a Complaint Against a Notary Public"投诉入口。 — 查证于 [2026-08-28](https://web.archive.org/web/20260825123741/https://www.sos.ca.gov/notary)
+- <span id="ref-gov-8224"></span>加州《政府法典》第 8224 条（公证员的利害关系限制）— [leginfo 法条原文](https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=8224#:~:text=direct%20financial%20or%20beneficial%20interest%20in%20a%20transaction%20shall%20not%20perform)。禁令："A notary public who has a direct financial or beneficial interest in a transaction shall not perform any notarial act in connection with such transaction."；豁免："a notary public has no direct financial or beneficial interest in a transaction where the notary public acts in the capacity of an agent, employee, insurer, attorney, escrow, or lender for a person having a direct financial or beneficial interest in the transaction." — 查证于 [2026-08-28](https://web.archive.org/web/20260421053244/https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=8224)
