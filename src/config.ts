@@ -1,11 +1,11 @@
 export const siteConfig = {
   name: 'Notary Zhou',
-  title: 'Notary Zhou | Bilingual Bay Area Notary',
+  title: 'Notary Zhou | Bay Area Mobile Notary',
   description:
-    'Professional bilingual (English & Mandarin) notary public services in the San Francisco Bay Area. Mobile and in-office notarization for real estate, legal, and business documents.',
-  titleZh: 'Notary Zhou | 湾区中英双语公证',
+    'Professional Mandarin-speaking mobile notary public services in the San Francisco Bay Area. Notarization for real estate, legal, and business documents.',
+  titleZh: 'Notary Zhou | 湾区中文上门公证',
   descriptionZh:
-    '旧金山湾区专业中英双语公证服务（Notary Public）。提供房产、法律及商业文件的上门与办公室公证。',
+    '旧金山湾区专业中文公证服务（Notary Public）。提供房产、法律及商业文件的上门公证。',
   url: 'https://notaryzhou.com',
 
   phone: '', // 留空 = 不显示；填入真实号码后自动进入 JSON-LD

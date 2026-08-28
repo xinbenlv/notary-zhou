@@ -1,6 +1,6 @@
 ---
 import { siteConfig } from '../config';
-import type { Lang } from '../i18n';
+import { langPath, type Lang } from '../i18n';
 
 interface Props {
   lang: Lang;
@@ -150,7 +150,7 @@ const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为�
       </div>
     </div>
 
-    <a href={lang === 'en' ? '/' : '/zh/'} class="logo footer-logo">
+    <a href={langPath(lang)} class="logo footer-logo">
       {siteConfig.name} <span class="logo-dot"></span>
     </a>
 

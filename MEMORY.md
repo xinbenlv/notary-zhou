@@ -76,12 +76,19 @@
 
 ## 2026-08-27 — i18n Split: Separate EN / ZH Pages
 
-- Replaced inline bilingual (EN + zh subtitle) layout with **Astro i18n routing**: `/` = English, `/zh/` = Chinese; language switcher pill in navbar (中文 ↔ English).
+- Replaced inline bilingual (EN + zh subtitle) layout with **Astro i18n routing**; language switcher pill in navbar (中文 ↔ English).
+- **Chinese is the default locale**: `/` = Chinese, `/en/` = English (was briefly `/` EN + `/zh/` ZH; `/zh/` now a static noindex meta-refresh redirect page → `/`, kept out of sitemap via filter — a config `redirects` entry couldn't cover both `/zh` and `/zh/` on Vercel).
 - All components take a `lang` prop with colocated `t = {en, zh}[lang]` dicts; shared `Lang` type + `langPath`/`otherLang` helpers in `src/i18n.ts`.
 - SEO: per-language `<html lang>`, title/description (`titleZh`/`descriptionZh` in config), canonical, `og:locale`, `hreflang` alternates (en/zh/x-default), sitemap i18n config.
 - **§8219.5 compliance kept**: the Chinese page advertises in Chinese, so the non-attorney notice AND the §8211 fee schedule remain bilingual (EN+ZH) on `/zh/`; everything else there is Chinese-only. English page is English-only (公证处 appears only as quoted term in the US-vs-China explainer).
 - New Chinese copy written for service card descriptions, booking explainer, and "what to bring" list (previously English-only).
 - `fees[]` gained `feeEn` (English-only string for EN page); combined `fee` string still used on ZH page.
+
+## 2026-08-27 — Phase-1 Scope: Mandarin-only, Mobile-only
+
+- **Phase 1 offers Mandarin service and mobile service only — no English service, no in-office.** Per Victor: do NOT advertise English fluency or in-office notarization anywhere, and do NOT state the limitation either (just omit).
+- Hero desc → "Fluent in Mandarin. Providing accurate mobile notarization…" / "普通话中文服务。…上门公证…"; site title/description → "Bay Area Mobile Notary" / "湾区中文上门公证" (dropped "Bilingual 中英双语" and "in-office 办公室").
+- The `/en/` page still exists (page language ≠ service language); revisit copy when English/in-office service starts.
 
 ## TODO
 - [ ] Fill in real phone in `src/config.ts` (currently '' → hidden) and confirm info@notaryzhou.com mailbox actually receives mail

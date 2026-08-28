@@ -9,15 +9,17 @@ export default defineConfig({
   adapter: vercel(),
   integrations: [
     sitemap({
+      // /zh/ is a legacy noindex redirect page, keep it out of the sitemap
+      filter: (page) => !page.includes('/zh/'),
       i18n: {
-        defaultLocale: 'en',
-        locales: { en: 'en', zh: 'zh-CN' },
+        defaultLocale: 'zh',
+        locales: { zh: 'zh-CN', en: 'en' },
       },
     }),
   ],
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'zh'],
+    defaultLocale: 'zh',
+    locales: ['zh', 'en'],
     routing: { prefixDefaultLocale: false },
   },
 });

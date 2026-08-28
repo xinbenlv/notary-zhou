@@ -10,7 +10,7 @@ interface Props {
   description?: string;
 }
 
-const { lang = 'en' } = Astro.props;
+const { lang = 'zh' } = Astro.props;
 const {
   title = lang === 'zh' ? siteConfig.titleZh : siteConfig.title,
   description = lang === 'zh' ? siteConfig.descriptionZh : siteConfig.description,
@@ -27,8 +27,8 @@ const canonical = `${siteConfig.url}${langPath(lang)}`;
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="en" href={`${siteConfig.url}/`} />
-    <link rel="alternate" hreflang="zh" href={`${siteConfig.url}/zh/`} />
+    <link rel="alternate" hreflang="zh" href={`${siteConfig.url}/`} />
+    <link rel="alternate" hreflang="en" href={`${siteConfig.url}/en/`} />
     <link rel="alternate" hreflang="x-default" href={`${siteConfig.url}/`} />
 
     <!-- OG -->
