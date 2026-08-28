@@ -473,7 +473,7 @@
     <!-- STEP 4 · 确认支付 -->
     <section v-if="step === 4">
       <h2>第 4 步 · 确认并支付</h2>
-      <p class="sub">请核对信息。支付成功后即完成预约，确认邮件将发送给您。</p>
+      <p class="sub">请核对信息。下一步在 Stripe 页面填写邮箱与手机号并付款，付款成功即完成预约。</p>
 
       <div class="card">
         <div class="sum">
@@ -513,7 +513,7 @@
         <button class="btn ghost" @click="step = 3">←</button>
         <button class="btn primary" :disabled="!agreed" @click="pay">确认并支付 ${{ grand }}</button>
       </div>
-      <p class="holdnote">🔒 时段为您保留 15 分钟 · 支付由 Stripe 安全处理</p>
+      <p class="holdnote">🔒 时段为您保留 15 分钟 · 邮箱与手机号在 Stripe 收银台填写<br />确认函与日历邀请将发送至该邮箱</p>
 
       <details class="debug">
         <summary>内部排期与计价明细（演示调试）</summary>
