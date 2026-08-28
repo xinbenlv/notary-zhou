@@ -418,7 +418,7 @@
           </div>
           <div class="peakbar">
             <span>⏱</span>
-            <span>此为畅通时段基准值。实际车程与交通费会按 <b>Google 对您所选时段的预测路况</b>自动调整（下一步每个时段会显示对应总价），高峰时段更高。</span>
+            <span>此为畅通时段基准值。下一步会按 <b>Google 对每个时段的预测路况</b>分别计算交通费，高峰时段更高。</span>
           </div>
         </div>
 
@@ -449,15 +449,19 @@
 
       <div class="slots">
         <button class="slot" v-for="s in daySlots" :key="s.hour"
-          :class="{sel: slotHour === s.hour}" :disabled="s.busy"
+          :class="{sel: slotHour === s.hour}" :disabled="s.busy || s.travel === null"
           @click="slotHour = s.hour">
           {{ s.label }}
           <small v-if="s.busy">已约满</small>
           <small v-else-if="location === 'park'">免交通费</small>
+          <small v-else-if="s.travel === null">{{ slotsLoading ? '计算中…' : '暂不可约' }}</small>
           <small v-else>交通费 ${{ s.travel }}</small>
         </button>
       </div>
-      <p class="peakhint">预计服务约 {{ serviceMin }} 分钟 · 公证费 ${{ notaryFee }} 另计</p>
+      <p class="peakhint">
+        预计服务约 {{ serviceMin }} 分钟 · 公证费 ${{ notaryFee }} 另计<template
+          v-if="location === 'mobile' && mapsMode === 'live'"> · 各时段车程为 Google 对该时刻的实时预测</template>
+      </p>
 
       <p class="hint" v-if="!slotHour">请选择一个时段。</p>
       <div class="nav">
@@ -593,7 +597,10 @@ const newDoc = () => ({
   adding: false, newName: '', newId: ID_TYPES[0],
 });
 
-// 高峰系数：驾车分钟数的演示乘数（正式版由 Routes API 的预测时长自然体现）
+const SLOT_HOURS = [9, 10, 11, 12, 14, 15, 16, 17, 18];
+const BUSY_HOURS = [11, 15];   // 演示：模拟已被占用的时段
+
+// 仅演示模式（无 key）使用的高峰系数；实时模式一律用 Routes 的预测时长
 function peakMult(h) {
   if ((h >= 7 && h <= 9) || (h >= 16 && h <= 18)) return 1.5;
   if (h >= 11 && h <= 13) return 1.15;
@@ -613,6 +620,8 @@ createApp({
       addrError: '',
       addrBusy: false,
       suggestions: [],
+      slotPred: {},          // hour -> {minOut, minBack}，实时模式由 Routes 填充
+      slotsLoading: false,
       mapsMode: gmapsKey() ? 'live' : 'demo',
       mapsError: '',
       dateStr: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10),
@@ -793,35 +802,94 @@ createApp({
     }, { immediate: true });
 
     // 交通费：$5 起步 + $1.4/mi + $0.45/min，去回程分别按各自时段的演示高峰系数
-    function travelAt(hour) {
-      if (state.location === 'park' || !state.resolved) return { mi2: 0, min2: 0, raw: 0, minOut: 0, minBack: 0 };
+    // 每个时段的去/回程分钟数：实时模式取 Google 对该时刻的预测，演示模式用系数
+    function legsAt(hour) {
+      if (state.mapsMode === 'live') return state.slotPred[hour] || null;   // null = 尚未取回
       const g = geo.value;
       const minOut = Math.round(g.min * peakMult(hour));
       const backHour = hour + Math.ceil((serviceMin.value + minOut) / 60);
-      const minBack = Math.round(g.min * peakMult(backHour));
-      const raw = TRAVEL_BASE + TRAVEL_PER_MIN * (minOut + minBack);
-      return { mi2: g.mi * 2, min2: minOut + minBack, raw, minOut, minBack };
+      return { minOut, minBack: Math.round(g.min * peakMult(backHour)) };
+    }
+
+    function travelAt(hour) {
+      if (state.location === 'park' || !state.resolved) return { min2: 0, raw: 0, minOut: 0, minBack: 0 };
+      const l = legsAt(hour);
+      if (!l) return null;
+      const raw = TRAVEL_BASE + TRAVEL_PER_MIN * (l.minOut + l.minBack);
+      return { min2: l.minOut + l.minBack, raw, minOut: l.minOut, minBack: l.minBack };
     }
     // 总价：Stripe 手续费 gross-up 全部落在交通费行；Park 会面则完全吸收
     function totalAt(hour) {
-      const t = travelAt(hour);
       if (state.location === 'park') return notaryFee.value;
+      const t = travelAt(hour);
+      if (!t) return null;
       return ceil5((notaryFee.value + t.raw + 0.30) / 0.971);
     }
 
+    // 向 Routes 查询某一时刻出发的单程分钟数（reverse=true 为回程）
+    async function legMinutes(placeId, departISO, reverse) {
+      const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': gmapsKey(),
+          'X-Goog-FieldMask': 'routes.duration',
+        },
+        body: JSON.stringify({
+          origin: reverse ? { placeId } : { address: ORIGIN_ADDR },
+          destination: reverse ? { address: ORIGIN_ADDR } : { placeId },
+          travelMode: 'DRIVE',
+          routingPreference: 'TRAFFIC_AWARE',
+          departureTime: departISO,
+        }),
+      });
+      const j = await res.json();
+      if (!res.ok || !j.routes || !j.routes.length) throw new Error((j.error || {}).message || 'no route');
+      return Math.round(parseInt(j.routes[0].duration) / 60);
+    }
+
+    // 逐时段取真实预测：去程按「反推的出发时刻」查，回程按「服务结束时刻」查
+    async function loadSlotPredictions() {
+      if (state.mapsMode !== 'live' || state.location !== 'mobile' || !state.resolved) return;
+      const pid = state.resolved.placeId, base = state.resolved.min, day = state.dateStr;
+      state.slotsLoading = true;
+      state.slotPred = {};
+      const got = {};
+      await Promise.all(SLOT_HOURS.map(async (h) => {
+        try {
+          const t = new Date(`${day}T${String(h).padStart(2, '0')}:00:00`);
+          // 去程：目标是提前 15 分钟到达，用畅通时长反推出发时刻（一次迭代足够）
+          const dep = new Date(t.getTime() - (base + 15) * 60000);
+          const minOut = await legMinutes(pid, dep.toISOString(), false);
+          // 回程：服务结束后再留 15 分钟 buffer 才出发
+          const back = new Date(t.getTime() + (serviceMin.value + 15) * 60000);
+          const minBack = await legMinutes(pid, back.toISOString(), true);
+          got[h] = { minOut, minBack };
+        } catch (e) { /* 该时段留空，界面显示为不可选 */ }
+      }));
+      if (state.dateStr === day) { state.slotPred = got; }   // 日期已改则丢弃过期结果
+      state.slotsLoading = false;
+    }
+
+    watch(() => [state.step, state.dateStr, state.resolved && state.resolved.placeId, serviceMin.value].join('|'),
+      () => { if (state.step === 3) loadSlotPredictions(); }, { immediate: false });
+
     const daySlots = computed(() =>
-      [9, 10, 11, 12, 14, 15, 16, 17, 18].map(h => ({
-        hour: h,
-        label: (h < 12 ? '上午 ' : h === 12 ? '中午 ' : '下午 ') + ((h - 1) % 12 + 1) + ':00',
-        busy: h === 11 || h === 15, // 演示：模拟已被占用的时段
-        total: totalAt(h),
-        // 与确认页「交通费」行一致：手续费 gross-up 与取整都并入该行
-        travel: totalAt(h) - notaryFee.value,
-      }))
+      SLOT_HOURS.map(h => {
+        const total = BUSY_HOURS.includes(h) ? null : totalAt(h);
+        return {
+          hour: h,
+          label: (h < 12 ? '上午 ' : h === 12 ? '中午 ' : '下午 ') + ((h - 1) % 12 + 1) + ':00',
+          busy: BUSY_HOURS.includes(h),
+          total,
+          // 与确认页「交通费」行一致：手续费 gross-up 与取整都并入该行
+          travel: total === null ? null : total - notaryFee.value,
+        };
+      })
     );
 
-    const selTravel = computed(() => travelAt(state.slotHour || 0));
-    const grand = computed(() => state.slotHour ? totalAt(state.slotHour) : 0);
+    const selTravel = computed(() => travelAt(state.slotHour || 0) || { min2: 0, raw: 0, minOut: 0, minBack: 0 });
+    const grand = computed(() => (state.slotHour ? totalAt(state.slotHour) : 0) || 0);
 
     const step1ok = computed(() =>
       state.docs.length > 0 &&
@@ -853,8 +921,8 @@ createApp({
       const fmt = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
       return [
         `服务时长 = ceil(${totalActs.value}/3)×15 = ${serviceMin.value} 分钟`,
-        `去程 ${t.minOut} 分钟 / 回程 ${t.minBack} 分钟（演示高峰系数）`,
-        `出发 ${fmt(dep)} → 服务 ${fmt(state.slotHour * 60)}–${fmt(state.slotHour * 60 + serviceMin.value)} → 返回 ${fmt(ret)}`,
+        `去程 ${t.minOut} 分钟 / 回程 ${t.minBack} 分钟（${state.mapsMode === 'live' ? 'Google 对该时刻的预测' : '演示高峰系数'}）`,
+        `出发 ${fmt(dep)} → 提前到达 ${fmt(state.slotHour * 60 - 15)} → 服务 ${fmt(state.slotHour * 60)}–${fmt(state.slotHour * 60 + serviceMin.value)} → 回程出发 ${fmt(state.slotHour * 60 + serviceMin.value + 15)} → 到家 ${fmt(ret)}`,
         `日历 block：${fmt(dep)}–${fmt(ret)}（含前后 15 分钟 buffer）`,
         `交通费原始 = ${TRAVEL_BASE} + ${TRAVEL_PER_MIN}×${t.min2} 分钟 = $${t.raw.toFixed(2)}（只计行车时间）`,
         `合计 = ceil5((${notaryFee.value} + ${t.raw.toFixed(2)} + 0.30) / 0.971) = $${grand.value}`,
@@ -912,7 +980,7 @@ createApp({
       },
       onAddrInput, resolveAddress, pickPlace,
       totalActs, waivedActs, paidActs, notaryFee, serviceMin,
-      geo, daySlots, selTravel, grand,
+      geo, daySlots, selTravel, grand, SLOT_HOURS,
       step1ok, step2ok,
       prettyDate, prettySlot, debugInfo,
       pay: () => alert(`演示：此处跳转 Stripe Checkout，金额 $${grand.value}。\n支付成功后：锁定时段、写入日历（含去程/回程 block）、发送确认邮件。`),
