@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>预约上门公证 · Mockup — Notary Zhou</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+  :root {
+    --bg-cream: #FFF8F0;
+    --bg-white: #FFFFFF;
+    --bg-alt: #F4EFEB;
+    --text-dark: #111816;
+    --text-muted: #6B726C;
+    --brand-green: #1B3B32;
+    --brand-green-hover: #122B24;
+    --brand-yellow: #F0B83A;
+    --brand-terra: #D88465;
+    --border-soft: #EBE7DF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-alt);
+    color: var(--text-dark);
+    font-family: -apple-system, "PingFang SC", "Noto Sans SC", "Helvetica Neue", sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 16px 8px 48px;
+  }
+  .phone {
+    width: 100%;
+    max-width: 420px;
+    background: var(--bg-cream);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(17, 24, 22, .08);
+  }
+  header.app {
+    background: var(--brand-green);
+    color: #F0F4F2;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header.app .logo { font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+  header.app .logo small { display: block; font-weight: 400; font-size: 10px; opacity: .75; letter-spacing: .12em; }
+  .dots { display: flex; gap: 6px; }
+  .dots i {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(240, 244, 242, .3);
+  }
+  .dots i.on { background: var(--brand-yellow); }
+  main { padding: 18px 16px 22px; }
+  h2 { font-size: 17px; margin-bottom: 2px; }
+  .sub { font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
+
+  .card {
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .card .rowtop { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .card .rowtop .tag { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .card .rowtop button { border: 0; background: none; color: var(--brand-terra); font-size: 12px; cursor: pointer; }
+  label.f { display: block; font-size: 12px; color: var(--text-muted); margin: 8px 0 4px; }
+  input[type="text"], input[type="date"], select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--bg-cream);
+    color: var(--text-dark);
+  }
+  input:focus, select:focus { outline: 2px solid var(--brand-yellow); border-color: transparent; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--bg-alt); border: 1px solid var(--border-soft);
+    border-radius: 999px; padding: 4px 8px 4px 10px; font-size: 12.5px;
+  }
+  .chip b { font-weight: 600; cursor: pointer; }
+  .chip .cnt {
+    color: var(--brand-green); background: var(--brand-yellow);
+    border-radius: 6px; padding: 0 4px; margin-left: 4px; font-size: 11px;
+  }
+  .chip button {
+    border: 0; background: var(--border-soft); color: var(--text-muted);
+    width: 16px; height: 16px; border-radius: 50%; line-height: 14px;
+    font-size: 11px; cursor: pointer;
+  }
+  .chip.add { background: none; border-style: dashed; color: var(--text-muted); cursor: pointer; }
+  .chip.add.new { color: var(--brand-green); font-weight: 600; }
+  .chiphint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+  .newform {
+    background: var(--bg-cream); border: 1px dashed var(--border-soft);
+    border-radius: 10px; padding: 10px; margin-top: 8px;
+  }
+  .newform .btnrow { display: flex; gap: 8px; margin-top: 8px; }
+  .mini {
+    padding: 8px 14px; border-radius: 8px; border: 0; font-size: 13px;
+    background: var(--brand-green); color: #F0F4F2; cursor: pointer; font-weight: 600;
+  }
+  .mini.ghost { background: none; border: 1px solid var(--border-soft); color: var(--text-muted); }
+
+  .combo { position: relative; }
+  .combo .panel {
+    position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px);
+    background: var(--bg-white); border: 1px solid var(--border-soft);
+    border-radius: 10px; max-height: 260px; overflow: auto;
+    box-shadow: 0 8px 24px rgba(17, 24, 22, .12);
+  }
+  .combo .ghead {
+    font-size: 11px; color: var(--text-muted); padding: 8px 12px 4px;
+    letter-spacing: .06em;
+  }
+  .combo .opt {
+    padding: 8px 12px; font-size: 13.5px; cursor: pointer;
+    display: flex; justify-content: space-between; gap: 8px;
+  }
+  .combo .opt:hover { background: var(--bg-cream); }
+  .combo .opt em { font-style: normal; color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+  .combo .opt em.free { color: #1E7A46; font-weight: 600; }
+
+  .badge-free {
+    display: inline-block; font-size: 11.5px; color: #1E7A46;
+    background: #E8F4EC; border-radius: 6px; padding: 2px 7px; margin-top: 6px;
+  }
+  .docfee { text-align: right; font-size: 13px; margin-top: 8px; }
+  .docfee s { color: var(--text-muted); margin-right: 6px; }
+  .docfee .free { color: #1E7A46; font-weight: 600; }
+
+  .addbtn {
+    width: 100%; padding: 10px; border-radius: 10px;
+    border: 1px dashed var(--border-soft); background: none;
+    color: var(--brand-green); font-size: 14px; cursor: pointer; margin-bottom: 10px;
+  }
+
+  .roster .rowline { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+  .roster .rowline input { flex: 1.2; }
+  .roster .rowline select { flex: 1; }
+  .roster .rowline button { border: 0; background: none; color: var(--brand-terra); font-size: 12px; cursor: pointer; white-space: nowrap; }
+
+  .totals {
+    border-top: 1px solid var(--border-soft);
+    padding-top: 10px; margin-top: 4px;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .totals .fee { color: var(--text-dark); font-weight: 600; }
+
+  .radio {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--bg-white); border: 1px solid var(--border-soft);
+    border-radius: 12px; padding: 12px; margin-bottom: 10px; cursor: pointer;
+  }
+  .radio.sel { border-color: var(--brand-green); outline: 1px solid var(--brand-green); }
+  .radio input { margin-top: 3px; }
+  .radio .t { font-size: 14px; font-weight: 600; }
+  .radio .d { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.5; }
+
+  .slots { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .slot {
+    padding: 9px 4px; border-radius: 10px; border: 1px solid var(--border-soft);
+    background: var(--bg-white); font-size: 13px; cursor: pointer; text-align: center;
+  }
+  .slot small { display: block; color: var(--text-muted); font-size: 11.5px; margin-top: 2px; }
+  .slot.sel { border-color: var(--brand-green); background: var(--brand-green); color: #F0F4F2; }
+  .slot.sel small { color: var(--brand-yellow); }
+  .slot:disabled { opacity: .4; cursor: not-allowed; }
+  .peakhint { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
+  .sum .line { display: flex; justify-content: space-between; font-size: 13.5px; padding: 4px 0; gap: 12px; }
+  .sum .line span:first-child { color: var(--text-muted); }
+  .sum .line span:last-child { text-align: right; }
+  .sum .grand { border-top: 1px solid var(--border-soft); margin-top: 6px; padding-top: 8px; font-size: 15px; font-weight: 700; }
+  .sum .grand span:first-child { color: var(--text-dark); }
+  .agree { display: flex; gap: 8px; font-size: 12.5px; color: var(--text-muted); margin: 12px 0; line-height: 1.5; }
+  .agree input { margin-top: 2px; }
+
+  .nav { display: flex; gap: 10px; margin-top: 14px; }
+  .btn {
+    flex: 1; padding: 12px; border-radius: 10px; border: 0;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn.primary { background: var(--brand-green); color: #F0F4F2; }
+  .btn.primary:hover { background: var(--brand-green-hover); }
+  .btn.primary:disabled { opacity: .35; cursor: not-allowed; }
+  .btn.ghost { background: none; border: 1px solid var(--border-soft); color: var(--text-muted); flex: 0 0 auto; padding: 12px 16px; }
+  .hint { font-size: 12px; color: var(--brand-terra); margin-top: 8px; }
+  .holdnote { text-align: center; font-size: 11.5px; color: var(--text-muted); margin-top: 10px; }
+
+  details.debug {
+    margin-top: 14px; font-size: 12px; color: var(--text-muted);
+    background: var(--bg-alt); border-radius: 10px; padding: 8px 12px;
+  }
+  details.debug pre { font-size: 11px; white-space: pre-wrap; margin-top: 6px; }
+  .mocknote { text-align: center; font-size: 11px; color: var(--text-muted); padding: 10px; }
+</style>
+</head>
+<body>
+<div id="app" class="phone">
+  <header class="app">
+    <div class="logo">周公证员<small>NOTARY ZHOU · 预约 MOCKUP</small></div>
+    <div class="dots"><i v-for="s in 4" :class="{on: s <= step}"></i></div>
+  </header>
+
+  <main>
+    <!-- STEP 1 · 文件与签署人 -->
+    <section v-if="step === 1">
+      <h2>第 1 步 · 需要公证什么？</h2>
+      <p class="sub">添加每份文件，并选择由谁签署。首次选人时现场填写，之后可直接复用。</p>
+
+      <div class="card" v-for="(d, i) in docs" :key="d.id">
+        <div class="rowtop">
+          <span class="tag">文件 {{ i + 1 }}</span>
+          <button v-if="docs.length > 1" @click="removeDoc(d.id)">移除</button>
+        </div>
+
+        <label class="f">文件类型（输入可搜索）</label>
+        <div class="combo">
+          <input type="text"
+            :value="d.open ? d.query : typeLabel(d)"
+            :placeholder="d.open ? '输入关键词，如「委托」「deed」「军」…' : '选择或搜索文件类型…'"
+            @focus="openCombo(d)"
+            @input="d.query = $event.target.value"
+            @blur="closeComboSoon(d)" />
+          <div class="panel" v-if="d.open">
+            <template v-for="g in filteredGroups(d)">
+              <div class="ghead">{{ g.label }}</div>
+              <div class="opt" v-for="t in g.items" :key="t.key" @mousedown.prevent="pickType(d, t)">
+                <span>{{ t.zh }}<template v-if="t.en"> · {{ t.en }}</template></span>
+                <em :class="{free: t.rule === 'free'}">{{ ruleTag(t) }}</em>
+              </div>
+            </template>
+            <div class="ghead" v-if="filteredGroups(d).length === 0">没有匹配，选「其他」手动填写</div>
+            <div class="opt" @mousedown.prevent="pickType(d, OTHER_TYPE)">
+              <span>✎ 其他（手动填写）</span>
+            </div>
+          </div>
+        </div>
+        <span class="badge-free" v-if="docRule(d) === 'free'">ⓘ 依法免收公证费</span>
+
+        <template v-if="d.typeKey === 'other'">
+          <label class="f">文件名称</label>
+          <input type="text" v-model.trim="d.customName" placeholder="例：房屋出售委托书" />
+        </template>
+
+        <template v-if="d.typeKey && docRule(d) !== 'copy'">
+          <label class="f">签署人</label>
+          <div class="chips">
+            <span class="chip" v-for="s in d.parts" :key="s.pid">
+              <b @click="bump(d, s)">{{ nameOf(s.pid) }}<span class="cnt" v-if="s.count > 1">×{{ s.count }}</span></b>
+              <button @click="detach(d, s.pid)">×</button>
+            </span>
+            <span class="chip add" v-for="p in docAddable(d)" :key="'a' + p.id" @click="attach(d, p.id)">
+              ＋ {{ p.name }}
+            </span>
+            <span class="chip add new" @click="d.adding = !d.adding">＋ 新签署人</span>
+          </div>
+          <p class="chiphint" v-if="d.parts.length > 0">同一人需在此文件签署多处（如个人＋受托人双重身份）？点击其姓名调整签名处数。</p>
+
+          <div class="newform" v-if="d.adding">
+            <label class="f" style="margin-top:0">英文法定姓名（与证件一致）</label>
+            <input type="text" v-model.trim="d.newName" placeholder="例：WEI ZHANG" autocapitalize="characters" />
+            <label class="f">当天出示的证件</label>
+            <select v-model="d.newId">
+              <option v-for="t in ID_TYPES" :value="t">{{ t }}</option>
+            </select>
+            <div class="btnrow">
+              <button class="mini" :disabled="!d.newName" @click="createSigner(d)">添加</button>
+              <button class="mini ghost" @click="d.adding = false">取消</button>
+            </div>
+          </div>
+        </template>
+
+        <div class="docfee" v-if="d.typeKey">
+          <template v-if="docRule(d) === 'free'">
+            <s>${{ 15 * docActs(d) }}</s><span class="free">$0 依法免收</span>
+          </template>
+          <template v-else>{{ docFeeLabel(d) }}<b> ${{ docFee(d) }}</b></template>
+        </div>
+      </div>
+
+      <button class="addbtn" @click="addDoc">＋ 添加文件</button>
+
+      <div class="card roster" v-if="signers.length > 0">
+        <div class="rowtop"><span class="tag">签署人信息（当天请携带所列证件）</span></div>
+        <div class="rowline" v-for="p in signers" :key="p.id">
+          <input type="text" v-model.trim="p.name" />
+          <select v-model="p.idType">
+            <option v-for="t in ID_TYPES" :value="t">{{ t }}</option>
+          </select>
+          <button @click="removeSigner(p.id)">移除</button>
+        </div>
+      </div>
+
+      <div class="totals" v-if="totalActs > 0">
+        {{ docs.length }} 份文件 · {{ totalActs }} 个签名处 · 预计服务约 {{ serviceMin }} 分钟<br />
+        <span class="fee">公证费 ${{ notaryFee }}</span>
+        <template v-if="waivedActs > 0">（{{ waivedActs }} 个签名依法免收）</template>
+      </div>
+      <p class="hint" v-if="!step1ok">每份文件请选择类型并至少指定一位签署人。</p>
+      <div class="nav">
+        <button class="btn primary" :disabled="!step1ok" @click="step = 2">下一步 →</button>
+      </div>
+    </section>
+
+    <!-- STEP 2 · 地点 -->
+    <section v-if="step === 2">
+      <h2>第 2 步 · 地点</h2>
+      <p class="sub">前往我们的服务点可免交通费，上门服务按往返车程估算交通费。</p>
+
+      <label class="radio" :class="{sel: location === 'park'}">
+        <input type="radio" value="park" v-model="location" />
+        <span>
+          <span class="t">我前往 Sunnyvale Lakewood Park</span>
+          <span class="d">免交通费，只收公证费。具体见面位置将在确认邮件中提供。</span>
+        </span>
+      </label>
+      <label class="radio" :class="{sel: location === 'mobile'}">
+        <input type="radio" value="mobile" v-model="location" />
+        <span>
+          <span class="t">上门服务（家中 / 办公室 / 医院等）</span>
+          <span class="d">另收交通费：按预约时段的往返车程估算，价格与 Uber/Lyft 近似，支付前锁定。</span>
+        </span>
+      </label>
+
+      <div class="card" v-if="location === 'mobile'">
+        <label class="f">上门地址</label>
+        <input type="text" v-model.trim="address" list="demo-addr" placeholder="街道地址、城市（演示：试试 Cupertino / SFO / San Francisco）" />
+        <datalist id="demo-addr">
+          <option v-for="p in DEMO_PLACES" :value="p.label"></option>
+        </datalist>
+        <p class="peakhint" v-if="address">
+          演示估算：单程约 {{ geo.mi }} 英里 / 畅通约 {{ geo.min }} 分钟（正式版将使用 Google 路线预测）
+        </p>
+      </div>
+
+      <p class="hint" v-if="!step2ok">请填写上门地址。</p>
+      <div class="nav">
+        <button class="btn ghost" @click="step = 1">←</button>
+        <button class="btn primary" :disabled="!step2ok" @click="step = 3">下一步 →</button>
+      </div>
+    </section>
+
+    <!-- STEP 3 · 日期与时间 -->
+    <section v-if="step === 3">
+      <h2>第 3 步 · 日期与时间</h2>
+      <p class="sub">
+        <template v-if="location === 'mobile'">每个时段显示的是含交通费的总价——高峰时段车程更长，价格会略高。</template>
+        <template v-else>在 Lakewood Park 会面，所有时段同价。</template>
+      </p>
+
+      <label class="f">日期</label>
+      <input type="date" v-model="dateStr" :min="minDate" />
+
+      <div class="slots">
+        <button class="slot" v-for="s in daySlots" :key="s.hour"
+          :class="{sel: slotHour === s.hour}" :disabled="s.busy"
+          @click="slotHour = s.hour">
+          {{ s.label }}
+          <small v-if="s.busy">已约满</small>
+          <small v-else>${{ s.total }}</small>
+        </button>
+      </div>
+      <p class="peakhint">预计服务约 {{ serviceMin }} 分钟 · 价格含公证费<template v-if="location === 'mobile'">与交通费</template></p>
+
+      <p class="hint" v-if="!slotHour">请选择一个时段。</p>
+      <div class="nav">
+        <button class="btn ghost" @click="step = 2">←</button>
+        <button class="btn primary" :disabled="!slotHour" @click="step = 4">下一步 →</button>
+      </div>
+    </section>
+
+    <!-- STEP 4 · 确认支付 -->
+    <section v-if="step === 4">
+      <h2>第 4 步 · 确认并支付</h2>
+      <p class="sub">请核对信息。支付成功后即完成预约，确认邮件将发送给您。</p>
+
+      <div class="card">
+        <div class="sum">
+          <div class="line"><span>时间</span><span>{{ prettyDate }} {{ prettySlot }}</span></div>
+          <div class="line"><span>地点</span><span>{{ location === 'park' ? 'Sunnyvale Lakewood Park' : address }}</span></div>
+          <div class="line"><span>签署人</span><span>{{ signers.map(p => p.name).join(' · ') }}</span></div>
+          <div class="line" v-for="d in docs" :key="d.id">
+            <span>📄</span><span>{{ typeLabel(d) }}{{ docMeta(d) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sum">
+          <div class="line">
+            <span>公证费 {{ paidActs }} 签名处 × $15</span><span>${{ notaryFee }}</span>
+          </div>
+          <div class="line" v-if="waivedActs > 0">
+            <span>依法免收（{{ waivedActs }} 签名处）</span><span style="color:#1E7A46">−$0</span>
+          </div>
+          <div class="line" v-if="location === 'mobile'">
+            <span>交通费 往返约 {{ selTravel.mi2 }} mi / {{ selTravel.min2 }} 分钟</span><span>${{ grand - notaryFee }}</span>
+          </div>
+          <div class="line" v-else>
+            <span>交通费（Lakewood Park 会面）</span><span>$0</span>
+          </div>
+          <div class="line grand"><span>合计</span><span>${{ grand }}</span></div>
+        </div>
+      </div>
+
+      <label class="agree">
+        <input type="checkbox" v-model="agreed" />
+        <span>我已阅读并同意<b>取消与退款政策</b>及<b>交通费说明</b>：24 小时前取消全额退款；24 小时内取消退公证费、交通费退一半；爽约或因证件问题无法完成公证，退公证费、交通费不退。</span>
+      </label>
+
+      <div class="nav">
+        <button class="btn ghost" @click="step = 3">←</button>
+        <button class="btn primary" :disabled="!agreed" @click="pay">确认并支付 ${{ grand }}</button>
+      </div>
+      <p class="holdnote">🔒 时段为您保留 15 分钟 · 支付由 Stripe 安全处理</p>
+
+      <details class="debug">
+        <summary>内部排期与计价明细（演示调试）</summary>
+        <pre>{{ debugInfo }}</pre>
+      </details>
+    </section>
+  </main>
+  <p class="mocknote">交互演示 Mockup — 数据不会被保存，支付为模拟</p>
+</div>
+
+<script>
+const { createApp, reactive, computed } = Vue;
+
+const ID_TYPES = ['加州驾照 / 加州 ID', '美国护照', '中国护照', '其他国家护照', '其他州驾照', '美国军人证件'];
+
+const DOC_TYPES = [
+  { key: 'grant_deed', zh: '房产地契', en: 'Grant Deed', alias: 'deed quitclaim 地契 房产 过户', group: 'common', rule: 'standard' },
+  { key: 'poa',        zh: '授权委托书', en: 'Power of Attorney', alias: 'poa 委托 授权', group: 'common', rule: 'standard' },
+  { key: 'affidavit',  zh: '宣誓书', en: 'Affidavit', alias: 'jurat 宣誓 声明', group: 'common', rule: 'standard' },
+  { key: 'trust',      zh: '生前信托', en: 'Living Trust', alias: 'trust 信托', group: 'common', rule: 'standard' },
+  { key: 'loan',       zh: '贷款 / 重贷文件包', en: 'Loan / Refi Package', alias: 'loan refinance heloc 贷款 重贷', group: 'common', rule: 'standard' },
+  { key: 'minor',      zh: '未成年人出行同意书', en: 'Minor Travel Consent', alias: 'travel consent 儿童 孩子 出行 未成年', group: 'common', rule: 'standard' },
+  { key: 'china_poa',  zh: '房屋出售委托书（中国使用）', en: 'POA for Use in China', alias: '国内 中国 卖房 出售 委托', group: 'common', rule: 'standard' },
+  { key: 'vbm',        zh: '邮寄选票身份信封', en: 'Vote-by-Mail Envelope', alias: '选票 选举 投票 ballot election', group: 'free', rule: 'free' },
+  { key: 'vet',        zh: '退伍军人福利申请', en: 'Veterans Benefits Application', alias: '军人 退伍 veteran va 福利', group: 'free', rule: 'free' },
+  { key: 'imm',        zh: '移民表格套件', en: 'Immigration Forms Set', alias: '移民 immigration uscis 绿卡', group: 'special', rule: 'imm' },
+  { key: 'poa_copy',   zh: 'POA 核证副本', en: 'Certified Copy of POA', alias: '副本 copy 核证 认证', group: 'special', rule: 'copy' },
+  { key: 'depo',       zh: '庭外取证', en: 'Deposition', alias: '取证 deposition 庭外', group: 'special', rule: 'depo' },
+];
+const OTHER_TYPE = { key: 'other', zh: '其他（手动填写）', en: '', alias: '', group: 'other', rule: 'standard' };
+const GROUPS = [
+  { id: 'common', label: '常见' },
+  { id: 'free', label: '依法免收公证费' },
+  { id: 'special', label: '特殊计费' },
+];
+
+// 演示用地点表（正式版换成 Google Routes API 预测时长）
+const DEMO_PLACES = [
+  { label: 'Cupertino', q: 'cupertino', mi: 6, min: 14 },
+  { label: 'Palo Alto', q: 'palo alto', mi: 10, min: 17 },
+  { label: 'San Jose Downtown', q: 'san jose', mi: 9, min: 16 },
+  { label: 'Fremont', q: 'fremont', mi: 15, min: 22 },
+  { label: 'SFO 机场', q: 'sfo', mi: 35, min: 32 },
+  { label: 'San Francisco', q: 'san francisco', mi: 38, min: 42 },
+  { label: 'Oakland', q: 'oakland', mi: 36, min: 40 },
+];
+
+let uid = 0;
+const newDoc = () => ({
+  id: ++uid, typeKey: '', customName: '',
+  parts: [],            // [{pid, count}] — 每位签署人在本文件上被公证的签名处数
+  open: false, query: '',
+  adding: false, newName: '', newId: ID_TYPES[0],
+});
+
+// 高峰系数：驾车分钟数的演示乘数（正式版由 Routes API 的预测时长自然体现）
+function peakMult(h) {
+  if ((h >= 7 && h <= 9) || (h >= 16 && h <= 18)) return 1.5;
+  if (h >= 11 && h <= 13) return 1.15;
+  return 1.0;
+}
+const ceil5 = (x) => Math.ceil(x / 5) * 5;
+
+createApp({
+  setup() {
+    const state = reactive({
+      step: 1,
+      signers: [],        // {id, name, idType} — 随文件按需创建，可复用
+      docs: [newDoc()],
+      location: 'park',
+      address: '',
+      dateStr: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10),
+      slotHour: null,
+      agreed: false,
+    });
+
+    const typeOf = (d) => d.typeKey === 'other' ? OTHER_TYPE : DOC_TYPES.find(t => t.key === d.typeKey);
+    const docRule = (d) => typeOf(d) ? typeOf(d).rule : '';
+    const docActs = (d) => {
+      const r = docRule(d);
+      if (r === 'copy' || r === 'depo') return 1;
+      return d.parts.reduce((s, x) => s + x.count, 0);
+    };
+    const docFee = (d) => {
+      const r = docRule(d);
+      if (r === 'free') return 0;
+      if (r === 'copy') return 15;
+      if (r === 'depo') return 44;
+      if (r === 'imm') return 15 * d.parts.length; // 每人每套封顶 $15，与签名处数无关
+      return 15 * docActs(d);
+    };
+    const docFeeLabel = (d) => {
+      const r = docRule(d);
+      if (r === 'copy') return '核证副本 $15/份';
+      if (r === 'depo') return '$30 + 宣誓 $7 + 证书 $7';
+      if (r === 'imm') return `${d.parts.length} 人 × $15（每人封顶）`;
+      return `${docActs(d)} 签名处 × $15`;
+    };
+
+    const totalActs = computed(() => state.docs.reduce((s, d) => s + docActs(d), 0));
+    const waivedActs = computed(() => state.docs.filter(d => docRule(d) === 'free').reduce((s, d) => s + docActs(d), 0));
+    const paidActs = computed(() => totalActs.value - waivedActs.value);
+    const notaryFee = computed(() => state.docs.reduce((s, d) => s + docFee(d), 0));
+    const serviceMin = computed(() => Math.max(15, Math.ceil(totalActs.value / 3) * 15));
+
+    const geo = computed(() => {
+      const a = state.address.toLowerCase();
+      const hit = DEMO_PLACES.find(p => a.includes(p.q));
+      return hit || { mi: 12, min: 20 };
+    });
+
+    // 交通费：$5 起步 + $1.4/mi + $0.45/min，去回程分别按各自时段的演示高峰系数
+    function travelAt(hour) {
+      if (state.location === 'park') return { mi2: 0, min2: 0, raw: 0, minOut: 0, minBack: 0 };
+      const g = geo.value;
+      const minOut = Math.round(g.min * peakMult(hour));
+      const backHour = hour + Math.ceil((serviceMin.value + minOut) / 60);
+      const minBack = Math.round(g.min * peakMult(backHour));
+      const raw = 5 + 1.4 * g.mi * 2 + 0.45 * (minOut + minBack);
+      return { mi2: g.mi * 2, min2: minOut + minBack, raw, minOut, minBack };
+    }
+    // 总价：Stripe 手续费 gross-up 全部落在交通费行；Park 会面则完全吸收
+    function totalAt(hour) {
+      const t = travelAt(hour);
+      if (state.location === 'park') return notaryFee.value;
+      return ceil5((notaryFee.value + t.raw + 0.30) / 0.971);
+    }
+
+    const daySlots = computed(() =>
+      [9, 10, 11, 12, 14, 15, 16, 17, 18].map(h => ({
+        hour: h,
+        label: (h < 12 ? '上午 ' : h === 12 ? '中午 ' : '下午 ') + ((h - 1) % 12 + 1) + ':00',
+        busy: h === 11 || h === 15, // 演示：模拟已被占用的时段
+        total: totalAt(h),
+      }))
+    );
+
+    const selTravel = computed(() => travelAt(state.slotHour || 0));
+    const grand = computed(() => state.slotHour ? totalAt(state.slotHour) : 0);
+
+    const step1ok = computed(() =>
+      state.docs.length > 0 &&
+      state.signers.every(p => p.name) &&
+      state.docs.every(d => {
+        if (!d.typeKey) return false;
+        if (d.typeKey === 'other' && !d.customName) return false;
+        const r = docRule(d);
+        if (r === 'copy' || r === 'depo') return true;
+        return d.parts.length > 0;
+      }));
+    const step2ok = computed(() => state.location === 'park' || state.address.length > 3);
+
+    const prettyDate = computed(() => {
+      const d = new Date(state.dateStr + 'T00:00');
+      return `${d.getMonth() + 1}月${d.getDate()}日（周${'日一二三四五六'[d.getDay()]}）`;
+    });
+    const prettySlot = computed(() => {
+      const h = state.slotHour;
+      if (!h) return '';
+      return (h < 12 ? '上午 ' : h === 12 ? '中午 ' : '下午 ') + ((h - 1) % 12 + 1) + ':00';
+    });
+
+    const debugInfo = computed(() => {
+      if (!state.slotHour) return '';
+      const t = selTravel.value;
+      const dep = state.slotHour * 60 - t.minOut - 15;
+      const ret = state.slotHour * 60 + serviceMin.value + 15 + t.minBack;
+      const fmt = (m) => `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+      return [
+        `服务时长 = ceil(${totalActs.value}/3)×15 = ${serviceMin.value} 分钟`,
+        `去程 ${t.minOut} 分钟 / 回程 ${t.minBack} 分钟（演示高峰系数）`,
+        `出发 ${fmt(dep)} → 服务 ${fmt(state.slotHour * 60)}–${fmt(state.slotHour * 60 + serviceMin.value)} → 返回 ${fmt(ret)}`,
+        `日历 block：${fmt(dep)}–${fmt(ret)}（含前后 15 分钟 buffer）`,
+        `交通费原始 = 5 + 1.4×${t.mi2} + 0.45×${t.min2} = $${t.raw.toFixed(2)}`,
+        `合计 = ceil5((${notaryFee.value} + ${t.raw.toFixed(2)} + 0.30) / 0.971) = $${grand.value}`,
+        `（Stripe 手续费与取整并入交通费行；公证费行恒为法定 $15×n）`,
+      ].join('\n');
+    });
+
+    const nameOf = (pid) => {
+      const p = state.signers.find(x => x.id === pid);
+      return p ? (p.name || '（未命名）') : '?';
+    };
+
+    return {
+      ...Vue.toRefs(state),
+      ID_TYPES, DEMO_PLACES, OTHER_TYPE,
+      minDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      addDoc: () => state.docs.push(newDoc()),
+      removeDoc: (id) => state.docs = state.docs.filter(d => d.id !== id),
+      removeSigner: (id) => {
+        state.signers = state.signers.filter(p => p.id !== id);
+        state.docs.forEach(d => d.parts = d.parts.filter(x => x.pid !== id));
+      },
+      typeLabel: (d) => {
+        if (d.typeKey === 'other') return d.customName ? `其他：${d.customName}` : '其他（手动填写）';
+        const t = typeOf(d);
+        return t ? t.zh : '';
+      },
+      docMeta: (d) => {
+        const r = docRule(d);
+        if (r === 'copy' || r === 'depo') return '';
+        return `（${d.parts.length} 人 · ${docActs(d)} 签名处）`;
+      },
+      openCombo: (d) => { d.open = true; d.query = ''; },
+      closeComboSoon: (d) => setTimeout(() => { d.open = false; }, 150),
+      pickType: (d, t) => { d.typeKey = t.key; d.open = false; d.query = ''; },
+      filteredGroups: (d) => {
+        const q = d.query.trim().toLowerCase();
+        return GROUPS.map(g => ({
+          label: g.label,
+          items: DOC_TYPES.filter(t => t.group === g.id &&
+            (!q || (t.zh + ' ' + t.en + ' ' + t.alias).toLowerCase().includes(q))),
+        })).filter(g => g.items.length > 0);
+      },
+      ruleTag: (t) => ({ free: '免费', imm: '$15/人封顶', copy: '$15/份', depo: '$30+', standard: '' }[t.rule] || ''),
+      docRule, docActs, docFee, docFeeLabel, nameOf,
+      docAddable: (d) => state.signers.filter(p => p.name && !d.parts.some(x => x.pid === p.id)),
+      attach: (d, pid) => d.parts.push({ pid, count: 1 }),
+      detach: (d, pid) => d.parts = d.parts.filter(x => x.pid !== pid),
+      bump: (d, s) => { s.count = s.count >= 4 ? 1 : s.count + 1; },
+      createSigner: (d) => {
+        if (!d.newName) return;
+        const p = { id: ++uid, name: d.newName, idType: d.newId };
+        state.signers.push(p);
+        d.parts.push({ pid: p.id, count: 1 });
+        d.newName = ''; d.newId = ID_TYPES[0]; d.adding = false;
+      },
+      totalActs, waivedActs, paidActs, notaryFee, serviceMin,
+      geo, daySlots, selTravel, grand,
+      step1ok, step2ok,
+      prettyDate, prettySlot, debugInfo,
+      pay: () => alert(`演示：此处跳转 Stripe Checkout，金额 $${grand.value}。\n支付成功后：锁定时段、写入日历（含去程/回程 block）、发送确认邮件。`),
+    };
+  },
+}).mount('#app');
+</script>
+</body>
+</html>
