@@ -1,5 +1,4 @@
 User-agent: *
-Disallow: /
+Allow: /
 
-# Draft site — not yet live
-# Remove Disallow once commission is active
+Sitemap: https://notaryzhou.com/sitemap-index.xml
