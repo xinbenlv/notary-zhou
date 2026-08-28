@@ -440,8 +440,8 @@
     <section v-if="step === 3">
       <h2>第 3 步 · 日期与时间</h2>
       <p class="sub">
-        <template v-if="location === 'mobile'">每个时段显示的是含交通费的总价——高峰时段车程更长，价格会略高。</template>
-        <template v-else>在 Lakewood Park 会面，所有时段同价。</template>
+        <template v-if="location === 'mobile'">下方为各时段的<b>交通费</b>——高峰时段车程更长，交通费更高。公证费 ${{ notaryFee }} 固定不变，合计在下一步确认。</template>
+        <template v-else>在 Lakewood Park 会面免交通费，所有时段同价。</template>
       </p>
 
       <label class="f">日期</label>
@@ -453,10 +453,11 @@
           @click="slotHour = s.hour">
           {{ s.label }}
           <small v-if="s.busy">已约满</small>
-          <small v-else>${{ s.total }}</small>
+          <small v-else-if="location === 'park'">免交通费</small>
+          <small v-else>交通费 ${{ s.travel }}</small>
         </button>
       </div>
-      <p class="peakhint">预计服务约 {{ serviceMin }} 分钟 · 价格含公证费<template v-if="location === 'mobile'">与交通费</template></p>
+      <p class="peakhint">预计服务约 {{ serviceMin }} 分钟 · 公证费 ${{ notaryFee }} 另计</p>
 
       <p class="hint" v-if="!slotHour">请选择一个时段。</p>
       <div class="nav">
@@ -809,6 +810,8 @@ createApp({
         label: (h < 12 ? '上午 ' : h === 12 ? '中午 ' : '下午 ') + ((h - 1) % 12 + 1) + ':00',
         busy: h === 11 || h === 15, // 演示：模拟已被占用的时段
         total: totalAt(h),
+        // 与确认页「交通费」行一致：手续费 gross-up 与取整都并入该行
+        travel: totalAt(h) - notaryFee.value,
       }))
     );
 
