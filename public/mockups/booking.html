@@ -307,7 +307,7 @@
               {{ a.zh }}<small>{{ a.en }}</small>
             </button>
           </div>
-          <p class="chiphint">{{ actHint(d) }}</p>
+          <p class="chiphint" :style="d.act === 'unsure' ? 'color:var(--brand-terra)' : null">{{ actHint(d) }}</p>
         </template>
 
         <template v-if="d.typeKey && docRule(d) !== 'copy'">
@@ -369,7 +369,7 @@
         <span class="fee">公证费 ${{ notaryFee }}</span>
         <template v-if="waivedActs > 0">（{{ waivedActs }} 个签名依法免收）</template>
       </div>
-      <p class="hint" v-if="!step1ok">每份文件请选择文件类型、公证类型，并至少指定一位签署人。</p>
+      <p class="hint" v-if="!step1ok">{{ step1Hint }}</p>
       <div class="nav">
         <button class="btn primary" :disabled="!step1ok" @click="step = 2">下一步 →</button>
       </div>
@@ -618,7 +618,7 @@ const ACT_HINT = {
   '':       '公证员依法不得替您选择公证类型——请依文件上已印好的公证格式，或询问要求您公证的机构。',
   ack:      '签名确认：核验您的身份、确认您自愿签署；不涉及文件内容是否属实。',
   jurat:    '宣誓：您须当着公证员的面宣誓文件内容属实，并当场签字（不能事先签好）。',
-  unsure:   '没关系。我们当天会先看文件上是否已印好公证格式；若没有，请务必事先向收件机构问清楚，否则可能需要改期。',
+  unsure:   '请先向要求您公证的机构问清楚该文件需要哪一种，再回来预约。公证员依法不能替您选择，类型不明当天无法完成公证。',
 };
 
 const newDoc = () => ({
@@ -934,9 +934,15 @@ createApp({
         if (d.typeKey === 'other' && !d.customName) return false;
         const r = docRule(d);
         if (r === 'copy' || r === 'depo') return true;
-        if (!d.act) return false;                 // 公证类型必须由客户选择
+        if (!d.act || d.act === 'unsure') return false;   // 必须由客户明确选定，「不确定」不可预约
         return d.parts.length > 0;
       }));
+    const step1Hint = computed(() => {
+      if (state.docs.some(d => d.act === 'unsure'))
+        return '请先向收件机构确认该文件需要「签名确认 Acknowledgment」还是「宣誓 Jurat」，确认后再回来预约。';
+      return '每份文件请选择文件类型、公证类型，并至少指定一位签署人。';
+    });
+
     const step2ok = computed(() => state.location === 'park' || !!state.resolved);
 
     const prettyDate = computed(() => {
@@ -1018,7 +1024,7 @@ createApp({
       onAddrInput, resolveAddress, pickPlace,
       totalActs, waivedActs, paidActs, notaryFee, serviceMin,
       geo, daySlots, selTravel, grand, SLOT_HOURS,
-      step1ok, step2ok,
+      step1ok, step2ok, step1Hint,
       prettyDate, prettySlot, debugInfo,
       pay: () => alert(`演示：此处跳转 Stripe Checkout，金额 $${grand.value}。\n支付成功后：锁定时段、写入日历（含去程/回程 block）、发送确认邮件。`),
     };
