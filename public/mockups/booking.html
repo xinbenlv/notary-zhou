@@ -111,6 +111,15 @@
   .chip.add { background: none; border-style: dashed; color: var(--text-muted); cursor: pointer; }
   .chip.add.new { color: var(--brand-green); font-weight: 600; }
   .chiphint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+  .seg { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+  .seg button {
+    flex: 1; min-width: 92px; padding: 8px 6px; border-radius: 8px;
+    border: 1px solid var(--border-soft); background: var(--bg-cream);
+    color: var(--text-dark); font-size: 12.5px; cursor: pointer; line-height: 1.35;
+  }
+  .seg button small { display: block; color: var(--text-muted); font-size: 10.5px; margin-top: 1px; }
+  .seg button.on { border-color: var(--brand-green); background: var(--brand-green); color: #F0F4F2; }
+  .seg button.on small { color: var(--brand-yellow); }
 
   .newform {
     background: var(--bg-cream); border: 1px dashed var(--border-soft);
@@ -291,6 +300,16 @@
           <input type="text" v-model.trim="d.customName" placeholder="例：房屋出售委托书" />
         </template>
 
+        <template v-if="actApplies(d)">
+          <label class="f">公证类型（须由文件本身或收件机构决定）</label>
+          <div class="seg">
+            <button v-for="a in ACTS" :key="a.key" :class="{on: d.act === a.key}" @click="d.act = a.key">
+              {{ a.zh }}<small>{{ a.en }}</small>
+            </button>
+          </div>
+          <p class="chiphint">{{ actHint(d) }}</p>
+        </template>
+
         <template v-if="d.typeKey && docRule(d) !== 'copy'">
           <label class="f">签署人</label>
           <div class="chips">
@@ -350,7 +369,7 @@
         <span class="fee">公证费 ${{ notaryFee }}</span>
         <template v-if="waivedActs > 0">（{{ waivedActs }} 个签名依法免收）</template>
       </div>
-      <p class="hint" v-if="!step1ok">每份文件请选择类型并至少指定一位签署人。</p>
+      <p class="hint" v-if="!step1ok">每份文件请选择文件类型、公证类型，并至少指定一位签署人。</p>
       <div class="nav">
         <button class="btn primary" :disabled="!step1ok" @click="step = 2">下一步 →</button>
       </div>
@@ -590,8 +609,20 @@ const DEMO_PLACES = [
 ];
 
 let uid = 0;
+const ACTS = [
+  { key: 'ack',    zh: '签名确认', en: 'Acknowledgment' },
+  { key: 'jurat',  zh: '宣誓',     en: 'Jurat' },
+  { key: 'unsure', zh: '不确定',   en: 'Ask recipient' },
+];
+const ACT_HINT = {
+  '':       '公证员依法不得替您选择公证类型——请依文件上已印好的公证格式，或询问要求您公证的机构。',
+  ack:      '签名确认：核验您的身份、确认您自愿签署；不涉及文件内容是否属实。',
+  jurat:    '宣誓：您须当着公证员的面宣誓文件内容属实，并当场签字（不能事先签好）。',
+  unsure:   '没关系。我们当天会先看文件上是否已印好公证格式；若没有，请务必事先向收件机构问清楚，否则可能需要改期。',
+};
+
 const newDoc = () => ({
-  id: ++uid, typeKey: '', customName: '',
+  id: ++uid, typeKey: '', customName: '', act: '',
   parts: [],            // [{pid, count}] — 每位签署人在本文件上被公证的签名处数
   open: false, query: '',
   adding: false, newName: '', newId: ID_TYPES[0],
@@ -651,6 +682,10 @@ createApp({
       if (r === 'imm') return `${d.parts.length} 人 × $15（每人封顶）`;
       return `${docActs(d)} 签名处 × $15`;
     };
+
+    // 核证副本与庭外取证本身即为特定公证行为，不需要再选 ack/jurat
+    const actApplies = (d) => !!d.typeKey && docRule(d) !== 'copy' && docRule(d) !== 'depo';
+    const actHint = (d) => ACT_HINT[d.act || ''];
 
     const totalActs = computed(() => state.docs.reduce((s, d) => s + docActs(d), 0));
     const waivedActs = computed(() => state.docs.filter(d => docRule(d) === 'free').reduce((s, d) => s + docActs(d), 0));
@@ -899,6 +934,7 @@ createApp({
         if (d.typeKey === 'other' && !d.customName) return false;
         const r = docRule(d);
         if (r === 'copy' || r === 'depo') return true;
+        if (!d.act) return false;                 // 公证类型必须由客户选择
         return d.parts.length > 0;
       }));
     const step2ok = computed(() => state.location === 'park' || !!state.resolved);
@@ -937,7 +973,7 @@ createApp({
 
     return {
       ...Vue.toRefs(state),
-      ID_TYPES, DEMO_PLACES, OTHER_TYPE,
+      ID_TYPES, DEMO_PLACES, OTHER_TYPE, ACTS, actApplies, actHint,
       minDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
       addDoc: () => state.docs.push(newDoc()),
       removeDoc: (id) => state.docs = state.docs.filter(d => d.id !== id),
@@ -953,7 +989,8 @@ createApp({
       docMeta: (d) => {
         const r = docRule(d);
         if (r === 'copy' || r === 'depo') return '';
-        return `（${d.parts.length} 人 · ${docActs(d)} 签名处）`;
+        const a = ACTS.find(x => x.key === d.act);
+        return `（${a ? a.zh : ''} · ${d.parts.length} 人 · ${docActs(d)} 签名处）`;
       },
       openCombo: (d) => { d.open = true; d.query = ''; },
       closeComboSoon: (d) => setTimeout(() => { d.open = false; }, 150),
