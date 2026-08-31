@@ -64,6 +64,8 @@ coverAlt: 插图：一份房产契据摊在桌面上，旁边是公证钢印、�
 
 加州《民法典》第 1214 条给出了后果的轮廓：一份未经登记的转让，[在对抗"善意、支付了对价、且其转让文件先行完成登记"的后手购买人或抵押权人时，是无效的](#ref-civ-1214)——原文 "is void as against any subsequent purchaser or mortgagee of the same property… in good faith and for a valuable consideration, whose conveyance is first duly recorded"。
 
+契据的签署与公证，常常是在一场 escrow 或贷款签约里一并完成的——那种场合里各方分别负责什么、公证员能做什么不能做什么，另见[《重新贷款、卖房签约时，公证员到底在做什么》](/articles/loan-signing-guide/)。
+
 用大白话说：加州的登记制度奖励**先登记的人**。一份签好、公证好却压在抽屉里的契据，在你们两人之间也许仍有意义，但当外部第三人牵涉进来时，它的处境就危险了。这条法律怎么适用到你的具体情况——尤其涉及家庭内部过户、有贷款在身、或产权本来就有争议时——请交给律师判断。这里只是说明：**签完、公证完，事情还没办完，登记才是最后一步。**
 
 ## 送去登记那一步，和随之而来的 PCOR
