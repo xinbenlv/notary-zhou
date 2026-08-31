@@ -235,7 +235,7 @@ Notary Public（公证员）· Notarization（公证）· Acknowledgment（签�
 
 **26. HELOC 签约指南**
 - Glossary：HELOC（房屋净值信用额度）· Draw period（提取期）· Repayment period（还款期）· Lien（留置权）
-- 来源：[CFPB：What is a HELOC?](https://www.consumerfinance.gov/ask-cfpb/what-is-a-home-equity-line-of-credit-heloc-en-247/) · [CFPB Reg Z §1026.23](https://www.consumerfinance.gov/rules-policy/regulations/1026/23/)
+- 来源：[CFPB：What is a HELOC?（en-107）](https://www.consumerfinance.gov/ask-cfpb/what-is-a-home-equity-line-of-credit-heloc-en-107/) · [CFPB：HELOC 与房屋净值贷款的区别（en-247）](https://www.consumerfinance.gov/ask-cfpb/what-is-the-difference-between-a-home-equity-loan-and-a-home-equity-line-of-credit-heloc-en-247/) · **[Reg Z §1026.15（开放式信贷的撤销权——HELOC 适用的是这一条）](https://www.consumerfinance.gov/rules-policy/regulations/1026/15/)** · [Reg Z §1026.40（home equity plans 的披露要求）](https://www.consumerfinance.gov/rules-policy/regulations/1026/40/) · [Reg Z §1026.23（闭合式，仅用于对比）](https://www.consumerfinance.gov/rules-policy/regulations/1026/23/)
 
 **27. 生前信托签约包**
 - Glossary：Revocable Living Trust（可撤销生前信托）· Settlor / Grantor（设立人）· Trustee（受托人）· Successor Trustee（继任受托人）· Pour-over Will（遗产归并遗嘱）· Certification of Trust（信托证明书）
