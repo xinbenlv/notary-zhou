@@ -117,22 +117,23 @@ Absolutely no letters, no words, no characters, no typography anywhere in the im
 **2) 调用 Gemini**（key 通过 Infisical 注入，切勿打印 key）：
 
 ```bash
-cd /Users/zzn/dotfiles && SLUG=<slug> ~/dotfiles/tools/infisical/with-secret.sh --match '^GEMINI_API_KEY$' --as GEMINI_API_KEY -- sh -c '
+cd /Users/zzn/dotfiles && ~/dotfiles/tools/infisical/with-secret.sh --match '^GEMINI_API_KEY$' --as GEMINI_API_KEY -- sh -c '
+D=/tmp/img/<slug>          # ← 在 sh -c 内部定义，不要用外部变量：外层单引号会让 $SLUG 展开为空
 for n in cover-bg 01-<name> 02-<name> 03-<name>; do
   (curl -s --max-time 180 "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image:generateContent?key=$GEMINI_API_KEY" \
-    -H "Content-Type: application/json" -d @"/tmp/img/'$SLUG'/$n.json" > "/tmp/img/'$SLUG'/$n.resp.json") &
+    -H "Content-Type: application/json" -d @"$D/$n.json" > "$D/$n.resp.json") &
 done
 wait
 for n in cover-bg 01-<name> 02-<name> 03-<name>; do
   python3 -c "
-import json,base64,sys
-n=sys.argv[1]; d=json.load(open(f\"/tmp/img/'$SLUG'/{n}.resp.json\"))
+import json,base64,sys,pathlib
+d=pathlib.Path(sys.argv[2]); n=sys.argv[1]
 try:
-    parts=d[\"candidates\"][0][\"content\"][\"parts\"]
-    data=next(p[\"inlineData\"][\"data\"] for p in parts if \"inlineData\" in p)
-    open(f\"/tmp/img/'$SLUG'/{n}.png\",\"wb\").write(base64.b64decode(data)); print(n,\"OK\")
-except Exception as e: print(n,\"FAIL\",str(d)[:200])
-" "$n"
+    j=json.load(open(d/f'{n}.resp.json'))
+    data=next(p['inlineData']['data'] for p in j['candidates'][0]['content']['parts'] if 'inlineData' in p)
+    (d/f'{n}.png').write_bytes(base64.b64decode(data)); print(' ',n,'OK')
+except Exception as e: print(' ',n,'FAIL',str(e)[:120])
+" "$n" "$D"
 done'
 ```
 
