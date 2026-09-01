@@ -5,7 +5,9 @@ import remarkCjkFriendly from 'remark-cjk-friendly';
 import rehypeCollapsibleReferences from './src/plugins/rehype-collapsible-references.mjs';
 
 export default defineConfig({
-  site: 'https://notaryzhou.com',
+  // 暂以 www 为规范域名：Railway 只接受 CNAME，根域无法直接指向它；
+  // 待 Namefi 支持 ANAME/ALIAS 展平后可改回 https://notaryzhou.com
+  site: 'https://www.notaryzhou.com',
   output: 'static',
   markdown: {
     // CommonMark 的 right-flanking 规则会让 `**要点。**说明` 这类中文写法
