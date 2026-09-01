@@ -7,7 +7,9 @@ export const siteConfig = {
   titleZh: 'Notary Zhou | 湾区中文上门公证',
   descriptionZh:
     '旧金山湾区专业中文公证服务（Notary Public）。提供房产、法律及商业文件的上门公证。',
-  url: 'https://notaryzhou.com',
+  // 暂以 www 为规范域名（Railway 只接受 CNAME，根域指不过去）；
+  // Namefi 支持 ANAME/ALIAS 后可改回 https://notaryzhou.com
+  url: 'https://www.notaryzhou.com',
 
   phone: '', // 留空 = 不显示；填入真实号码后自动进入 JSON-LD
   email: 'info@notaryzhou.com',
