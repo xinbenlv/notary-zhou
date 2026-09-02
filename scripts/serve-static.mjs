@@ -1,13 +1,17 @@
-// Railway 上托管 Astro 静态构建产物（dist/）的零依赖静态服务器。
-// 不引入 npm 依赖，避免与仓库内另一个服务（公证员名单 API）的 package.json 冲突。
+// Railway 上托管 Astro 构建产物的服务器。
+// 静态页面由这里直接服务（带 br/gzip 压缩）；未命中的路径交给 Astro 的
+// SSR handler，用于 /api/* 等标了 prerender = false 的按需路由。
+// 除 Astro 自身外不引入额外依赖。
 import { createServer } from 'node:http';
-import { createReadStream } from 'node:fs';
+import { createReadStream, existsSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { join, normalize, extname, resolve } from 'node:path';
 import { createGzip, createBrotliCompress, constants as zlibConstants } from 'node:zlib';
 import { pipeline } from 'node:stream';
 
-const ROOT = resolve('dist');
+// 带 adapter 构建时产物在 dist/client；纯静态构建时在 dist
+const ROOT = existsSync(resolve('dist/client')) ? resolve('dist/client') : resolve('dist');
+const SSR_ENTRY = resolve('dist/server/entry.mjs');
 const PORT = Number(process.env.PORT) || 8080;
 
 const MIME = {
@@ -69,6 +73,13 @@ function cacheFor(file) {
   return 'public, max-age=3600';
 }
 
+// Astro 的 SSR handler（若本次构建产出了服务端入口）
+let ssrHandler = null;
+if (existsSync(SSR_ENTRY)) {
+  ({ handler: ssrHandler } = await import(SSR_ENTRY));
+  console.log('ssr handler: loaded');
+}
+
 const server = createServer(async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405, { Allow: 'GET, HEAD' }).end('Method Not Allowed');
@@ -81,6 +92,11 @@ const server = createServer(async (req, res) => {
 
   let file = await resolveFile(req.url || '/');
   let status = 200;
+  if (!file && ssrHandler) {
+    // 静态文件未命中：交给 Astro 处理按需路由（自身会返回 404）
+    ssrHandler(req, res);
+    return;
+  }
   if (!file) {
     status = 404;
     file = await fileAt(join(ROOT, '404.html'));

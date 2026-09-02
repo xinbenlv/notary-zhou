@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://notaryzhou.com/sitemap-index.xml
+# 预约接口无需抓取；预约页面本身允许抓取但带 noindex，
+# 这样 Google 才能读到 noindex 标签（Disallow 会让它读不到）
+Disallow: /api/
+
+Sitemap: https://www.notaryzhou.com/sitemap-index.xml
