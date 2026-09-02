@@ -4,6 +4,8 @@ import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { join, normalize, extname, resolve } from 'node:path';
+import { createGzip, createBrotliCompress, constants as zlibConstants } from 'node:zlib';
+import { pipeline } from 'node:stream';
 
 const ROOT = resolve('dist');
 const PORT = Number(process.env.PORT) || 8080;
@@ -50,6 +52,16 @@ async function resolveFile(urlPath) {
     || (await fileAt(base + '.html'));
 }
 
+// 只压缩文本类；图片/字体/PDF 本身已压缩，再压是浪费 CPU
+const COMPRESSIBLE = /^(text\/|application\/(json|xml|javascript|manifest\+json)|image\/svg)/;
+
+// 按 Accept-Encoding 选择压缩方式；br 优先（同等体积下比 gzip 小约 15%）
+function pickEncoding(accept = '') {
+  if (/\bbr\b/.test(accept)) return 'br';
+  if (/\bgzip\b/.test(accept)) return 'gzip';
+  return null;
+}
+
 function cacheFor(file) {
   // Astro 给 /_astro/ 下的资源加了内容哈希，可长期缓存；HTML 每次校验
   if (file.includes('/_astro/')) return 'public, max-age=31536000, immutable';
@@ -78,13 +90,26 @@ const server = createServer(async (req, res) => {
     }
   }
 
-  res.writeHead(status, {
-    'Content-Type': MIME[extname(file).toLowerCase()] || 'application/octet-stream',
+  const type = MIME[extname(file).toLowerCase()] || 'application/octet-stream';
+  const enc = COMPRESSIBLE.test(type) ? pickEncoding(req.headers['accept-encoding']) : null;
+
+  const headers = {
+    'Content-Type': type,
     'Cache-Control': cacheFor(file),
     'X-Content-Type-Options': 'nosniff',
-  });
+    Vary: 'Accept-Encoding',
+  };
+  if (enc) headers['Content-Encoding'] = enc;
+  res.writeHead(status, headers);
   if (req.method === 'HEAD') { res.end(); return; }
-  createReadStream(file).pipe(res);
+
+  const src = createReadStream(file);
+  if (!enc) { src.pipe(res); return; }
+  // 质量取中等档：静态站点每次请求现压，延迟比体积更重要
+  const zip = enc === 'br'
+    ? createBrotliCompress({ params: { [zlibConstants.BROTLI_PARAM_QUALITY]: 5 } })
+    : createGzip({ level: 6 });
+  pipeline(src, zip, res, () => {});
 });
 
 server.listen(PORT, '0.0.0.0', () => {
