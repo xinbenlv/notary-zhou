@@ -10,28 +10,37 @@ const { lang } = Astro.props;
 const t = {
   en: {
     services: 'Services',
+    verify: 'Verify Notary',
     about: 'About',
     faq: 'FAQ',
     book: 'Book Now',
     comingSoon: 'Coming Soon',
     switchLabel: '中文',
+    openMenu: 'Open navigation menu',
+    closeMenu: 'Close navigation menu',
   },
   zh: {
     services: '服务',
+    verify: '查验公证员',
     about: '关于',
     faq: '常见问题',
     book: '立即预约',
     comingSoon: '即将开放',
     switchLabel: 'English',
+    openMenu: '打开导航菜单',
+    closeMenu: '关闭导航菜单',
   },
 }[lang];
 const home = langPath(lang);
-const switchHref = langPath(otherLang(lang));
+const verifyHref = `${home}verify/`;
+const switchHref = /\/verify\/?$/.test(Astro.url.pathname)
+  ? `${langPath(otherLang(lang))}verify/`
+  : langPath(otherLang(lang));
 ---
 
-<nav>
+<nav data-site-nav data-open-label={t.openMenu} data-close-label={t.closeMenu}>
   <div class="container">
-    <div class="nav-inner">
+    <div class="nav-inner" data-menu-open="false">
       {lang === 'zh' ? (
         <a href={home} class="logo logo-stacked">
           <span class="logo-main">{siteConfig.nameZh} <span class="logo-dot"></span></span>
@@ -42,24 +51,231 @@ const switchHref = langPath(otherLang(lang));
           {siteConfig.name} <span class="logo-dot"></span>
         </a>
       )}
-      <ul class="nav-links">
-        <li><a href={`${home}#services`}>{t.services}</a></li>
-        <li><a href={`${home}#about`}>{t.about}</a></li>
-        <li><a href={`${home}#faq`}>{t.faq}</a></li>
-        {lang === 'zh' && <li><a href="/articles/">公证知识</a></li>}
-      </ul>
-      <div class="flex items-center gap-sm">
-        <a href={switchHref} class="lang-switch">{t.switchLabel}</a>
-        {siteConfig.isDraft ? (
-          <span class="btn btn-disabled" style="padding: 10px 24px; font-size: 14px;">
-            {t.comingSoon}
-          </span>
-        ) : (
-          <a href={`${home}#book`} class="btn btn-yellow" style="padding: 10px 24px; font-size: 14px;">
-            {t.book}
-          </a>
-        )}
+      <div class="nav-drawer" id={`site-menu-${lang}`}>
+        <ul class="nav-links">
+          <li><a href={`${home}#services`}>{t.services}</a></li>
+          <li><a href={verifyHref}>{t.verify}</a></li>
+          <li><a href={`${home}#about`}>{t.about}</a></li>
+          <li><a href={`${home}#faq`}>{t.faq}</a></li>
+          {lang === 'zh' && <li><a href="/articles/">公证知识</a></li>}
+        </ul>
+        <div class="nav-actions">
+          <a href={switchHref} class="lang-switch">{t.switchLabel}</a>
+          {siteConfig.isDraft ? (
+            <span class="btn btn-disabled" style="padding: 10px 24px; font-size: 14px;">
+              {t.comingSoon}
+            </span>
+          ) : (
+            <a href={`${home}#book`} class="btn btn-yellow" style="padding: 10px 24px; font-size: 14px;">
+              {t.book}
+            </a>
+          )}
+        </div>
       </div>
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls={`site-menu-${lang}`}
+        aria-label={t.openMenu}
+        data-menu-toggle
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
     </div>
   </div>
 </nav>
+
+<script>
+  document.querySelectorAll('[data-site-nav]').forEach((nav) => {
+    if (nav.dataset.initialized === 'true') return;
+    nav.dataset.initialized = 'true';
+
+    const inner = nav.querySelector('.nav-inner');
+    const toggle = nav.querySelector('[data-menu-toggle]');
+    const drawer = nav.querySelector('.nav-drawer');
+    if (!inner || !toggle || !drawer) return;
+
+    const setOpen = (open) => {
+      inner.dataset.menuOpen = String(open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? nav.dataset.closeLabel : nav.dataset.openLabel);
+    };
+
+    toggle.addEventListener('click', () => {
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    drawer.addEventListener('click', (event) => {
+      if (event.target.closest('a')) setOpen(false);
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!nav.contains(event.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || toggle.getAttribute('aria-expanded') !== 'true') return;
+      setOpen(false);
+      toggle.focus();
+    });
+
+    window.matchMedia('(min-width: 961px)').addEventListener('change', (event) => {
+      if (event.matches) setOpen(false);
+    });
+  });
+</script>
+
+<style>
+  .nav-inner {
+    position: relative;
+  }
+
+  .nav-drawer {
+    display: contents;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .menu-toggle {
+    display: none;
+  }
+
+  @media (max-width: 960px) {
+    nav {
+      top: max(14px, env(safe-area-inset-top));
+    }
+
+    nav .container {
+      padding: 0 16px;
+    }
+
+    .nav-inner {
+      min-height: 64px;
+      padding: 9px 9px 9px 22px;
+    }
+
+    .nav-drawer {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      left: 0;
+      display: none;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.97);
+      border: 1px solid var(--border-soft);
+      border-radius: 24px;
+      box-shadow: 0 18px 44px rgba(17, 24, 22, 0.13);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-inner[data-menu-open='true'] .nav-drawer {
+      display: block;
+      animation: menu-in 0.18s ease-out both;
+    }
+
+    .nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-links a {
+      display: flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-size: 16px;
+    }
+
+    .nav-links a:hover,
+    .nav-links a:focus-visible {
+      color: var(--brand-green);
+      background: var(--bg-alt);
+      outline: none;
+    }
+
+    .nav-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 12px;
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .nav-actions .lang-switch,
+    .nav-actions .btn {
+      width: 100%;
+      min-height: 44px;
+      padding: 9px 14px !important;
+      font-size: 14px !important;
+      text-align: center;
+    }
+
+    .nav-actions .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu-toggle {
+      display: inline-flex;
+      flex: 0 0 auto;
+      width: 46px;
+      height: 46px;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 5px;
+      color: var(--brand-green);
+      background: var(--bg-cream);
+      border: 1px solid var(--border-soft);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .menu-toggle span {
+      width: 18px;
+      height: 1.5px;
+      background: currentColor;
+      border-radius: 2px;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+    }
+
+    .menu-toggle[aria-expanded='true'] span:nth-child(1) {
+      transform: translateY(6.5px) rotate(45deg);
+    }
+
+    .menu-toggle[aria-expanded='true'] span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .menu-toggle[aria-expanded='true'] span:nth-child(3) {
+      transform: translateY(-6.5px) rotate(-45deg);
+    }
+  }
+
+  @keyframes menu-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-inner[data-menu-open='true'] .nav-drawer {
+      animation: none;
+    }
+
+    .menu-toggle span {
+      transition: none;
+    }
+  }
+</style>

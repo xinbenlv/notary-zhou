@@ -1,0 +1,894 @@
+---
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const apiBaseUrl =
+  import.meta.env.PUBLIC_NOTARY_LOOKUP_API_URL ||
+  (import.meta.env.DEV ? 'http://127.0.0.1:8787' : '');
+
+const copy = {
+  zh: {
+    eyebrow: '加州州务卿公开数据',
+    heading: '查验加州公证员',
+    intro: '输入姓名或委任编号，查看其是否列入加州州务卿当前公布的现行公证员名单。',
+    accuracy: '使用委任编号查询最准确。',
+    updateLabel: '官方数据更新时间',
+    loadingStatus: '正在读取官方数据更新时间…',
+    searchLabel: '姓名或委任编号',
+    placeholder: '例如 Guojin Zhou 或 2557299',
+    submit: '查询名单',
+    help: '姓名可按“名 姓”或官方名单的“姓, 名”顺序输入，至少输入两个字符。',
+    resultsTitle: '查询结果',
+    waiting: '等待查询',
+    initialTitle: '从一个准确线索开始',
+    initialBody: '输入委任编号可获得最明确的单条结果；按姓名查询时可能出现重名。',
+    sourceTitle: '数据来自官方公开名单',
+    sourceLoading: '正在读取数据生成时间与同步信息…',
+    officialLink: '前往官方来源',
+    disclaimer:
+      '本工具并非加州州务卿官方网站，与其不存在隶属、授权或认可关系。找到记录仅表示该姓名或委任编号出现在所示时间生成的现行名单中，并不核验当事人身份、签名、公章或某次公证行为；未找到记录也不是资格状态的最终认定。数据可能延迟、遗漏或有误，请以官方来源及加州州务卿公证处的答复为准。',
+  },
+  en: {
+    eyebrow: 'California Secretary of State public data',
+    heading: 'Verify a California Notary Public',
+    intro:
+      'Search by name or commission number to see whether a person appears in the current active-notary listing published by the California Secretary of State.',
+    accuracy: 'A commission number gives the most precise result.',
+    updateLabel: 'Official data update time',
+    loadingStatus: 'Loading official data update time…',
+    searchLabel: 'Name or commission number',
+    placeholder: 'e.g. Guojin Zhou or 2557299',
+    submit: 'Search listing',
+    help: 'Enter a name as “First Last” or the listing format “Last, First.” Use at least two characters.',
+    resultsTitle: 'Search results',
+    waiting: 'Waiting for a search',
+    initialTitle: 'Start with a precise detail',
+    initialBody:
+      'A commission number normally returns one unambiguous record. Name searches may include multiple people.',
+    sourceTitle: 'Data from the official public listing',
+    sourceLoading: 'Loading source generation and synchronization times…',
+    officialLink: 'Visit official source',
+    disclaimer:
+      'This is an unofficial convenience tool. It is not affiliated with, authorized by, or endorsed by the California Secretary of State. A match only means the name or commission number appears in the active listing generated at the time shown; it does not verify identity, a signature, a seal, or any particular notarization. No match is not a final determination of status. Data may be delayed, incomplete, or incorrect. Confirm important results with the official source or the Secretary of State Notary Public Section.',
+  },
+}[lang];
+
+const clientCopy = {
+  locale: lang === 'zh' ? 'zh-CN' : 'en-US',
+  loadingStatus: copy.loadingStatus,
+  readyStatus: lang === 'zh' ? '官方现行名单已载入' : 'Official active listing loaded',
+  statusError:
+    lang === 'zh' ? '暂时无法读取名单状态' : 'Listing status is temporarily unavailable',
+  sourceError:
+    lang === 'zh'
+      ? '当前无法取得同步信息，请直接访问官方来源。'
+      : 'Synchronization details are unavailable. Please use the official source.',
+  sourceTimes:
+    lang === 'zh'
+      ? '官方文件生成于 {generated}；本站读取于 {retrieved}。'
+      : 'Official file generated {generated}; retrieved by this service {retrieved}.',
+  unknownTime: lang === 'zh' ? '时间未知' : 'time unavailable',
+  queryRequired:
+    lang === 'zh' ? '请输入至少两个姓名字符或完整委任编号。' : 'Enter at least two name characters or a full commission number.',
+  searching: lang === 'zh' ? '正在查询…' : 'Searching…',
+  submit: copy.submit,
+  resultsSummary:
+    lang === 'zh' ? '“{query}” · 显示 {count} 条结果' : '“{query}” · {count} result(s) shown',
+  noResultsSummary: lang === 'zh' ? '“{query}” · 0 条结果' : '“{query}” · 0 results',
+  noResultsTitle:
+    lang === 'zh' ? '当前现行名单中没有找到匹配记录' : 'No match found in the current active listing',
+  noResultsBody:
+    lang === 'zh'
+      ? '这不是对资格状态的最终认定。请检查拼写或委任编号，并通过下方链接核对官方来源。'
+      : 'This is not a final status determination. Check the spelling or commission number, then confirm with the official source below.',
+  requestErrorTitle: lang === 'zh' ? '暂时无法完成查询' : 'Search is temporarily unavailable',
+  requestErrorBody:
+    lang === 'zh'
+      ? '查询服务没有响应，请稍后重试或直接前往官方来源。'
+      : 'The lookup service did not respond. Try again later or use the official source.',
+  resultKicker:
+    lang === 'zh' ? '列于官方现行名单' : 'Listed in the official active directory',
+  commission: lang === 'zh' ? '委任编号' : 'Commission',
+  expires: lang === 'zh' ? '有效期至' : 'Expires',
+  county: lang === 'zh' ? '备案县' : 'Filing county',
+  location: lang === 'zh' ? '登记城市' : 'Listed city',
+  countyCode: lang === 'zh' ? '县代码 {code}' : 'County code {code}',
+};
+---
+
+<section
+  id="verify-notary"
+  class="lookup-section"
+  data-notary-lookup
+  data-api-base={apiBaseUrl}
+  data-copy={JSON.stringify(clientCopy)}
+>
+  <div class="container">
+    <div class="lookup-shell">
+      <header class="lookup-intro">
+        <div class="lookup-copy">
+          <p class="lookup-eyebrow">{copy.eyebrow}</p>
+          <h2>{copy.heading}</h2>
+          <p class="lookup-description">{copy.intro}</p>
+          <p class="lookup-accuracy">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3 5 6v5c0 4.8 2.9 8.2 7 10 4.1-1.8 7-5.2 7-10V6l-7-3Z"></path>
+              <path d="m9.3 12 1.8 1.8 3.9-4"></path>
+            </svg>
+            {copy.accuracy}
+          </p>
+        </div>
+
+        <div class="registry-stat" aria-live="polite">
+          <strong data-updated-date>—</strong>
+          <span><span data-updated-time>—</span> · {copy.updateLabel}</span>
+          <div class="dataset-status" data-dataset-status data-state="loading">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span data-dataset-status-text>{copy.loadingStatus}</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="lookup-workspace">
+        <form class="lookup-form" data-search-form role="search">
+          <label for={`notary-query-${lang}`}>{copy.searchLabel}</label>
+          <div class="lookup-controls">
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="6.5"></circle>
+                <path d="m16 16 4 4"></path>
+              </svg>
+              <input
+                id={`notary-query-${lang}`}
+                data-search-input
+                name="q"
+                type="search"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder={copy.placeholder}
+              />
+            </div>
+            <button type="submit" data-search-button>{copy.submit}</button>
+          </div>
+          <p class="search-help">{copy.help}</p>
+        </form>
+
+        <section class="results-panel" aria-labelledby={`notary-results-${lang}`}>
+          <div class="results-heading">
+            <h3 id={`notary-results-${lang}`}>{copy.resultsTitle}</h3>
+            <p data-result-summary>{copy.waiting}</p>
+          </div>
+          <div data-results aria-live="polite" aria-busy="false">
+            <div class="lookup-notice">
+              <span aria-hidden="true">#</span>
+              <div>
+                <h4>{copy.initialTitle}</h4>
+                <p>{copy.initialBody}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="source-row">
+        <div>
+          <h3>{copy.sourceTitle}</h3>
+          <p data-source-detail>{copy.sourceLoading}</p>
+        </div>
+        <a
+          href="https://www.sos.ca.gov/notary/notary-public-listing"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {copy.officialLink}
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+
+      <p class="lookup-disclaimer"><strong>{lang === 'zh' ? '重要提示：' : 'Important:'}</strong> {copy.disclaimer}</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  const countyNames = [
+    '', 'Alameda', 'Alpine', 'Amador', 'Butte', 'Calaveras', 'Colusa', 'Contra Costa',
+    'Del Norte', 'El Dorado', 'Fresno', 'Glenn', 'Humboldt', 'Imperial', 'Inyo', 'Kern',
+    'Kings', 'Lake', 'Lassen', 'Los Angeles', 'Madera', 'Marin', 'Mariposa', 'Mendocino',
+    'Merced', 'Modoc', 'Mono', 'Monterey', 'Napa', 'Nevada', 'Orange', 'Placer', 'Plumas',
+    'Riverside', 'Sacramento', 'San Benito', 'San Bernardino', 'San Diego', 'San Francisco',
+    'San Joaquin', 'San Luis Obispo', 'San Mateo', 'Santa Barbara', 'Santa Clara',
+    'Santa Cruz', 'Shasta', 'Sierra', 'Siskiyou', 'Solano', 'Sonoma', 'Stanislaus',
+    'Sutter', 'Tehama', 'Trinity', 'Tulare', 'Tuolumne', 'Ventura', 'Yolo', 'Yuba',
+  ];
+
+  const replaceTokens = (template, values) =>
+    Object.entries(values).reduce(
+      (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
+      template,
+    );
+
+  const makeElement = (tag, className, text) => {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = String(text);
+    return element;
+  };
+
+  document.querySelectorAll('[data-notary-lookup]').forEach((root) => {
+    if (root.dataset.initialized === 'true') return;
+    root.dataset.initialized = 'true';
+
+    const apiBase = root.dataset.apiBase?.replace(/\/$/, '') ?? '';
+    const copy = JSON.parse(root.dataset.copy ?? '{}');
+    const form = root.querySelector('[data-search-form]');
+    const input = root.querySelector('[data-search-input]');
+    const button = root.querySelector('[data-search-button]');
+    const results = root.querySelector('[data-results]');
+    const resultSummary = root.querySelector('[data-result-summary]');
+    const datasetStatus = root.querySelector('[data-dataset-status]');
+    const datasetStatusText = root.querySelector('[data-dataset-status-text]');
+    const updatedDate = root.querySelector('[data-updated-date]');
+    const updatedTime = root.querySelector('[data-updated-time]');
+    const sourceDetail = root.querySelector('[data-source-detail]');
+    const numberFormat = new Intl.NumberFormat(copy.locale);
+
+    const formatPacificTime = (value) => {
+      if (!value) return copy.unknownTime;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return copy.unknownTime;
+      return new Intl.DateTimeFormat(copy.locale, {
+        timeZone: 'America/Los_Angeles',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      }).format(date);
+    };
+
+    const updateDisplayedTime = (source) => {
+      const value = source?.generatedAt ?? source?.retrievedAt;
+      if (!value) return;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return;
+      if (updatedDate) {
+        updatedDate.textContent = new Intl.DateTimeFormat(copy.locale, {
+          timeZone: 'America/Los_Angeles',
+          month: 'short',
+          day: 'numeric',
+        }).format(date);
+      }
+      if (updatedTime) {
+        updatedTime.textContent = `${new Intl.DateTimeFormat(copy.locale, {
+          timeZone: 'America/Los_Angeles',
+          hour: 'numeric',
+          minute: '2-digit',
+          ...(copy.locale === 'zh-CN' ? { hourCycle: 'h23' } : {}),
+        }).format(date)} PT`;
+      }
+    };
+
+    const updateSource = (source) => {
+      if (!source || !sourceDetail) return;
+      updateDisplayedTime(source);
+      sourceDetail.textContent = replaceTokens(copy.sourceTimes, {
+        generated: formatPacificTime(source.generatedAt),
+        retrieved: formatPacificTime(source.retrievedAt),
+      });
+    };
+
+    const setStatus = (state, text) => {
+      if (datasetStatus) datasetStatus.dataset.state = state;
+      if (datasetStatusText) datasetStatusText.textContent = text;
+    };
+
+    const renderNotice = (kind, title, body) => {
+      if (!results) return;
+      const notice = makeElement('div', 'lookup-notice');
+      notice.dataset.kind = kind;
+      notice.append(makeElement('span', '', kind === 'error' ? '!' : '0'));
+      const message = makeElement('div');
+      message.append(makeElement('h4', '', title), makeElement('p', '', body));
+      notice.append(message);
+      results.replaceChildren(notice);
+    };
+
+    const addFact = (list, label, value) => {
+      const item = makeElement('div');
+      item.append(makeElement('dt', '', label), makeElement('dd', '', value || '—'));
+      list.append(item);
+    };
+
+    const renderRecords = (records, source, query) => {
+      updateSource(source);
+      if (!records.length) {
+        if (resultSummary) {
+          resultSummary.textContent = replaceTokens(copy.noResultsSummary, { query });
+        }
+        renderNotice('empty', copy.noResultsTitle, copy.noResultsBody);
+        return;
+      }
+
+      if (resultSummary) {
+        resultSummary.textContent = replaceTokens(copy.resultsSummary, {
+          query,
+          count: numberFormat.format(records.length),
+        });
+      }
+
+      const list = makeElement('div', 'results-list');
+      list.setAttribute('role', 'list');
+      records.forEach((record, index) => {
+        const card = makeElement('article', 'result-card');
+        card.setAttribute('role', 'listitem');
+        card.style.setProperty('--result-index', String(Math.min(index, 6)));
+
+        const identity = makeElement('div', 'result-identity');
+        identity.append(
+          makeElement('p', 'result-kicker', copy.resultKicker),
+          makeElement('h4', 'result-name', record.name),
+        );
+        if (record.businessName) {
+          identity.append(makeElement('p', 'result-business', record.businessName));
+        }
+
+        const facts = makeElement('dl', 'result-facts');
+        const county =
+          countyNames[Number(record.countyNumber)] ||
+          replaceTokens(copy.countyCode, { code: record.countyNumber });
+        const location = [record.city, record.state, record.zipCode].filter(Boolean).join(' ');
+        addFact(facts, copy.commission, `#${record.commissionNumber}`);
+        addFact(facts, copy.expires, record.expirationDate);
+        addFact(facts, copy.county, county);
+        addFact(facts, copy.location, location);
+        card.append(identity, facts);
+        list.append(card);
+      });
+      results?.replaceChildren(list);
+    };
+
+    const fetchJson = async (path) => {
+      const response = await fetch(`${apiBase}${path}`, {
+        headers: { accept: 'application/json' },
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    };
+
+    const loadHealth = async () => {
+      try {
+        const status = await fetchJson('/health');
+        setStatus('ready', copy.readyStatus);
+        updateSource(status.source);
+      } catch (error) {
+        console.error('[notary-lookup] health check failed', error);
+        setStatus('error', copy.statusError);
+        if (sourceDetail) sourceDetail.textContent = copy.sourceError;
+      }
+    };
+
+    const runSearch = async (query) => {
+      const value = query.trim();
+      if ((!/^\d+$/.test(value) && value.length < 2) || !value) {
+        renderNotice('error', copy.requestErrorTitle, copy.queryRequired);
+        input?.focus();
+        return;
+      }
+
+      if (button) {
+        button.disabled = true;
+        button.textContent = copy.searching;
+      }
+      results?.setAttribute('aria-busy', 'true');
+
+      try {
+        const params = new URLSearchParams({ limit: '20' });
+        params.set(/^\d+$/.test(value) ? 'commissionNumber' : 'name', value);
+        const payload = await fetchJson(`/search?${params}`);
+        renderRecords(payload.results ?? [], payload.source, value);
+        const pageUrl = new URL(window.location.href);
+        pageUrl.searchParams.set('q', value);
+        window.history.replaceState(null, '', pageUrl);
+      } catch (error) {
+        console.error('[notary-lookup] search failed', error);
+        renderNotice('error', copy.requestErrorTitle, copy.requestErrorBody);
+      } finally {
+        results?.setAttribute('aria-busy', 'false');
+        if (button) {
+          button.disabled = false;
+          button.textContent = copy.submit;
+        }
+      }
+    };
+
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      runSearch(input?.value ?? '');
+    });
+
+    loadHealth();
+    const initialQuery = new URLSearchParams(window.location.search).get('q');
+    if (initialQuery) {
+      if (input) input.value = initialQuery;
+      runSearch(initialQuery);
+    }
+  });
+</script>
+
+<style>
+  .lookup-section {
+    padding: 112px 0;
+  }
+
+  .lookup-shell {
+    overflow: hidden;
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 24px 64px rgba(27, 59, 50, 0.07);
+  }
+
+  .lookup-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 56px;
+    padding: 64px;
+    background:
+      radial-gradient(circle at 90% 10%, rgba(240, 184, 58, 0.2), transparent 32%),
+      var(--brand-green);
+    color: var(--bg-white);
+  }
+
+  .lookup-copy {
+    max-width: 720px;
+  }
+
+  .lookup-eyebrow {
+    margin-bottom: 14px;
+    color: var(--brand-yellow);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .lookup-intro h2 {
+    margin-bottom: 18px;
+    font-size: clamp(34px, 4vw, 48px);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+
+  .lookup-description {
+    max-width: 680px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 18px;
+    line-height: 1.7;
+  }
+
+  .lookup-accuracy {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 24px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .lookup-accuracy svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: var(--brand-yellow);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .registry-stat {
+    align-self: center;
+    padding-left: 40px;
+    border-left: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .registry-stat > strong {
+    display: block;
+    color: var(--brand-yellow);
+    font-size: clamp(36px, 4vw, 52px);
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .registry-stat > span {
+    display: block;
+    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 13px;
+  }
+
+  .dataset-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 24px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .status-dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    margin-top: 5px;
+    border-radius: 50%;
+    background: var(--brand-yellow);
+    box-shadow: 0 0 0 4px rgba(240, 184, 58, 0.15);
+  }
+
+  .dataset-status[data-state='ready'] .status-dot {
+    background: #8bd4a5;
+    box-shadow: 0 0 0 4px rgba(139, 212, 165, 0.15);
+  }
+
+  .dataset-status[data-state='error'] .status-dot {
+    background: var(--brand-terra);
+    box-shadow: 0 0 0 4px rgba(216, 132, 101, 0.16);
+  }
+
+  .lookup-workspace {
+    display: grid;
+    grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.4fr);
+    min-height: 430px;
+  }
+
+  .lookup-form {
+    padding: 48px;
+    background: var(--bg-cream);
+    border-right: 1px solid var(--border-soft);
+  }
+
+  .lookup-form > label {
+    display: block;
+    margin-bottom: 14px;
+    color: var(--brand-green);
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .lookup-controls {
+    display: grid;
+    gap: 12px;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .input-wrap svg {
+    position: absolute;
+    top: 50%;
+    left: 18px;
+    width: 21px;
+    height: 21px;
+    color: var(--text-muted);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .input-wrap input {
+    width: 100%;
+    min-height: 54px;
+    padding: 14px 18px 14px 50px;
+    color: var(--text-dark);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    outline: none;
+    font: inherit;
+    font-size: 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .input-wrap input:focus {
+    border-color: var(--brand-terra);
+    box-shadow: 0 0 0 4px rgba(216, 132, 101, 0.12);
+  }
+
+  .lookup-controls > button {
+    min-height: 52px;
+    padding: 0 24px;
+    color: var(--bg-white);
+    background: var(--brand-green);
+    border: 0;
+    border-radius: var(--radius-pill);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .lookup-controls > button:hover:not(:disabled) {
+    background: var(--brand-green-hover);
+    transform: translateY(-1px);
+  }
+
+  .lookup-controls > button:disabled {
+    cursor: wait;
+    opacity: 0.68;
+  }
+
+  .search-help {
+    margin-top: 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .results-panel {
+    min-width: 0;
+    padding: 48px;
+    background: var(--bg-white);
+  }
+
+  .results-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .results-heading h3 {
+    color: var(--brand-green);
+    font-size: 22px;
+  }
+
+  .results-heading p {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: right;
+  }
+
+  .lookup-section :global(.lookup-notice) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 18px;
+    align-items: start;
+    padding: 28px;
+    background: var(--bg-cream);
+    border: 1px dashed #dcd5ca;
+    border-radius: var(--radius-md);
+  }
+
+  .lookup-section :global(.lookup-notice > span) {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    color: var(--brand-terra);
+    background: var(--bg-white);
+    border: 1px solid var(--border-soft);
+    border-radius: 50%;
+    font-weight: 700;
+  }
+
+  .lookup-section :global(.lookup-notice[data-kind='error'] > span) {
+    color: #9a3f2d;
+  }
+
+  .lookup-section :global(.lookup-notice h4) {
+    margin-bottom: 6px;
+    font-size: 16px;
+  }
+
+  .lookup-section :global(.lookup-notice p) {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .lookup-section :global(.results-list) {
+    display: grid;
+    gap: 14px;
+  }
+
+  .lookup-section :global(.result-card) {
+    display: grid;
+    grid-template-columns: minmax(170px, 0.8fr) minmax(280px, 1.2fr);
+    gap: 28px;
+    padding: 24px;
+    background: var(--bg-cream);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    animation: result-in 0.32s ease both;
+    animation-delay: calc(var(--result-index) * 45ms);
+  }
+
+  .lookup-section :global(.result-kicker) {
+    margin-bottom: 5px;
+    color: var(--brand-terra);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .lookup-section :global(.result-name) {
+    color: var(--brand-green);
+    font-size: 19px;
+    line-height: 1.3;
+  }
+
+  .lookup-section :global(.result-business) {
+    margin-top: 7px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .lookup-section :global(.result-facts) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 22px;
+  }
+
+  .lookup-section :global(.result-facts dt) {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .lookup-section :global(.result-facts dd) {
+    margin-top: 3px;
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .source-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    padding: 30px 48px;
+    background: var(--bg-alt);
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .source-row h3 {
+    margin-bottom: 6px;
+    color: var(--brand-green);
+    font-size: 16px;
+  }
+
+  .source-row p {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .source-row a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    padding: 11px 17px;
+    color: var(--brand-green);
+    border: 1px solid rgba(27, 59, 50, 0.28);
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .source-row a:hover {
+    color: var(--bg-white);
+    background: var(--brand-green);
+  }
+
+  .lookup-disclaimer {
+    padding: 24px 48px 30px;
+    color: var(--text-muted);
+    background: var(--bg-alt);
+    font-size: 12px;
+    line-height: 1.75;
+  }
+
+  .lookup-disclaimer strong {
+    color: var(--text-dark);
+  }
+
+  @keyframes result-in {
+    from { opacity: 0; transform: translateY(7px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 960px) {
+    .lookup-intro {
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+
+    .registry-stat {
+      padding: 0;
+      border: 0;
+    }
+
+    .lookup-workspace {
+      grid-template-columns: 1fr;
+    }
+
+    .lookup-form {
+      border-right: 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+  }
+
+  @media (max-width: 680px) {
+    .lookup-section {
+      padding: 72px 0;
+    }
+
+    .lookup-intro,
+    .lookup-form,
+    .results-panel {
+      padding: 32px 24px;
+    }
+
+    .lookup-intro h2 {
+      font-size: 34px;
+    }
+
+    .lookup-description {
+      font-size: 16px;
+    }
+
+    .results-heading,
+    .source-row {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .results-heading p {
+      text-align: left;
+    }
+
+    .lookup-section :global(.result-card) {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .lookup-section :global(.result-facts) {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .source-row {
+      padding: 26px 24px;
+    }
+
+    .lookup-disclaimer {
+      padding: 0 24px 28px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lookup-section :global(.result-card) {
+      animation: none;
+    }
+  }
+</style>

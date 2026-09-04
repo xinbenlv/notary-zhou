@@ -1,0 +1,19 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../../components/Navbar.astro';
+import NotaryLookup from '../../components/NotaryLookup.astro';
+import Footer from '../../components/Footer.astro';
+---
+
+<Layout
+  lang="en"
+  path="/en/verify/"
+  title="Verify a California Notary Public | Notary Zhou"
+  description="Search by name or commission number in the current active-notary listing published by the California Secretary of State."
+>
+  <Navbar lang="en" />
+  <main>
+    <NotaryLookup lang="en" />
+  </main>
+  <Footer lang="en" />
+</Layout>

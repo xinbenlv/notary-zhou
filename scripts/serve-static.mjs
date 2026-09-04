@@ -8,11 +8,13 @@ import { stat } from 'node:fs/promises';
 import { join, normalize, extname, resolve } from 'node:path';
 import { createGzip, createBrotliCompress, constants as zlibConstants } from 'node:zlib';
 import { pipeline } from 'node:stream';
+import { createNotaryListingService } from '../src/lib/notary-public-listing.mjs';
 
 // 带 adapter 构建时产物在 dist/client；纯静态构建时在 dist
 const ROOT = existsSync(resolve('dist/client')) ? resolve('dist/client') : resolve('dist');
 const SSR_ENTRY = resolve('dist/server/entry.mjs');
 const PORT = Number(process.env.PORT) || 8080;
+const notaryListing = createNotaryListingService();
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -80,13 +82,52 @@ if (existsSync(SSR_ENTRY)) {
   console.log('ssr handler: loaded');
 }
 
+await notaryListing.start();
+
+function sendJson(req, res, status, body) {
+  const payload = JSON.stringify(body);
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Length': Buffer.byteLength(payload),
+    'Cache-Control': 'no-store',
+    'Access-Control-Allow-Origin': '*',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Robots-Tag': 'noindex, nofollow',
+  });
+  if (req.method === 'HEAD') res.end();
+  else res.end(payload);
+}
+
 const server = createServer(async (req, res) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405, { Allow: 'GET, HEAD' }).end('Method Not Allowed');
     return;
   }
-  if (req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' }).end('ok');
+  const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+
+  if (url.pathname === '/health') {
+    sendJson(req, res, 200, notaryListing.getStatus());
+    return;
+  }
+
+  if (url.pathname === '/search') {
+    const commissionNumber = url.searchParams.get('commissionNumber')?.trim();
+    const name = url.searchParams.get('name')?.trim();
+    if (!commissionNumber && !name) {
+      sendJson(req, res, 400, { error: 'Provide commissionNumber or name' });
+      return;
+    }
+
+    const requestedLimit = Number(url.searchParams.get('limit') ?? 20);
+    const limit = Number.isSafeInteger(requestedLimit) ? requestedLimit : 20;
+    sendJson(req, res, 200, {
+      results: notaryListing.search({
+        commissionNumber: commissionNumber || undefined,
+        name: name || undefined,
+        limit,
+      }),
+      source: notaryListing.getStatus().source,
+    });
     return;
   }
 
@@ -131,3 +172,17 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`static server: serving ${ROOT} on :${PORT}`);
 });
+
+function shutDown(signal) {
+  console.log(`received ${signal}; shutting down`);
+  notaryListing.stop();
+  server.close((error) => {
+    if (error) {
+      console.error(error);
+      process.exitCode = 1;
+    }
+  });
+}
+
+process.once('SIGINT', () => shutDown('SIGINT'));
+process.once('SIGTERM', () => shutDown('SIGTERM'));

@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import NotaryLookup from '../components/NotaryLookup.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout
+  lang="zh"
+  path="/verify/"
+  title="查验加州公证员 | 周公证员"
+  description="按姓名或委任编号查验是否列入加州州务卿当前公布的现行公证员名单。"
+>
+  <Navbar lang="zh" />
+  <main>
+    <NotaryLookup lang="zh" />
+  </main>
+  <Footer lang="zh" />
+</Layout>

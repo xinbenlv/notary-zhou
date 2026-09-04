@@ -6,11 +6,15 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "start": "node scripts/serve-static.mjs",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "check:articles": "astro build && node scripts/check-articles.mjs",
-    "astro": "astro"
+    "astro": "astro",
+    "notary:service": "node scripts/run-notary-listing-service.mjs",
+    "notary:benchmark": "node --expose-gc scripts/benchmark-notary-public-listing.mjs",
+    "test:notary": "node --test tests/notary-public-listing.test.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^10.1.4",
