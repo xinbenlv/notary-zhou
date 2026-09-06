@@ -24,27 +24,32 @@
 - It checks public site health and sitemaps, Search Console indexing/query data, organic traffic and inquiry clicks, saving reports in `reports/seo-weekly/`.
 - The first 100 commission IDs remain fixed. Expansion is a later recommendation based on actual evidence; no inferred keyword volumes or DataForSEO calls.
 
-## Google Business Profile — waiting for user confirmation
+## Google Business Profile — verified September 6, Google review processing
 
-No businesses existed in the signed-in account. The new-business form has:
+No businesses existed before setup. On September 6, the user confirmed that they accepted the Business Profile terms. After the user provided an address for the explicitly non-public verification form, Google displayed **You're now verified**. A freshly loaded Business Profile Manager confirms **1 business, 100% verified**, **Verified (1)**, **Pending review (1)**, and row status **Processing**. Public availability is still pending Google's review. The record has:
 
 - Name: **Notary Zhou**.
 - Type: **Service business — makes visits to customers** only; Local store and Online retail are unselected.
 - Category: **Notary public**.
 - Service areas: **Santa Clara County, CA; San Mateo County, CA; Alameda County, CA**.
 - Public website: **https://www.notaryzhou.com/en/**.
-- Phone and chat phone left blank, pending the user's preference. No home address entered.
+- Phone and chat phone left blank, pending the user's preference.
+- Business location remains **No location; deliveries and home services only**, confirmed after verification.
+- Planning: **Appointment required**, saved and confirmed.
+- Language assistance: **English** and **Mandarin**, saved and confirmed.
 - Optional marketing tips and surveys unchecked.
 
-The form is at **Put your business on the map / Continue**. Continuing accepts the Google Business Profile Terms and shares app data with Google Business Manager. Browser rules require confirmation at this step; the question is pending. The business has **not** yet been created or verified. Do not create a duplicate when resuming.
+Terms acceptance and the address verification step are complete. The existing business store code is `06018910610616092135`; management link: https://business.google.com/n/474424666780005805/searchprofile . Google explicitly states that the verification address is hidden from the public. No additional phone, postcard or video verification was requested in this flow. After completing setup, the refreshed owner panel says **Google is processing your verification. It may take up to 5 days**, and **NOT PUBLICLY VISIBLE**. Treat this as verification submitted/accepted with processing pending, not a live listing. Resume this existing record; do not create a duplicate.
 
-If Google subsequently requires a private verification address, have the user enter their actual address directly in Google and preserve the service-only/hidden-address setting. Do not use Lakewood Park as an office or storefront address, and do not put a residential address in this repository, website, public profile or chat.
+Keep the residential verification address out of this repository, website and public profile. Do not use Lakewood Park as an office or storefront address. Preserve the service-only/hidden-address setting.
 
-Suggested description for the later description field:
+English description saved and confirmed September 6:
 
 > Notary Zhou provides mobile notary public services by appointment in Santa Clara, San Mateo and Alameda counties, California. We travel to agreed locations such as homes, offices, hospitals and coffee shops. Service is available in Mandarin Chinese and English. Services include acknowledgments, jurats and eligible power-of-attorney copy certifications. Contact us to arrange a visit and confirm document and identification requirements.
 
-This description has not been published. Hours and public phone remain unspecified. The existing website rule waives travel fees for meeting at Lakewood Park, Sunnyvale; whether the user also wants free travel within a surrounding radius is still unanswered. Do not invent a radius or publish the park as a walk-in location.
+Services saved and independently confirmed in the Services editor match the existing website: Acknowledgment statement notarization; Affidavit & oath notarization; Jurat notary acknowledgments; Certified copy of a Power of Attorney; Mobile notary services by appointment. Broad document-copy certification, legal advice and online notarization were not selected.
+
+The setup flow reached 100% and was completed with Continue. Fixed business hours, storefront and business photos, and the optional Google Ads credit were skipped. Hours remain **Open with no main hours**; public phone remains unspecified. The existing website rule waives travel fees for meeting at Lakewood Park, Sunnyvale; whether the user also wants free travel within a surrounding radius is still unanswered. Do not invent a radius or publish the park as a walk-in location. Saved profile fields may remain unavailable to customers while Google processes the profile.
 
 Google references:
 - https://support.google.com/business/answer/2853879?hl=en
