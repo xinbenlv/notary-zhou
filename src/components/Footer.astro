@@ -168,5 +168,10 @@ const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为�
           : `加州公证员 · 委任编号 ${siteConfig.commissionNumber}（${siteConfig.commissionCounty} 县）· 有效期至${siteConfig.commissionExpiresZh}`}<br />
       &copy; {siteConfig.copyrightYear} NotaryZhou.com. All rights reserved.
     </p>
+    <p class="footer-text" style="margin-top: 16px;">
+      <a href={`${langPath(lang)}privacy/`}>
+        {lang === 'en' ? 'Privacy & cookies' : '隐私与 Cookie 说明'}
+      </a>
+    </p>
   </div>
 </footer>

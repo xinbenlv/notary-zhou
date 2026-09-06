@@ -17,6 +17,7 @@ interface Props {
   noindex?: boolean;
   /** Overrides the default LocalBusiness JSON-LD (e.g. Article schema). */
   jsonLd?: object;
+  alternatePaths?: Record<Lang, string>;
 }
 
 const { lang = 'zh', path, ogType = 'website', jsonLd } = Astro.props;
@@ -29,6 +30,7 @@ const ogImage = Astro.props.ogImage === null
   : Astro.props.ogImage ?? `${siteConfig.url}/images/george-zhou.jpg`;
 const canonical = `${siteConfig.url}${path ?? langPath(lang)}`;
 const isHomepage = !path;
+const alternatePaths = Astro.props.alternatePaths ?? (isHomepage ? { zh: '/', en: '/en/' } : null);
 ---
 
 <!doctype html>
@@ -43,11 +45,11 @@ const isHomepage = !path;
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="canonical" href={canonical} />
-    {isHomepage && (
+    {alternatePaths && (
       <>
-        <link rel="alternate" hreflang="zh" href={`${siteConfig.url}/`} />
-        <link rel="alternate" hreflang="en" href={`${siteConfig.url}/en/`} />
-        <link rel="alternate" hreflang="x-default" href={`${siteConfig.url}/`} />
+        <link rel="alternate" hreflang="zh" href={`${siteConfig.url}${alternatePaths.zh}`} />
+        <link rel="alternate" hreflang="en" href={`${siteConfig.url}${alternatePaths.en}`} />
+        <link rel="alternate" hreflang="x-default" href={`${siteConfig.url}${alternatePaths.zh}`} />
       </>
     )}
 

@@ -24,6 +24,7 @@ const t = {
     comingSoon: 'Coming Soon',
     comingSoonDesc: 'Online scheduling is coming soon. Meanwhile, please email us at',
     comingSoonDescEnd: 'to book an appointment.',
+    mobileOnly: 'Mobile notary service by appointment. We come to your agreed location; there is no walk-in office.',
   },
   zh: {
     heading: '第一次办理公证？',
@@ -41,6 +42,7 @@ const t = {
     comingSoon: '即将开放',
     comingSoonDesc: '在线预约系统即将上线，现阶段请先发送邮件至',
     comingSoonDescEnd: '与我们预约。',
+    mobileOnly: '仅提供预约制上门公证，到双方约定地点办理，不设接待到访客户的办公室。',
   },
 }[lang];
 ---
@@ -82,9 +84,10 @@ const t = {
           <h3>{t.comingSoon}</h3>
           <p>
             {t.comingSoonDesc}
-            <a href={`mailto:${siteConfig.email}`} style="color: var(--brand-green);">{siteConfig.email}</a>
+            <a href={`mailto:${siteConfig.email}`} data-contact-method="email" data-contact-placement="booking" style="color: var(--brand-green);">{siteConfig.email}</a>
             {t.comingSoonDescEnd}
           </p>
+          <p style="margin-top: 16px;">{t.mobileOnly}</p>
         </div>
       </div>
     </div>

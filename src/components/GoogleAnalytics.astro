@@ -26,6 +26,21 @@
       allow_ad_personalization_signals: false,
     });
 
+    // Count an intentional inquiry click, not an email sent or a booking made.
+    // Only explicitly marked business-contact links qualify. Never send the
+    // link URL, address, text, lookup input, or form contents as event data.
+    document.addEventListener('click', (event) => {
+      if (event.defaultPrevented || !(event.target instanceof Element)) return;
+      const link = event.target.closest('a[data-contact-method="email"]');
+      if (!link || !link.getAttribute('href')?.startsWith('mailto:')) return;
+      if (link.dataset.contactPlacement !== 'booking') return;
+      window.gtag('event', 'contact_email_click', {
+        contact_method: 'email',
+        contact_placement: 'booking',
+        transport_type: 'beacon',
+      });
+    });
+
     const script = document.createElement('script');
     script.async = true;
     script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;

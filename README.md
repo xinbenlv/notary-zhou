@@ -119,3 +119,14 @@ in the stream; no lookup or contact-form event parameters are collected.
 Keep a single `gtag` config call: it sends the initial `page_view` automatically.
 Do not add a second GTM/GA tag or manual page view. Preview pages remain excluded.
 Configuration and deployment evidence: `reports/google-setup-status.md`.
+
+The explicitly marked appointment email link sends `contact_email_click`, with
+only the fixed `contact_method=email` and `contact_placement=booking` fields.
+This measures an inquiry click, not an email sent, a confirmed lead, or a booking.
+Privacy/correction links are excluded; email addresses, link contents, and
+message contents are never event parameters. Run `npm run test:analytics` to
+check redaction, duplicate initialization, and event boundaries.
+
+Privacy notices are available at `/privacy/` (Chinese) and `/en/privacy/`
+(English), linked from both the main footer and public-record footer. They
+describe the actual Analytics, lookup, email, map, and font integrations.

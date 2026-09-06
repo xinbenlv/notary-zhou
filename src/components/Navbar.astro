@@ -33,8 +33,9 @@ const t = {
 }[lang];
 const home = langPath(lang);
 const verifyHref = `${home}verify/`;
-const switchHref = /\/verify\/?$/.test(Astro.url.pathname)
-  ? `${langPath(otherLang(lang))}verify/`
+const localizedPage = Astro.url.pathname.match(/\/(verify|privacy)\/?$/)?.[1];
+const switchHref = localizedPage
+  ? `${langPath(otherLang(lang))}${localizedPage}/`
   : langPath(otherLang(lang));
 ---
 

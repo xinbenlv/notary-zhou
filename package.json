@@ -14,7 +14,8 @@
     "astro": "astro",
     "notary:service": "node scripts/run-notary-listing-service.mjs",
     "notary:benchmark": "node --expose-gc scripts/benchmark-notary-public-listing.mjs",
-    "test:notary": "node --test tests/notary-public-listing.test.mjs tests/notary-profile.test.mjs tests/sitemap.test.mjs"
+    "test:notary": "node --test tests/notary-public-listing.test.mjs tests/notary-profile.test.mjs tests/sitemap.test.mjs",
+    "test:analytics": "node --test tests/analytics.test.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^10.1.4",

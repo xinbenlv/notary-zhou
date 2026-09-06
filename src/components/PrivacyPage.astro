@@ -1,0 +1,86 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from './Navbar.astro';
+import Footer from './Footer.astro';
+import { siteConfig } from '../config';
+import { langPath, type Lang } from '../i18n';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const english = lang === 'en';
+const title = english ? 'Privacy & cookies' : '隐私与 Cookie 说明';
+const description = english
+  ? 'How Notary Zhou handles website visits, notary lookups, email inquiries, analytics, and third-party services.'
+  : '了解 Notary Zhou 如何处理网站访问、公证员查验、邮件咨询、访问统计及第三方服务相关信息。';
+const path = `${langPath(lang)}privacy/`;
+const updated = '2026-09-05';
+const jsonLd = {
+  '@context': 'https://schema.org', '@type': 'WebPage',
+  name: title, description, url: `${siteConfig.url}${path}`,
+  inLanguage: english ? 'en' : 'zh-CN', dateModified: updated,
+};
+---
+
+<Layout lang={lang} title={`${title} | Notary Zhou`} description={description} path={path}
+  ogImage={null} jsonLd={jsonLd} alternatePaths={{ zh: '/privacy/', en: '/en/privacy/' }}>
+  <Navbar lang={lang} />
+  <main class="article-page">
+    <div class="container">
+      <div class="article-wrap">
+        <p class="article-meta">{english ? 'Last updated: September 5, 2026' : '更新日期：2026 年 9 月 5 日'}</p>
+        <h1>{title}</h1>
+        <p class="article-desc">{description}</p>
+        <article class="article-body">
+          {english ? <>
+            <h2>About this notice</h2>
+            <p>This notice covers the Notary Zhou website at notaryzhou.com, operated by {siteConfig.owner.fullNameEn}. We provide mobile notary services by appointment. We do not publish a residential office address or offer a walk-in office.</p>
+
+            <h2>Website visits and notary lookups</h2>
+            <p>Your browser sends technical information, such as an IP address, requested URL, and browser details, to our hosting provider to load the website. This information may appear in infrastructure logs used to operate and secure the service.</p>
+            <p>When you search for a notary, the name or commission number you enter is sent to our server to find matching public records. Search terms may appear in request URLs and related infrastructure logs. We do not add lookup inputs to our Google Analytics events.</p>
+            <p>The directory republishes selected fields from the <a href="https://www.sos.ca.gov/notary/notary-public-listing">California Secretary of State's public notary listing</a>, including names, commission details, and listed cities and counties. We omit street addresses. To report a problem with a page, use its correction link or contact us below; changes to the official source must be handled with the Secretary of State.</p>
+
+            <h2>Google Analytics and cookies</h2>
+            <p>We use Google Analytics 4 to understand which pages people visit and whether they click the business email link in our appointment section. Analytics uses cookies, including cookies with names beginning with <code>_ga</code>, to distinguish browsers and visits. Google receives technical and usage information such as browser and device details, page titles, page URLs, and visit and engagement events.</p>
+            <p>We remove query strings and URL fragments from the page and referrer URLs supplied to Analytics. A profile page's title and URL can identify the public notary record viewed. An email-contact click records the contact method and that the link was in the appointment section; it does not mean an email was sent or an appointment was booked. We do not include email addresses, message contents, or document contents in these events.</p>
+            <p>Our Analytics configuration disables Google signals and advertising personalization signals. Enhanced measurement is off; we have not enabled automatic form or site-search tracking. Read <a href="https://policies.google.com/technologies/partner-sites">how Google uses information from sites that use its services</a> and <a href="https://policies.google.com/privacy">Google's Privacy Policy</a>.</p>
+
+            <h2>Email inquiries</h2>
+            <p>If you email us, your email provider and ours process your address, message, and any attachments so we can receive and respond to your inquiry and arrange services. Please send only what is needed for your question; do not include identity-document scans or sensitive documents in an initial inquiry. This website notice does not replace the separate recordkeeping requirements that apply when a notarization takes place.</p>
+
+            <h2>Fonts, maps, and external links</h2>
+            <p>Pages load fonts from Google Fonts. Some directory pages embed OpenStreetMap city maps; other links open Google Maps. These providers can receive technical information such as your IP address and browser details when their resources load or you follow a link. See <a href="https://developers.google.com/fonts/faq/privacy">Google Fonts privacy information</a> and the <a href="https://osmfoundation.org/wiki/Privacy_Policy">OpenStreetMap Foundation Privacy Policy</a>. External sites apply their own privacy practices.</p>
+
+            <h2>Your choices and contacting us</h2>
+            <p>You can manage or delete cookies in your browser and use the <a href="https://tools.google.com/dlpage/gaoptout">Google Analytics opt-out browser add-on</a> in supported browsers. Blocking Analytics does not prevent you from reading pages or searching the notary directory. These controls do not remove ordinary hosting requests or information you email to us.</p>
+            <p>For questions about this notice, website information, or a privacy request, email <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>. We may need enough information to identify the relevant record or request. If our website practices change, we will update this notice and its date.</p>
+          </> : <>
+            <h2>本说明的适用范围</h2>
+            <p>本说明适用于由 {siteConfig.owner.fullNameEn} 运营的 Notary Zhou 网站（notaryzhou.com）。我们提供预约制上门公证，不公开住宅办公地址，也不设接待到访客户的办公室。</p>
+
+            <h2>网站访问与公证员查验</h2>
+            <p>为加载网站，浏览器会向托管服务商发送 IP 地址、请求网址、浏览器等技术信息。这些信息可能出现在用于网站运行与安全维护的基础设施日志中。</p>
+            <p>查验时输入的姓名或委任编号会发送到我们的服务器，用于匹配公开记录。搜索词可能出现在请求网址及相关基础设施日志中。我们不会把查验输入添加到 Google Analytics 事件中。</p>
+            <p>查验目录展示<a href="https://www.sos.ca.gov/notary/notary-public-listing">加州州务卿公开公证员名录</a>的部分字段，包括姓名、委任信息及名录所列城市和县，不展示街道地址。页面信息有误时，可使用页面纠错入口或通过下方邮箱联系我们；官方原始记录的更正需向加州州务卿办理。</p>
+
+            <h2>Google Analytics 与 Cookie</h2>
+            <p>我们使用 Google Analytics 4 了解页面访问情况，以及访客是否点击预约区域的业务邮箱链接。Analytics 使用包括名称以 <code>_ga</code> 开头的 Cookie 来区分浏览器和访问。Google 会收到浏览器与设备信息、页面标题与网址、访问及互动事件等技术和使用信息。</p>
+            <p>提供给 Analytics 的页面网址和来源网址会去掉查询参数及片段。人物页面的标题和网址可能表明访客查看了哪一条公开公证员记录。邮件咨询点击仅记录联系渠道及链接位于预约区域；点击不代表邮件已发送，也不代表预约已完成。事件中不包含邮箱地址、邮件正文或文件内容。</p>
+            <p>我们的 Analytics 配置关闭了 Google signals 和广告个性化信号。增强型衡量已关闭，未启用自动表单或站内搜索跟踪。详情请参阅 <a href="https://policies.google.com/technologies/partner-sites?hl=zh-CN">Google 如何使用采用其服务的网站所提供的信息</a>及 <a href="https://policies.google.com/privacy?hl=zh-CN">Google 隐私权政策</a>。</p>
+
+            <h2>邮件咨询</h2>
+            <p>您发邮件给我们时，双方邮件服务商会处理邮件地址、正文和附件，以便我们收取、回复咨询并安排服务。请仅提供咨询所需的信息，首次咨询中请勿附上身份证件扫描件或敏感文件。本网站说明不替代实际办理公证时适用的独立记录保存要求。</p>
+
+            <h2>字体、地图与外部链接</h2>
+            <p>网站从 Google Fonts 加载字体。部分人物页面嵌入 OpenStreetMap 城市地图，另有链接会打开 Google Maps。加载资源或打开链接时，这些服务商可能收到 IP 地址、浏览器等技术信息。请参阅 <a href="https://developers.google.com/fonts/faq/privacy">Google Fonts 隐私说明</a>和 <a href="https://osmfoundation.org/wiki/Privacy_Policy">OpenStreetMap Foundation 隐私政策</a>。外部网站适用其自身的隐私规则。</p>
+
+            <h2>您的选择与联系方式</h2>
+            <p>您可以通过浏览器管理或删除 Cookie，也可以在支持的浏览器上使用 <a href="https://tools.google.com/dlpage/gaoptout">Google Analytics 停用插件</a>。阻止 Analytics 不影响阅读页面或查验公证员；这些设置不会取消访问网站所需的普通托管请求，也不会删除您已发给我们的邮件。</p>
+            <p>如有隐私问题、网站信息更正或其他隐私请求，请联系 <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>。我们可能需要足够的信息来确认相关记录或请求。网站处理方式发生变化时，我们会更新本说明及日期。</p>
+          </>}
+        </article>
+      </div>
+    </div>
+  </main>
+  <Footer lang={lang} />
+</Layout>
