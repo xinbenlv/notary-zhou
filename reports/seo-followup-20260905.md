@@ -8,13 +8,15 @@
 - Website states that services are by appointment at agreed customer locations, with no walk-in office. No home or office street address is published.
 - Initial release `e3546c35-40e3-49a4-82a5-d68895f48d66` succeeded. All 100 notary profiles passed the live canonical/Person checks; the sitemap index has 100 notary, 30 article and 7 general URLs (137 total). The two additions are privacy pages. Legacy 301/410 and preview noindex behavior passed.
 
+- Final website release from `344b9a1`: **5d2722b5-a163-41d4-b227-f718072ce12a**, SUCCESS, created `2026-09-06T06:24:19.562Z`. Production source checks confirm both homepage contact placements, one GA initializer per page, the revised privacy copy, and grouped directory-footer links.
+
 ## Inquiry measurement
 
 - The homepage introduction and appointment email links send `contact_email_click`. Only the allowlisted placement (`hero` or `booking`) and fixed contact method (`email`) are sent. Correction and privacy contact links are excluded.
 - The event is an inquiry click, not an email sent, a qualified lead, or a completed booking.
 - GA4 property `552951052` shows the event as a key event. Created using the **with code** option, avoiding a second event derived from page views. Key-event counting is once per session, with no default monetary value. Raw event counts may include multiple clicks.
 - Automated tests verify single initialization, URL/referrer query and fragment removal, allowed click targets, exclusion of contact contents, and exclusion of local/preview hosts. All 3 pass. Existing 11 notary tests and all 29 article checks also pass.
-- Actual contact-event receipt remains unverified. Browser security blocked the attempted `mailto:` test navigation. No workaround or email sending was attempted. A normal user click on either homepage business-email link is needed before checking Realtime for this event.
+- GA4 Realtime subsequently showed **contact_email_click: 1** during verification, confirming receipt. The browser had blocked the attempted `mailto:` navigation; no workaround or email sending was attempted. The observed event is validation-period activity and is not evidence of an actual customer inquiry. The event was visible in Realtime even though the key-event panel had not yet populated.
 
 ## Four-week observation
 
