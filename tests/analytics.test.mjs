@@ -61,6 +61,9 @@ test('only marked appointment email clicks qualify; event payload cannot contain
     contact_method: 'email', contact_placement: 'booking', transport_type: 'beacon',
   });
   assert.equal(r.events().length, 1);
+  click({ target: new ClickTarget({ ...link, dataset: { contactPlacement: 'hero' } }) });
+  assert.equal(r.events().length, 2);
+  assert.equal(r.events()[1][2].contact_placement, 'hero');
 });
 
 test('localhost and other hosts never load analytics or register click tracking', () => {

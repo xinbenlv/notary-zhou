@@ -33,10 +33,11 @@
       if (event.defaultPrevented || !(event.target instanceof Element)) return;
       const link = event.target.closest('a[data-contact-method="email"]');
       if (!link || !link.getAttribute('href')?.startsWith('mailto:')) return;
-      if (link.dataset.contactPlacement !== 'booking') return;
+      const placement = link.dataset.contactPlacement;
+      if (placement !== 'booking' && placement !== 'hero') return;
       window.gtag('event', 'contact_email_click', {
         contact_method: 'email',
-        contact_placement: 'booking',
+        contact_placement: placement,
         transport_type: 'beacon',
       });
     });

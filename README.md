@@ -120,8 +120,8 @@ Keep a single `gtag` config call: it sends the initial `page_view` automatically
 Do not add a second GTM/GA tag or manual page view. Preview pages remain excluded.
 Configuration and deployment evidence: `reports/google-setup-status.md`.
 
-The explicitly marked appointment email link sends `contact_email_click`, with
-only the fixed `contact_method=email` and `contact_placement=booking` fields.
+The explicitly marked homepage email links send `contact_email_click`, with
+only `contact_method=email` and an allowlisted `contact_placement=booking|hero`.
 This measures an inquiry click, not an email sent, a confirmed lead, or a booking.
 Privacy/correction links are excluded; email addresses, link contents, and
 message contents are never event parameters. Run `npm run test:analytics` to

@@ -177,8 +177,10 @@ const correctionHref = `mailto:${siteConfig.email}?subject=${encodeURIComponent(
     <div class="record-container footer-content">
       <a class="directory-brand" href="/en/">Notary Zhou<span aria-hidden="true">.</span></a>
       <p>An independent public-record directory operated by Notary Zhou. Not affiliated with or endorsed by the California Secretary of State. Inclusion does not imply a relationship with Notary Zhou.</p>
-      <a href="/en/verify/">Notary lookup</a>
-      <a href="/en/privacy/">Privacy &amp; cookies</a>
+      <div class="footer-links">
+        <a href="/en/verify/">Notary lookup</a>
+        <a href="/en/privacy/">Privacy &amp; cookies</a>
+      </div>
     </div>
   </footer>
 </div>
@@ -293,7 +295,8 @@ const correctionHref = `mailto:${siteConfig.email}?subject=${encodeURIComponent(
   .footer-content { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 36px; align-items: start; }
   .directory-footer .directory-brand { font-size: 20px; }
   .directory-footer p { max-width: 73ch; font-size: 11px; line-height: 1.8; }
-  .directory-footer .footer-content > a:last-child { color: var(--record-muted); text-decoration: none; font-size: 12px; padding-block: 5px; }
+  .footer-links { display: grid; gap: 8px; }
+  .directory-footer .footer-links a { color: var(--record-muted); text-decoration: none; font-size: 12px; padding-block: 5px; }
   a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #b36343; outline-offset: 5px; }
   .source-card a:focus-visible { outline-color: #fff8f0; }
   @media (max-width: 800px) {
