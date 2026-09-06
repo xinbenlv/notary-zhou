@@ -1,0 +1,355 @@
+---
+import { siteConfig } from '../config';
+import type { NotaryDetailRecord } from '../data/notary-preview';
+
+interface Props {
+  record: NotaryDetailRecord;
+  source: { url: string; generatedAt: string; retrievedAt: string };
+  relatedRecords?: { record: NotaryDetailRecord; href: string; reason: string }[];
+  cityBounds?: string;
+}
+const { record, source, relatedRecords = [], cityBounds } = Astro.props;
+const cityLabel = `${record.city}, ${record.state}`;
+const mapHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${cityLabel}, USA`)}`;
+const mapEmbed = cityBounds ? `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(cityBounds)}&layer=mapnik` : null;
+const date = (value: string) => new Intl.DateTimeFormat('en-US', {
+  month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles',
+}).format(new Date(value.length === 10 ? `${value}T12:00:00-07:00` : value));
+const time = (value: string) => new Intl.DateTimeFormat('en-US', {
+  hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles', timeZoneName: 'short',
+}).format(new Date(value));
+const correctionHref = `mailto:${siteConfig.email}?subject=${encodeURIComponent(`Public record correction: commission ${record.commissionNumber}`)}`;
+---
+
+<div class="notary-record">
+  <header class="directory-header">
+    <div class="record-container directory-header-inner">
+      <a class="directory-brand" href="/en/" aria-label="Notary Zhou home">Notary Zhou<span aria-hidden="true">.</span></a>
+      <span class="directory-label">Public records</span>
+      <a class="directory-search" href="/en/verify/">Search notaries <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <main id="record-main" class="record-container">
+    <nav class="record-breadcrumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/en/verify/">California notary lookup</a></li>
+        <li aria-hidden="true">/</li>
+        <li aria-current="page">Commission {record.commissionNumber}</li>
+      </ol>
+    </nav>
+
+    <header class="record-hero">
+      <div>
+        <p class="record-eyebrow">California notary public record</p>
+        <h1>{record.displayName}</h1>
+        <p class="record-location">{record.city}, {record.state} <span aria-hidden="true">·</span> Filed in {record.county} County</p>
+      </div>
+      <div class="record-number-block">
+        <span class="record-eyebrow">Commission number</span>
+        <p class="record-number">#{record.commissionNumber}</p>
+        <button class="copy-number" type="button" data-copy-commission={record.commissionNumber}>Copy number <span aria-hidden="true">↗</span></button>
+        <span class="copy-feedback" data-copy-feedback role="status" aria-live="polite"></span>
+      </div>
+    </header>
+
+    <div class="listing-status">
+      <span class="listing-dot" aria-hidden="true"></span>
+      <p>Listed in the state’s active-notary file <span>dated <time datetime={source.generatedAt}>{date(source.generatedAt)}</time></span></p>
+    </div>
+
+    <div class="record-grid">
+      <section class="record-details" aria-labelledby="commission-heading">
+        <div class="details-heading">
+          <h2 id="commission-heading">Commission details</h2>
+          <span>California</span>
+        </div>
+        <dl class="details-grid">
+          <div>
+            <dt>Commission number</dt>
+            <dd class="number-value">{record.commissionNumber}</dd>
+          </div>
+          <div>
+            <dt>Listed expiration date</dt>
+            <dd><time datetime={record.expirationDate}>{date(record.expirationDate)}</time></dd>
+          </div>
+          <div>
+            <dt>Filing county</dt>
+            <dd>{record.county} County</dd>
+          </div>
+          <div>
+            <dt>Listed city</dt>
+            <dd><a class="city-jump" href="#listed-city-map">{record.city}, {record.state} <span aria-hidden="true">↘</span></a></dd>
+          </div>
+          <div class="full-field">
+            <dt>Name in the official file</dt>
+            <dd>{record.name}</dd>
+          </div>
+          {record.businessName && (
+            <div class="full-field">
+              <dt>Business name in the official file</dt>
+              <dd>{record.businessName}</dd>
+            </div>
+          )}
+        </dl>
+        <p class="record-field-note">The listed city and filing county do not establish where this notary offers services.</p>
+      </section>
+
+      <aside class="source-card" aria-labelledby="source-heading">
+        <p class="source-eyebrow">Official data source</p>
+        <h2 id="source-heading">California Secretary<br /> of State</h2>
+        <p class="source-intro">The state’s published active-notary file is the source of this record.</p>
+        <dl class="source-dates">
+          <div>
+            <dt>Official file generated</dt>
+            <dd><time datetime={source.generatedAt}>{date(source.generatedAt)}<span>{time(source.generatedAt)}</span></time></dd>
+          </div>
+          <div>
+            <dt>Retrieved by this directory</dt>
+            <dd><time datetime={source.retrievedAt}>{date(source.retrievedAt)}<span>{time(source.retrievedAt)}</span></time></dd>
+          </div>
+        </dl>
+        <a class="source-button" href={source.url} target="_blank" rel="noopener noreferrer">View official source <span aria-hidden="true">↗</span></a>
+        <p class="source-link-note">Opens the state’s listing and download page.</p>
+      </aside>
+    </div>
+
+    <section id="listed-city-map" class="city-map" aria-labelledby="city-map-heading">
+      <div class="city-map-copy">
+        <p class="record-eyebrow">Explore the listed city</p>
+        <h2 id="city-map-heading">{cityLabel}</h2>
+        <p>The official file lists this city in the notary’s mailing address. Use the map to get your bearings.</p>
+        <p class="city-map-note">Service area is not provided in the state file. Confirm coverage with the notary before arranging a visit.</p>
+        <a class="map-link" href={mapHref} target="_blank" rel="noopener noreferrer">Open in Google Maps <span aria-hidden="true">↗</span></a>
+      </div>
+      {mapEmbed && <div class="city-map-view">
+        <iframe src={mapEmbed} title={`Map of ${cityLabel} — city overview, not a notary office or service area`} loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <p>City overview · No office location or service boundary is shown.</p>
+      </div>}
+    </section>
+
+    <section class="reading-record" aria-labelledby="reading-heading">
+      <div>
+        <p class="record-eyebrow">Reading this record</p>
+        <h2 id="reading-heading">What this record means.</h2>
+      </div>
+      <div class="reading-copy">
+        <p>This record shows that the commission appeared in the official file on the date above. It does not verify the person presenting an ID, a signature, a seal, or a particular notarization.</p>
+        <details>
+          <summary>Names, updates &amp; verification <span aria-hidden="true">+</span></summary>
+          <div class="reading-expanded">
+            <p>Different people may share a name. Use the commission number to distinguish records. A later commission may have a different number.</p>
+            <p>The source may be delayed, incomplete, or corrected after publication. An absence from a later file is not a final determination of qualification. For an important decision, confirm the record with the California Secretary of State.</p>
+          </div>
+        </details>
+        <a class="correction-link" href={correctionHref}>Something looks incorrect? Let us know <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>
+
+    {relatedRecords.length > 0 && <section class="related-records" aria-labelledby="related-heading">
+      <div class="related-heading">
+        <div>
+          <p class="record-eyebrow">Compare public records</p>
+          <h2 id="related-heading">Similar names &amp; other local records</h2>
+        </div>
+        <p>Check the name, city, and commission number to find the record you need. Similar names do not establish that records belong to the same person.</p>
+      </div>
+      <ul class="related-list">
+        {relatedRecords.map(({record: related, href, reason}) => <li>
+          <a class="related-link" href={href}>
+            <span class="related-reason">{reason}</span>
+            <h3>{related.displayName} <span aria-hidden="true">↗</span></h3>
+            <p>{related.city}, {related.state} <span aria-hidden="true">·</span> {related.county} County</p>
+            <span class="related-commission">Commission #{related.commissionNumber}</span>
+            <span class="related-action">View public record <span aria-hidden="true">→</span></span>
+          </a>
+        </li>)}
+      </ul>
+    </section>}
+
+    <div class="lookup-next">
+      <div><h2>Looking for someone else?</h2><p>Search California’s public listing by name or commission number.</p></div>
+      <a class="lookup-button" href="/en/verify/">Search another notary <span aria-hidden="true">→</span></a>
+    </div>
+  </main>
+
+  <footer class="directory-footer">
+    <div class="record-container footer-content">
+      <a class="directory-brand" href="/en/">Notary Zhou<span aria-hidden="true">.</span></a>
+      <p>An independent public-record directory operated by Notary Zhou. Not affiliated with or endorsed by the California Secretary of State. Inclusion does not imply a relationship with Notary Zhou.</p>
+      <a href="/en/verify/">Notary lookup</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-copy-commission]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const number = button.dataset.copyCommission;
+      const feedback = button.parentElement?.querySelector('[data-copy-feedback]');
+      if (!number || !feedback) return;
+      try {
+        await navigator.clipboard.writeText(number);
+        feedback.textContent = 'Commission number copied';
+      } catch {
+        feedback.textContent = `Copy this number: ${number}`;
+      }
+    });
+  });
+</script>
+
+<style>
+  .notary-record { --record-muted: #58645e; }
+  .record-container { width: min(100% - 96px, 1120px); margin-inline: auto; }
+  .directory-header { background: var(--bg-cream); border-bottom: 1px solid #dfded5; }
+  .directory-header-inner { min-height: 92px; display: flex; align-items: center; gap: 26px; }
+  .directory-brand { color: var(--brand-green); text-decoration: none; font-weight: 600; font-size: 25px; letter-spacing: -.045em; white-space: nowrap; }
+  .directory-brand span { color: #b36343; }
+  .directory-label { border-left: 1px solid #d9d9ce; padding-left: 26px; font-size: 13px; color: var(--record-muted); }
+  .directory-search { margin-left: auto; color: var(--brand-green); font-size: 14px; text-decoration: none; display: flex; gap: 16px; align-items: center; padding-block: 12px; }
+  .record-breadcrumbs { position: static; inset: auto; width: auto; pointer-events: auto; margin-top: 32px; }
+  .record-breadcrumbs ol { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; font-size: 12px; color: var(--record-muted); }
+  .record-breadcrumbs a { color: inherit; text-decoration: none; }
+  .record-breadcrumbs a:hover, .directory-search:hover { text-decoration: underline; }
+  .record-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: end; padding: 44px 0 30px; }
+  .record-eyebrow { text-transform: uppercase; letter-spacing: .13em; font-size: 11px; font-weight: 600; color: var(--record-muted); }
+  h1 { font-family: Georgia, 'Times New Roman', serif; font-size: clamp(40px, 5.6vw, 68px); letter-spacing: -.045em; font-weight: 400; line-height: 1.08; color: var(--brand-green); margin: 14px 0 18px; overflow-wrap: anywhere; }
+  .record-location { color: var(--record-muted); font-size: 15px; }
+  .record-location span { padding: 0 8px; }
+  .record-number-block { padding-bottom: 4px; min-width: 205px; }
+  .record-number { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 27px; color: var(--brand-green); margin: 10px 0 7px; letter-spacing: -.03em; }
+  .copy-number { font-family: inherit; font-size: 12px; color: var(--record-muted); border: 0; background: transparent; padding: 8px 0; cursor: pointer; text-align: left; }
+  .copy-number span { margin-left: 10px; }
+  .copy-number:hover { color: var(--brand-green); text-decoration: underline; }
+  .copy-feedback { display: block; font-size: 12px; color: var(--brand-green); }
+  .listing-status { display: flex; gap: 10px; align-items: baseline; margin-bottom: 28px; color: var(--brand-green); font-size: 13px; }
+  .listing-dot { width: 7px; height: 7px; background: #44745a; border-radius: 50%; flex: 0 0 auto; }
+  .listing-status p span { color: var(--record-muted); }
+  .record-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 24px; align-items: start; }
+  .record-details { background: #fffdfa; border: 1px solid #e2e0d8; border-radius: 18px; padding: 30px 32px 24px; }
+  .details-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border-soft); padding-bottom: 22px; }
+  h2 { font-size: 20px; font-weight: 500; line-height: 1.3; letter-spacing: -.025em; }
+  .details-heading > span { font-size: 12px; color: var(--record-muted); }
+  .details-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; }
+  .details-grid > div { padding-block: 23px; border-bottom: 1px solid var(--border-soft); min-width: 0; }
+  .details-grid dt { color: var(--record-muted); font-size: 12px; margin-bottom: 8px; }
+  .details-grid dd { font-size: 17px; overflow-wrap: anywhere; }
+  .details-grid .number-value { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 16px; }
+  .full-field { grid-column: 1 / -1; }
+  .record-field-note { margin-top: 20px; color: var(--record-muted); font-size: 12px; line-height: 1.7; max-width: 54ch; }
+  .source-card { background: var(--brand-green); color: #fff8f0; padding: 30px 30px 24px; border-radius: 18px; }
+  .source-eyebrow { color: #bcd0c4; text-transform: uppercase; letter-spacing: .13em; font-size: 10px; font-weight: 500; margin-bottom: 18px; }
+  .source-card h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 400; letter-spacing: -.025em; line-height: 1.15; }
+  .source-intro { margin-top: 17px; color: #d4dfd7; font-size: 13px; line-height: 1.75; }
+  .source-dates { margin-top: 22px; }
+  .source-dates > div { padding: 17px 0; border-top: 1px solid #496257; }
+  .source-dates dt { font-size: 11px; color: #bcd0c4; margin-bottom: 6px; }
+  .source-dates dd { font-size: 15px; }
+  .source-dates dd span { color: #c4d4c9; font-size: 12px; display: block; margin-top: 3px; }
+  .source-button { display: flex; justify-content: space-between; align-items: center; gap: 18px; color: var(--brand-green); background: #fff8f0; border-radius: 8px; padding: 13px 16px; text-decoration: none; font-size: 13px; font-weight: 500; margin-top: 13px; }
+  .source-button:hover { background: #e7eee4; }
+  .source-link-note { font-size: 11px; margin-top: 11px; color: #c4d4c9; line-height: 1.6; }
+  .city-jump { color: inherit; text-decoration-color: #b7bfb1; text-underline-offset: 4px; }
+  .city-jump span { margin-left: 4px; font-size: 13px; }
+  .city-map { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 52px; padding-block: 36px; margin-top: 36px; border-block: 1px solid #dfded5; scroll-margin-top: 24px; }
+  .city-map h2, .related-heading h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 400; color: var(--brand-green); margin-top: 12px; }
+  .city-map-copy > p:not(.record-eyebrow) { margin-top: 16px; color: var(--record-muted); font-size: 14px; line-height: 1.8; }
+  .city-map-copy > p.city-map-note { font-size: 12px; }
+  .map-link { display: inline-flex; gap: 20px; padding-block: 12px; margin-top: 10px; color: var(--brand-green); font-size: 13px; text-underline-offset: 4px; }
+  .city-map-view { min-width: 0; }
+  .city-map-view iframe { display: block; width: 100%; height: 280px; border: 1px solid #d5dbce; border-radius: 12px; background: #e9ece4; }
+  .city-map-view > p { font-size: 11px; line-height: 1.7; margin-top: 10px; color: var(--record-muted); }
+  .related-records { padding-top: 34px; margin-bottom: 44px; border-top: 1px solid #dfded5; }
+  .related-heading { display: grid; grid-template-columns: 1fr 1fr; align-items: end; gap: 52px; margin-bottom: 24px; }
+  .related-heading h2 { font-size: 27px; max-width: 24ch; }
+  .related-heading > p { color: var(--record-muted); font-size: 13px; line-height: 1.8; }
+  .related-list { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+  .related-link { display: flex; flex-direction: column; height: 100%; padding: 24px; border: 1px solid #dfded5; border-radius: 12px; background: #fffdfa; color: var(--brand-green); text-decoration: none; transition: border-color .15s, background .15s; }
+  .related-link:hover { border-color: #82987c; background: #f4f4eb; }
+  .related-reason { color: var(--record-muted); font-size: 11px; margin-bottom: 17px; }
+  .related-link h3 { font-family: Georgia, 'Times New Roman', serif; font-size: 23px; font-weight: 400; line-height: 1.3; letter-spacing: -.025em; overflow-wrap: anywhere; }
+  .related-link h3 > span { font-family: inherit; font-size: 17px; white-space: nowrap; }
+  .related-link p { color: var(--record-muted); font-size: 12px; line-height: 1.7; margin-top: 10px; }
+  .related-link p > span { margin-inline: 3px; }
+  .related-commission { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 11px; color: var(--record-muted); margin-block: 12px 22px; }
+  .related-action { display: flex; justify-content: space-between; gap: 16px; font-size: 12px; margin-top: auto; padding-top: 16px; border-top: 1px solid #e2e0d8; }
+  .reading-record { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 52px; margin: 50px 0 46px; }
+  .reading-record h2 { font-family: Georgia, 'Times New Roman', serif; color: var(--brand-green); font-size: 27px; line-height: 1.2; margin-top: 12px; font-weight: 400; }
+  .reading-copy { font-size: 14px; line-height: 1.8; color: var(--record-muted); }
+  .reading-copy details { border-top: 1px solid #dfded5; border-bottom: 1px solid #dfded5; margin-top: 20px; }
+  .reading-copy summary { color: var(--brand-green); padding: 15px 0; cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 20px; font-size: 13px; }
+  .reading-copy summary::-webkit-details-marker { display: none; }
+  .reading-copy details[open] summary span { transform: rotate(45deg); }
+  .reading-expanded p { margin-bottom: 16px; }
+  .correction-link { display: inline-block; margin-top: 16px; color: var(--record-muted); font-size: 12px; text-underline-offset: 4px; }
+  .correction-link span { margin-left: 7px; }
+  .lookup-next { background: #eceee5; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 28px 32px; border-radius: 14px; margin-bottom: 52px; }
+  .lookup-next h2 { color: var(--brand-green); font-size: 20px; }
+  .lookup-next p { color: var(--record-muted); font-size: 13px; margin-top: 7px; }
+  .lookup-button { flex-shrink: 0; display: inline-flex; justify-content: center; align-items: center; gap: 24px; color: #fff8f0; background: var(--brand-green); border-radius: 8px; padding: 14px 20px; font-size: 13px; text-decoration: none; }
+  .lookup-button:hover { background: var(--brand-green-hover); }
+  .directory-footer { background: transparent; color: var(--record-muted); padding: 28px 0 36px; border-top: 1px solid #dfded5; text-align: left; }
+  .footer-content { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 36px; align-items: start; }
+  .directory-footer .directory-brand { font-size: 20px; }
+  .directory-footer p { max-width: 73ch; font-size: 11px; line-height: 1.8; }
+  .directory-footer .footer-content > a:last-child { color: var(--record-muted); text-decoration: none; font-size: 12px; padding-block: 5px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid #b36343; outline-offset: 5px; }
+  .source-card a:focus-visible { outline-color: #fff8f0; }
+  @media (max-width: 800px) {
+    .record-container { width: calc(100% - 40px); }
+    .record-grid { grid-template-columns: minmax(0, 1fr); }
+    .record-hero { gap: 22px; }
+    .record-number-block { min-width: 175px; }
+    .reading-record { gap: 30px; }
+    .city-map { gap: 30px; }
+    .related-heading { gap: 30px; }
+    .related-list { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+    .lookup-next { align-items: start; flex-direction: column; }
+    .footer-content { grid-template-columns: 1fr; gap: 16px; }
+  }
+  @media (max-width: 540px) {
+    .directory-header-inner { min-height: 74px; gap: 14px; flex-wrap: wrap; }
+    .directory-label { display: none; }
+    .directory-brand { font-size: 23px; }
+    .directory-search { font-size: 12px; gap: 8px; }
+    .record-breadcrumbs { margin-top: 24px; }
+    .record-breadcrumbs ol { font-size: 11px; gap: 7px; }
+    .record-hero { grid-template-columns: minmax(0, 1fr); padding: 30px 0 16px; gap: 23px; }
+    h1 { font-size: 43px; margin-top: 12px; }
+    .record-location { font-size: 13px; }
+    .record-number-block { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 12px; }
+    .record-number-block > .record-eyebrow { grid-column: 1 / -1; }
+    .record-number { font-size: 23px; }
+    .copy-number { padding: 12px 0; }
+    .copy-feedback { grid-column: 1 / -1; }
+    .listing-status { font-size: 12px; margin-top: 6px; margin-bottom: 22px; }
+    .listing-status p span { display: block; }
+    .record-details { padding: 22px 20px; border-radius: 12px; }
+    .details-heading { padding-bottom: 18px; }
+    .details-heading h2 { font-size: 18px; }
+    .details-grid { column-gap: 18px; }
+    .details-grid dd { font-size: 15px; }
+    .details-grid > div { padding-block: 19px; }
+    .source-card { border-radius: 12px; padding: 26px 24px; }
+    .source-card h2 br { display: none; }
+    .reading-record { grid-template-columns: minmax(0, 1fr); gap: 20px; margin-block: 38px; }
+    .reading-record h2 { font-size: 26px; }
+    .city-map, .related-heading { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+    .city-map { padding-block: 28px; margin-top: 28px; }
+    .city-map-view iframe { height: 260px; }
+    .related-heading h2 { font-size: 26px; }
+    .related-records { padding-top: 28px; margin-bottom: 32px; }
+    .lookup-next { padding: 24px; margin-bottom: 36px; }
+    .lookup-button { width: 100%; }
+  }
+  @media print {
+    .directory-header, .copy-number, .copy-feedback, .lookup-next, .correction-link { display: none; }
+    .record-container { width: 100%; }
+    .record-hero { padding-top: 20px; }
+    .record-grid { grid-template-columns: 1.7fr 1fr; gap: 16px; }
+    .source-card { background: white; color: #111816; border: 1px solid #dfded5; }
+    .source-card p, .source-card dt, .source-card dd span { color: #58645e; }
+    .record-details, .source-card { break-inside: avoid; }
+    .city-map-view, .related-records { display: none; }
+  }
+</style>

@@ -25,7 +25,16 @@ export default defineConfig({
     sitemap({
       // /zh/ is a legacy noindex redirect page, keep it out of the sitemap
       // /zh/ 是历史遗留的 noindex 跳转页；/book 是交易流程，不进搜索
-      filter: (page) => !page.includes('/zh/') && !page.includes('/book'),
+      filter: (page) => {
+        const path = new URL(page).pathname;
+        return !path.startsWith('/zh/') && !path.startsWith('/book')
+          && !path.startsWith('/articles/') && !path.startsWith('/en/notaries/')
+          && !/\.xml\/?$/.test(path);
+      },
+      customSitemaps: [
+        'https://www.notaryzhou.com/articles/sitemap.xml',
+        'https://www.notaryzhou.com/en/notaries/sitemap.xml',
+      ],
       i18n: {
         defaultLocale: 'zh',
         locales: { zh: 'zh-CN', en: 'en' },

@@ -1,0 +1,34 @@
+<!-- Basic page statistics for the production website. -->
+<script is:inline>
+  (() => {
+    if (location.hostname !== 'www.notaryzhou.com' || window.__notaryZhouAnalytics) return;
+    window.__notaryZhouAnalytics = true;
+
+    const measurementId = 'G-NSPEQT81PG';
+    // Lookup inputs can occur in query strings. Send only the origin and path.
+    const withoutQuery = (value) => {
+      try {
+        const url = new URL(value);
+        return url.origin + url.pathname;
+      } catch {
+        return '';
+      }
+    };
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    // config sends the single initial page_view; do not send another manually.
+    window.gtag('config', measurementId, {
+      page_location: withoutQuery(location.href),
+      page_referrer: withoutQuery(document.referrer),
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false,
+    });
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
+    document.head.appendChild(script);
+  })();
+</script>

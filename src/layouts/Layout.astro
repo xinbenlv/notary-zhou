@@ -2,6 +2,7 @@
 import { siteConfig } from '../config';
 import { langPath, type Lang } from '../i18n';
 import PasswordGate from '../components/PasswordGate.astro';
+import GoogleAnalytics from '../components/GoogleAnalytics.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -10,8 +11,10 @@ interface Props {
   description?: string;
   /** Canonical path for non-homepage pages (e.g. `/articles/foo/`). */
   path?: string;
-  ogImage?: string;
+  /** null omits image metadata for records without a representative image. */
+  ogImage?: string | null;
   ogType?: string;
+  noindex?: boolean;
   /** Overrides the default LocalBusiness JSON-LD (e.g. Article schema). */
   jsonLd?: object;
 }
@@ -21,7 +24,9 @@ const {
   title = lang === 'zh' ? siteConfig.titleZh : siteConfig.title,
   description = lang === 'zh' ? siteConfig.descriptionZh : siteConfig.description,
 } = Astro.props;
-const ogImage = Astro.props.ogImage ?? `${siteConfig.url}/images/george-zhou.jpg`;
+const ogImage = Astro.props.ogImage === null
+  ? null
+  : Astro.props.ogImage ?? `${siteConfig.url}/images/george-zhou.jpg`;
 const canonical = `${siteConfig.url}${path ?? langPath(lang)}`;
 const isHomepage = !path;
 ---
@@ -33,6 +38,7 @@ const isHomepage = !path;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {import.meta.env.PROD && !siteConfig.isDraft && !Astro.props.noindex && <GoogleAnalytics />}
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -48,18 +54,18 @@ const isHomepage = !path;
     <!-- OG -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={ogImage} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
     <meta property="og:url" content={canonical} />
     <meta property="og:type" content={ogType} />
     <meta property="og:locale" content={lang === 'zh' ? 'zh_CN' : 'en_US'} />
 
     <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={ogImage} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
 
-    {siteConfig.isDraft && <meta name="robots" content="noindex, nofollow" />}
+    {(siteConfig.isDraft || Astro.props.noindex) && <meta name="robots" content="noindex, nofollow" />}
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -86,7 +92,7 @@ const isHomepage = !path;
         "addressRegion": "CA",
         "addressCountry": "US"
       }
-    })} />
+    }).replace(/</g, '\\u003c')} />
   </head>
   <body>
     <PasswordGate />

@@ -1,0 +1,94 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import NotaryRecord from '../../../components/NotaryRecord.astro';
+import { previewRecords, previewSource, previewCityBounds, relatedPreviewRecords } from '../../../data/notary-preview';
+import { siteConfig } from '../../../config';
+
+// One server-rendered template; the query picks a small, dated review fixture.
+// Database-backed routes and public indexing are intentionally a later step.
+export const prerender = false;
+const requested = Astro.url.searchParams.get('commission');
+const record = previewRecords.find((entry) => entry.commissionNumber === requested) ?? previewRecords[0];
+const path = `/en/notaries/preview/?commission=${record.commissionNumber}`;
+const canonical = `${siteConfig.url}${path}`;
+const title = `${record.displayName} — California Notary Record in ${record.city} | Notary Zhou`;
+const description = `View the California public-listing record for ${record.displayName}: commission ${record.commissionNumber}, ${record.county} County, listed expiration ${record.expirationDate}, and official source information.`;
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+Astro.response.headers.set('Cache-Control', 'no-store');
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebPage',
+      '@id': `${canonical}#webpage`,
+      url: canonical,
+      name: title,
+      description,
+      inLanguage: 'en',
+      mainEntity: { '@id': `${canonical}#person` },
+      publisher: { '@type': 'Organization', name: siteConfig.name, url: siteConfig.url },
+      citation: previewSource.url,
+    },
+    {
+      '@type': 'Person',
+      '@id': `${canonical}#person`,
+      name: record.displayName,
+      alternateName: record.name,
+      description: `Named in the California active-notary file generated September 5, 2026, under commission ${record.commissionNumber}.`,
+      hasCredential: {
+        '@type': 'EducationalOccupationalCredential',
+        name: 'California Notary Public Commission',
+        credentialCategory: 'Notary public commission',
+        identifier: { '@type': 'PropertyValue', propertyID: 'California notary commission number', value: record.commissionNumber },
+      },
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'California notary lookup', item: `${siteConfig.url}/en/verify/` },
+        { '@type': 'ListItem', position: 2, name: `Commission ${record.commissionNumber}`, item: canonical },
+      ],
+    },
+  ],
+};
+---
+
+<Layout lang="en" title={title} description={description} path={path} ogImage={null} noindex jsonLd={jsonLd}>
+  <a class="record-skip" href="#record-main">Skip to record</a>
+  <div class="template-preview">
+    <div class="preview-inner">
+      <p><strong>Template preview</strong><span>Official snapshot · Sep 5, 2026</span></p>
+      <form method="get" action="/en/notaries/preview/">
+        <label for="preview-record">Sample record</label>
+        <select id="preview-record" name="commission">
+          {previewRecords.map((entry) => <option value={entry.commissionNumber} selected={entry.commissionNumber === record.commissionNumber}>{entry.displayName}</option>)}
+        </select>
+        <button type="submit">View</button>
+      </form>
+    </div>
+  </div>
+  <NotaryRecord record={record} source={previewSource} relatedRecords={relatedPreviewRecords(record)} cityBounds={previewCityBounds[`${record.city}, ${record.state}`]} />
+</Layout>
+
+<style>
+  .record-skip { position: absolute; top: -100px; left: 20px; z-index: 200; padding: 12px 18px; background: white; color: var(--brand-green); }
+  .record-skip:focus { top: 12px; }
+  .template-preview { background: #e9ece4; color: #33483d; border-bottom: 1px solid #d8ddd2; font-size: 12px; }
+  .preview-inner { width: min(100% - 96px, 1120px); margin-inline: auto; min-height: 54px; display: flex; gap: 20px; align-items: center; justify-content: space-between; padding-block: 10px; }
+  .preview-inner p { display: flex; gap: 12px; flex-wrap: wrap; }
+  .preview-inner strong { font-weight: 600; }
+  .preview-inner form { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .preview-inner label { white-space: nowrap; }
+  .preview-inner select { font: inherit; color: #263e30; background: #fffdfa; border: 1px solid #c7cfc1; border-radius: 5px; padding: 7px 8px; max-width: 230px; min-width: 0; }
+  .preview-inner button { font: inherit; font-weight: 500; color: #263e30; border: 1px solid #b1bcaa; background: transparent; border-radius: 5px; padding: 7px 13px; cursor: pointer; }
+  .preview-inner button:hover { background: #dce2d6; }
+  @media (max-width: 800px) {
+    .preview-inner { width: calc(100% - 40px); flex-direction: column; align-items: flex-start; gap: 10px; padding-block: 12px; }
+    .preview-inner p { gap: 4px 12px; }
+    .preview-inner form { width: 100%; }
+    .preview-inner select { flex: 1; max-width: none; font-size: 16px; }
+    .preview-inner button { min-height: 38px; }
+  }
+  @media (max-width: 360px) { .preview-inner label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } }
+  @media print { .template-preview, .record-skip { display: none; } }
+</style>

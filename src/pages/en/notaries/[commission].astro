@@ -1,0 +1,39 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import NotaryRecord from '../../../components/NotaryRecord.astro';
+import { siteConfig } from '../../../config';
+import { toProfile, profilePath, profileMetadata, OFFICIAL_SOURCE_PAGE } from '../../../lib/notary-profile.mjs';
+import { notaryCityBounds } from '../../../data/notary-cities';
+
+export const prerender = false;
+const service = Astro.locals.notaryListing;
+if (!service?.getStatus().ready) {
+  return new Response('Notary records are temporarily unavailable. Please try again shortly.', {
+    status: 503, headers: { 'Retry-After': '300', 'X-Robots-Tag': 'noindex', 'Cache-Control': 'no-store' },
+  });
+}
+const detail = service.getProfile(Astro.params.commission ?? '');
+if (!detail) {
+  Astro.response.status = 404;
+  Astro.response.headers.set('X-Robots-Tag', 'noindex');
+  Astro.response.headers.set('Cache-Control', 'no-store');
+}
+// A missing source timestamp must never become a current/verified status claim.
+if (detail && !detail.source.generatedAt) return new Response('Source date unavailable. Please try again later.', {
+  status: 503, headers: { 'Retry-After': '300', 'X-Robots-Tag': 'noindex', 'Cache-Control': 'no-store' },
+});
+const record = detail ? toProfile(detail.record) : null;
+const metadata = record ? profileMetadata(record, detail!.source, siteConfig) : null;
+if (metadata && Astro.url.pathname !== metadata.path) return Astro.redirect(metadata.path, 301);
+if (record) Astro.response.headers.set('Cache-Control', 'public, max-age=300, s-maxage=300');
+---
+{record && detail && metadata ? <Layout lang="en" {...metadata} ogImage={null}>
+  <NotaryRecord record={record}
+    source={{ ...detail.source, url: OFFICIAL_SOURCE_PAGE }}
+    relatedRecords={detail.related.map(({record: related, reason}) => ({record: toProfile(related), reason, href: profilePath(related.commissionNumber)}))}
+    cityBounds={notaryCityBounds[`${record.city}, ${record.state}`]}
+  />
+</Layout> : <Layout lang="en" title="Notary record not found | Notary Zhou" description="This commission was not found in the current public listing." path={Astro.url.pathname} noindex ogImage={null} jsonLd={{'@context':'https://schema.org','@type':'WebPage',name:'Notary record not found'}}>
+  <main class="missing-record"><h1>Record not found</h1><p>This commission was not found in the current listing. This is not a final determination of qualification.</p><a href="/en/verify/">Search the current notary listing →</a></main>
+</Layout>}
+<style>.missing-record { max-width: 640px; margin: 100px auto; padding: 24px; } .missing-record p { margin: 24px 0; } .missing-record a { color: var(--brand-green); }</style>

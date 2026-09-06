@@ -195,6 +195,7 @@ const clientCopy = {
 </section>
 
 <script>
+  import { profilePath } from '../lib/notary-profile.mjs';
   const countyNames = [
     '', 'Alameda', 'Alpine', 'Amador', 'Butte', 'Calaveras', 'Colusa', 'Contra Costa',
     'Del Norte', 'El Dorado', 'Fresno', 'Glenn', 'Humboldt', 'Imperial', 'Inyo', 'Kern',
@@ -330,10 +331,11 @@ const clientCopy = {
         card.style.setProperty('--result-index', String(Math.min(index, 6)));
 
         const identity = makeElement('div', 'result-identity');
-        identity.append(
-          makeElement('p', 'result-kicker', copy.resultKicker),
-          makeElement('h4', 'result-name', record.name),
-        );
+        const heading = makeElement('h4', 'result-name');
+        const profileLink = makeElement('a', 'result-profile-link', record.name);
+        profileLink.href = profilePath(record.commissionNumber);
+        heading.append(profileLink);
+        identity.append(makeElement('p', 'result-kicker', copy.resultKicker), heading);
         if (record.businessName) {
           identity.append(makeElement('p', 'result-business', record.businessName));
         }
@@ -730,6 +732,9 @@ const clientCopy = {
     font-size: 19px;
     line-height: 1.3;
   }
+
+  .lookup-section :global(.result-profile-link) { color: inherit; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+  .lookup-section :global(.result-profile-link:focus-visible) { outline: 2px solid var(--brand-terra); outline-offset: 4px; }
 
   .lookup-section :global(.result-business) {
     margin-top: 7px;

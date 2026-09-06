@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { inflateRawSync } from 'node:zlib';
+import { nameParts, relatedMatch, toProfile } from './notary-profile.mjs';
 
 export const NOTARY_LISTING_URL =
   'https://notary.cdn.sos.ca.gov/export/active-notary.zip';
@@ -415,10 +416,24 @@ export function buildNotarySnapshot(input, source = {}) {
   const parsed = parseNotaryText(text);
   const parseAndIndexMs = performance.now() - parseStartedAt;
 
+  const byFamily = new Map();
+  const byCity = new Map();
+  const appendIndex = (map, key, index) => {
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(index);
+  };
+  parsed.rows.forEach((row, index) => {
+    const fields = row.split('\t');
+    appendIndex(byFamily, nameParts(fields[0]).family, index);
+    if (fields[2]) appendIndex(byCity, `${fields[2].toLowerCase()}\t${fields[3]}`, index);
+  });
+
   const snapshot = {
     rows: parsed.rows,
     nameSearchKeys: parsed.nameSearchKeys,
     byCommission: parsed.byCommission,
+    byFamily,
+    byCity,
     source: Object.freeze({
       url: NOTARY_LISTING_URL,
       retrievedAt: source.retrievedAt ?? new Date().toISOString(),
@@ -593,5 +608,36 @@ export function createNotaryListingService(options = {}) {
     };
   }
 
-  return { start, stop, refresh, search, getStatus };
+  function getProfile(commissionNumber) {
+    if (!snapshot) throw new Error('Notary listing is not loaded');
+    if (!/^[1-9]\d{0,9}$/.test(commissionNumber)) return null;
+    const index = snapshot.byCommission.get(Number(commissionNumber));
+    if (index === undefined) return null;
+    const record = materializeRecord(snapshot.rows[index]);
+    const candidates = new Set(snapshot.byFamily.get(nameParts(record.name).family) ?? []);
+    // City fallbacks are bounded; name matches always consider the entire surname group.
+    for (const candidate of (snapshot.byCity.get(`${record.city.toLowerCase()}\t${record.state}`) ?? []).slice(0, 100)) candidates.add(candidate);
+    const related = [...candidates].map(candidate => {
+      const other = materializeRecord(snapshot.rows[candidate]);
+      const match = relatedMatch(record, other);
+      return match ? { record: other, ...match } : null;
+    }).filter(Boolean).sort((a, b) => b.rank - a.rank || a.record.name.localeCompare(b.record.name, 'en')).slice(0, 3);
+    return { record, related, source: snapshot.source };
+  }
+
+  function getSitemapRecords(commissionNumbers) {
+    if (!snapshot) throw new Error('Notary listing is not loaded');
+    if (!snapshot.source.generatedAt) return [];
+    const sourceDate = snapshot.source.generatedAt.slice(0, 10);
+    return [...new Set(commissionNumbers)].flatMap(number => {
+      if (!/^[1-9]\d{0,9}$/.test(number)) return [];
+      const index = snapshot.byCommission.get(Number(number));
+      if (index === undefined) return [];
+      const record = materializeRecord(snapshot.rows[index]);
+      const profile = toProfile(record);
+      return profile.expirationDate >= sourceDate && profile.city && profile.state === 'CA' ? [profile] : [];
+    });
+  }
+
+  return { start, stop, refresh, search, getStatus, getProfile, getSitemapRecords };
 }

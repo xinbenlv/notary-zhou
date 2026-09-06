@@ -11,7 +11,8 @@
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-const DIST = 'dist/articles';
+const DIST_ROOT = existsSync('dist/client') ? 'dist/client' : 'dist';
+const DIST = join(DIST_ROOT, 'articles');
 const SRC = 'src/content/articles';
 
 if (!existsSync(DIST)) {
@@ -53,7 +54,7 @@ for (const { slug, file } of pages) {
 
   // 3. 图片文件是否真实存在
   for (const m of body.matchAll(/src="(\/images\/[^"]+)"/g)) {
-    if (!existsSync(join('dist', m[1]))) report(slug, '图片缺失', m[1]);
+    if (!existsSync(join(DIST_ROOT, m[1]))) report(slug, '图片缺失', m[1]);
   }
 
   // 4. 免责声明是否就位

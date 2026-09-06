@@ -105,6 +105,17 @@ const server = createServer(async (req, res) => {
   }
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
+  // Retire the previous full-directory sitemaps after moving to a small pilot.
+  if (url.pathname === '/notary-sitemap.xml') {
+    res.writeHead(301, { Location: '/en/notaries/sitemap.xml', 'Cache-Control': 'public, max-age=300' }).end();
+    return;
+  }
+  if (/^\/notary-sitemap-\d+\.xml$/.test(url.pathname)) {
+    res.writeHead(410, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=300', 'X-Robots-Tag': 'noindex' });
+    res.end(req.method === 'HEAD' ? undefined : 'This full-directory sitemap has been retired.');
+    return;
+  }
+
   if (url.pathname === '/health') {
     sendJson(req, res, 200, notaryListing.getStatus());
     return;
@@ -135,7 +146,7 @@ const server = createServer(async (req, res) => {
   let status = 200;
   if (!file && ssrHandler) {
     // 静态文件未命中：交给 Astro 处理按需路由（自身会返回 404）
-    ssrHandler(req, res);
+    ssrHandler(req, res, undefined, { notaryListing });
     return;
   }
   if (!file) {
