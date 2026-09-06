@@ -180,6 +180,21 @@ const server = createServer(async (req, res) => {
   pipeline(src, zip, res, () => {});
 });
 
+// 迁移先于监听：宁可启动失败，也不要在表结构未就绪时开始接单。
+// 没有 DATABASE_URL 时（例如本地只预览静态页）跳过，不阻塞启动。
+if (process.env.DATABASE_URL) {
+  try {
+    const { migrate } = await import('./migrate.mjs');
+    const applied = await migrate();
+    console.log(applied.length ? `migrations applied: ${applied.join(', ')}` : 'migrations: up to date');
+  } catch (err) {
+    console.error('migration failed:', err.message);
+    process.exit(1);
+  }
+} else {
+  console.log('migrations: skipped (no DATABASE_URL)');
+}
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`static server: serving ${ROOT} on :${PORT}`);
 });
