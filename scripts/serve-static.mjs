@@ -99,7 +99,10 @@ function sendJson(req, res, status, body) {
 }
 
 const server = createServer(async (req, res) => {
+  // 静态文件只服务 GET/HEAD；POST 等交给 SSR（预约接口全靠 POST）。
+  // 没有 SSR handler 时才是真正的 405。
   if (req.method !== 'GET' && req.method !== 'HEAD') {
+    if (ssrHandler) { ssrHandler(req, res); return; }
     res.writeHead(405, { Allow: 'GET, HEAD' }).end('Method Not Allowed');
     return;
   }
