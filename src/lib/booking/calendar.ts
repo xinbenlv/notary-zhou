@@ -96,6 +96,25 @@ export async function listCalendars(): Promise<CalendarRef[]> {
   }));
 }
 
+/**
+ * 把日历登记进服务账号自己的列表。
+ * 共享（ACL）只授予权限，不会让日历出现在 calendarList —— 服务账号无法像
+ * 真人那样"接受"共享邀请。登记之后 listCalendars 才能发现它。
+ * 已登记的重复调用返回 409，视为成功。
+ */
+export async function registerCalendar(calendarId: string): Promise<void> {
+  try {
+    await calendarFetch('/users/me/calendarList', {
+      method: 'POST',
+      body: JSON.stringify({ id: calendarId }),
+    });
+  } catch (err) {
+    const msg = (err as Error).message;
+    if (msg.includes('409') || msg.toLowerCase().includes('already exists')) return;
+    throw err;
+  }
+}
+
 /** 能写入事件的日历（共享时须授予「更改活动」） */
 export async function writableCalendars(): Promise<CalendarRef[]> {
   const all = await listCalendars();

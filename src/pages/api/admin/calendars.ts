@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { listCalendars } from '../../../lib/booking/calendar';
+import { listCalendars, registerCalendar, freeBusy } from '../../../lib/booking/calendar';
 
 export const prerender = false;
 
@@ -14,6 +14,27 @@ export const GET: APIRoute = async ({ request }) => {
     });
   }
 
+  // 传入 calendarId 时：实测访问权限并登记，之后即可自动发现。
+  // 共享给服务账号只授予 ACL 权限，不会让日历自动进入它的 calendarList。
+  const calendarId = new URL(request.url).searchParams.get('calendarId');
+  if (calendarId) {
+    try {
+      const from = new Date();
+      const to = new Date(from.getTime() + 24 * 3600 * 1000);
+      const busy = await freeBusy(calendarId, from, to);
+      await registerCalendar(calendarId);
+      return new Response(JSON.stringify({
+        calendarId,
+        access: 'ok',
+        busyNext24h: busy.length,
+        next: `把 BOOKING_CALENDAR_ID 设为 ${calendarId}`,
+      }, null, 2), { headers: { 'Content-Type': 'application/json' } });
+    } catch (err) {
+      return new Response(JSON.stringify({ calendarId, access: 'failed', error: (err as Error).message }, null, 2),
+        { status: 400, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
   try {
     const calendars = await listCalendars();
     const writable = calendars.filter((c) => c.accessRole === 'writer' || c.accessRole === 'owner');
@@ -23,7 +44,8 @@ export const GET: APIRoute = async ({ request }) => {
       writable,
       hint: writable.length
         ? '把 writable 里的 id 设为 BOOKING_CALENDAR_ID'
-        : '还没有可写日历：请共享日历给上面的服务账号，权限选「更改活动」',
+        : '列表为空是正常的：共享给服务账号不会自动进入它的日历列表。'
+          + '请在本 URL 后加 &calendarId=<你的日历ID> 实测权限并登记。',
     }, null, 2), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
     return new Response(JSON.stringify({ error: (err as Error).message }), {
