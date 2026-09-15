@@ -1,9 +1,14 @@
 # Notary Zhou
 
 George (GJ) Zhou的双语公证服务官网，服务湾区 Santa Clara / San Mateo / Alameda 三县。
-已上线：[notaryzhou.com](https://notaryzhou.com)（加州公证 Commission #2557299，Santa Clara County，2030-05-30 到期）。
+已上线：[notaryzhou.com](https://notaryzhou.com)（Commission #2557299）。
 
 项目日志见 [MEMORY.md](MEMORY.md)。
+
+![中英文跨境文件指南](docs/assets/global-guides-desktop.png)
+
+提供普通话上门公证说明、公证员查验，以及附官方来源的中英文文件指南。
+本次内容发布与验证见 [发布说明](reports/global-guide-release.md)。
 
 ## 技术栈
 
@@ -83,7 +88,7 @@ npm run notary:benchmark
 - [ ] NNA 认证、E&O 保险（`config.ts` 中仍为 `Pending`）
 - [ ] Google Business Profile
 
-私有项目，保留所有权利。
+保留所有权利。
 
 ## Google Analytics
 

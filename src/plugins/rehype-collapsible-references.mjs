@@ -15,7 +15,7 @@ const textOf = (node) =>
 
 export default function rehypeCollapsibleReferences(options = {}) {
   const headings = options.heading ? [options.heading] : ['参考来源', 'References', 'Sources', 'Sources and further reading'];
-  
+
 
   return (tree) => {
     const children = tree.children;

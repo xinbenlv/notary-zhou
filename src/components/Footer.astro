@@ -1,4 +1,6 @@
 ---
+// Bilingual statutory notice, fee display and service boundaries.
+// Length rationale: keep the paired legally required notices and shared footer together.
 import { siteConfig } from '../config';
 import { langPath, type Lang } from '../i18n';
 
@@ -10,25 +12,25 @@ const { lang } = Astro.props;
 const t = {
   en: {
     disclaimerTitle: 'Disclaimer',
-    usCnTitle: 'U.S. vs. China Notarization',
+    usCnTitle: 'California notarization & documents used abroad',
     feesTitle: 'Fees',
   },
   zh: {
     disclaimerTitle: '免责声明 · Disclaimer',
-    usCnTitle: '中美「公证」的区别',
+    usCnTitle: '加州公证与跨境文件',
     feesTitle: '收费标准',
   },
 }[lang];
 
 const noticeEn =
-  'I am not an attorney licensed to practice law and may not give legal advice about immigration or any other legal matters or accept fees for legal advice.';
+  'I am not an attorney and, therefore, cannot give legal advice about immigration or any other legal matters.';
 const noticeZh =
-  '本人并非持有执照的执业律师，不得就移民或任何其他法律事务提供法律意见，亦不得就法律意见收取费用。';
+  '本人不是律师，因此不能就移民或任何其他法律事务提供法律意见。';
 
 const commissionedEn = `${siteConfig.owner.fullNameEn} is a notary public commissioned by the Secretary of State of the State of California, United States of America ("California"), Commission ${siteConfig.commissionNumber}, governed by California law (Government Code sections 8200–8230 and related statutes).`;
 const draftEn = `Once commissioned, ${siteConfig.owner.fullNameEn} will serve as a notary public commissioned by the Secretary of State of the State of California, United States of America ("California"), governed by California law (Government Code sections 8200–8230 and related statutes).`;
-const commissionedZh = `${siteConfig.owner.nameZhDisplay} 是由美利坚合众国加利福尼亚州（通称「加州」）州务卿（Secretary of State）委任的公证员（Notary Public，委任编号 ${siteConfig.commissionNumber}，有效期至${siteConfig.commissionExpiresZh}），受《加州政府法典》第 8200–8230 条及相关法律约束。`;
-const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为由美利坚合众国加利福尼亚州（通称「加州」）州务卿（Secretary of State）委任的公证员（Notary Public）执业，受《加州政府法典》第 8200–8230 条及相关法律约束。`;
+const commissionedZh = `${siteConfig.owner.nameZhDisplay} 是由美利坚合众国加利福尼亚州（通称“加州”）州务卿（Secretary of State）委任的公证员（Notary Public，委任编号 ${siteConfig.commissionNumber}，有效期至${siteConfig.commissionExpiresZh}），受《加州政府法典》第 8200–8230 条及相关法律约束。`;
+const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为由美利坚合众国加利福尼亚州（通称“加州”）州务卿（Secretary of State）委任的公证员（Notary Public）执业，受《加州政府法典》第 8200–8230 条及相关法律约束。`;
 ---
 
 <footer>
@@ -55,23 +57,20 @@ const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为�
           <>
             <p>{siteConfig.isDraft ? draftEn : commissionedEn}</p>
             <p>
-              A U.S. Notary Public is fundamentally different from a notary office
-              (公证处) in China. Under U.S. and California law, a California
-              notarization only verifies the identity
-              of the signer and witnesses the signing of a document — it does not
-              examine or certify the truthfulness or legality of the document's
-              contents, and it is not equivalent to, nor a substitute for,
-              notarization by a Chinese notary office or consular authentication by a
-              Chinese embassy or consulate. Documents intended for use in China
-              typically require an Apostille (Hague authentication) or other
-              procedures — please verify requirements with the receiving institution.
+              In a California acknowledgment, the signer appears and acknowledges
+              having signed the document; a jurat requires signing before the notary
+              and an oath or affirmation. Neither certifies the document’s truthfulness,
+              accuracy or validity. See <a href="/en/articles/acknowledgment-vs-jurat/">acknowledgment and jurat requirements</a>.
+              For use abroad, confirm the recipient’s notarization, translation and
+              authentication requirements before proceeding. Start with our
+              <a href="/en/articles/topics/apostille/">cross-border document guides</a>.
             </p>
           </>
         ) : (
           <>
             <p lang="zh">{siteConfig.isDraft ? draftZh : commissionedZh}</p>
             <p lang="zh">
-              美国公证员（Notary Public）与中国公证处的公证性质完全不同。根据美国及加州法律，加州公证仅核验签署人身份并见证文件签署，不对文件内容的真实性、合法性进行审查或证明；其效力不等同于、也不能替代中国公证处出具的公证书或中国驻美使领馆的领事认证。拟在中国境内使用的文件，通常还需办理海牙认证（Apostille）或其他手续，请务必向文件接收机构核实具体要求。
+              在加州办理签名确认时，签署人须本人到场确认已签署文件；办理 jurat 时，还须当面签署并宣誓或郑重确认。两种公证均不证明文件的真实性、准确性或有效性，具体区别见<a href="/articles/acknowledgment-vs-jurat/">签名确认与宣誓书公证指南</a>。文件用于境外时，请先向接收机构确认公证、翻译和认证要求，再查阅<a href="/articles/topics/apostille/">跨境文件指南</a>。
             </p>
           </>
         )}
@@ -113,40 +112,31 @@ const draftZh = `${siteConfig.owner.nameZhDisplay} 取得资格后，将作为�
         {lang === 'en' ? (
           <>
             <p>
-              As required by law, no notarial fee is charged for vote-by-mail
-              ballot identification envelopes or for a U.S. military veteran's
-              application or claim for veterans' benefits. For these documents, we
-              are glad to make the service entirely free if you meet us near
-              {siteConfig.travelOriginEn} — for mobile service, only the travel fee
-              below applies. The amounts above are the statutory maximums as of
-              {siteConfig.feesLastVerified} and may change if the law is amended —
-              the current statute controls.
+              No notarial fee is charged for signatures on vote-by-mail ballot
+              identification envelopes or other voting materials, or for the specified
+              applications and claims for U.S. military veterans’ benefits. Further
+              restrictions apply to <a href="/en/articles/california-notary-fees/#ref-veterans">services connected with covered veteran benefit matters</a>.
+              We check the applicable no-fee requirements before quoting related
+              charges, including travel. These statutory maximums were verified on
+              {siteConfig.feesLastVerified}; the current statute controls.
             </p>
             <p>
-              <strong>Mobile (travel) service:</strong> in addition to the notarial
-              fees above, a separate travel fee applies. It is estimated from the
-              round-trip drive time between {siteConfig.travelOriginEn} and your
-              signing location, priced comparably to an Uber/Lyft ride, and quoted
-              to you and agreed upon in advance at booking. If you meet us at
-              {siteConfig.travelOriginEn}, the travel fee is waived. Travel fees
-              are not notarial fees and are not regulated by &sect;8211.
+              <strong>Mobile service:</strong> Mandarin-speaking appointments in
+              Santa Clara, San Mateo and Alameda counties; no walk-in office.
+              Where a travel charge is permitted, it is quoted separately and agreed
+              upon before booking. The estimate uses round-trip drive time from
+              {siteConfig.travelOriginEn} to the signing location, at a price
+              comparable to an Uber/Lyft ride. Confirm the total before the trip;
+              a travel charge does not override statutory free-service requirements.
             </p>
           </>
         ) : (
           <>
             <p lang="zh">
-              依法律规定，邮寄选票身份信封的签名公证、美国退伍军人福利申请文件的公证不收公证费；此类文件若您愿意前来
-              {siteConfig.travelOriginZh}
-              附近与我们会面，我们乐意完全免费提供服务（如需上门，仅收取下述交通费）。以上为截至{
-                siteConfig.feesLastVerifiedZh
-              }的法定上限，如法律修订，以最新法规为准。
+              邮寄选票身份信封及其他投票材料上的签名公证，以及美国退伍军人的法定福利申请或索赔公证，不收公证费。<a href="/articles/california-notary-fees/#ref-veterans">相关退伍军人福利事项的其他服务</a>也有收费限制。报价前须核对适用的免费规定，包括交通费是否可以收取。以上法定上限核对日期为{siteConfig.feesLastVerifiedZh}；如法规修订，以现行规定为准。
             </p>
             <p lang="zh">
-              <strong>上门服务：</strong>除上述公证费外，另收取交通费。交通费按预约时从
-              {siteConfig.travelOriginZh}
-              至您上门公证地点的往返时间预估，价格与 Uber/Lyft
-              近似，在预约时向您报价并经您同意后收取；如果您前往 {siteConfig.travelOriginZh}，则免去交通费。交通费不属于公证费，不受第
-              8211 条约束。
+              <strong>上门服务：</strong>目前提供 Santa Clara、San Mateo、Alameda 三县的普通话预约制上门公证，不设到访接待办公室。在允许收取交通费的情形下，交通费单独报价，预约前确认；按从{siteConfig.travelOriginZh}至签署地点的往返时间预估，价格与 Uber/Lyft 近似。请在出发前确认总价；不能通过另列交通费绕过法定免费要求。
             </p>
           </>
         )}

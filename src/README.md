@@ -5,3 +5,11 @@ Astro routes live in `pages/`; reusable UI in `components/`; shared head metadat
 See [articles](content/articles/README.md) for editorial rules and [components](components/README.md) for rendering. New English content must not imply English-language or worldwide service.
 
 Route-directory documentation uses `_README.md`, the Astro exclusion convention, so developer notes never become indexable routes.
+
+```text
+src/
+├── pages/
+├── components/
+├── content/articles/
+└── layouts/, lib/, styles/
+```

@@ -9,3 +9,9 @@ Every substantive legal/procedural claim needs a local `#ref-*` citation to an e
 Covers and diagrams live under `public/images/articles/`; translate text-bearing covers. Long articles may exceed 5 KB because the explanation and its source chain should remain one reviewable document. Keep sections focused and citations adjacent.
 
 Run `npm run check:articles` after editing. It validates both languages, rendered citations, images, canonical URLs, reciprocal hreflang, article links and scoped sitemaps.
+
+```text
+articles/
+├── <slug>.md       Chinese
+└── en/<slug>.md    English counterparts
+```

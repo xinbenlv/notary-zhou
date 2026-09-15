@@ -5,3 +5,9 @@
 Article UI: `ArticlePage` renders metadata/body/CTA; `ArticleIndex` lists one language; `ApostilleHub` links document-specific guides; `ArticleRelated` adds locale-matched reading paths; `ArticleReferences` opens cited source disclosures; `ArticleDisclaimer` supplies the localized notice. `KnowledgeHighlights` links both homepages to the guides.
 
 Shared article styles remain in `../styles/global.css`; component-only additions use scoped CSS and logical spacing properties.
+
+```text
+ArticlePage → ArticleRelated / ArticleDisclaimer / ArticleReferences
+ArticleIndex / ApostilleHub → localized discovery
+KnowledgeHighlights → homepage entry points
+```
