@@ -1,17 +1,15 @@
 ---
 import { siteConfig } from '../config';
+import type { Lang } from '../i18n';
+interface Props { lang?: Lang }
+const { lang = 'zh' } = Astro.props;
 ---
-
-<aside class="article-disclaimer" lang="zh">
-  <p>
-    本文由 {siteConfig.name} 编写整理，成文过程中借助了人工智能工具协助检索、编纂与校对。仓促成文，学力所限，讹误疏漏在所难免；倘蒙读者诸君发现谬误，敬请赐函
-    <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>
-    指正，我们当及时勘正，不胜感荷。
-  </p>
-  <p>
-    为便于理解，文中对部分法律概念作了通俗化的表述。美国法上的若干术语，在中文里本无严格对应之词，现有译名多为称说方便而立，未必能尽传其义；故凡关键之处，均尽力附英文原词并注明法条出处，以便读者自行核校。
-  </p>
-  <p>
-    本文内容仅为一般性资讯分享，不构成法律意见，亦无从顾及读者各自的具体情形。各受理机构要求不一，法律亦时有修订；具体事项，请以文件接收方的要求及现行法律法规为准。读者在作出任何决定之前，务请自行查证，并就个案咨询律师、税务师或其他相关专业人士。
-  </p>
+<aside class="article-disclaimer" lang={lang}>
+  {lang === 'zh' ? <>
+    <p>本文由 {siteConfig.name} 整理，借助人工智能工具协助检索与校对。发现错误，请联系 <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>。</p>
+    <p>本文提供一般资讯，不构成法律意见。文中的中文术语用于帮助理解，请结合英文原文、签发地规则和接收机构的现行要求核对；个案问题请咨询合资格的专业人士。</p>
+  </> : <>
+    <p>Prepared by {siteConfig.name} with AI assistance for research and editing. Send corrections to <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>.</p>
+    <p>This is general information, not legal advice. Check the original rules for the issuing jurisdiction and the receiving institution’s current requirements. Consult a qualified professional about your circumstances.</p>
+  </>}
 </aside>

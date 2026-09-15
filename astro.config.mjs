@@ -28,11 +28,12 @@ export default defineConfig({
       filter: (page) => {
         const path = new URL(page).pathname;
         return !path.startsWith('/zh/') && !path.startsWith('/book')
-          && !path.startsWith('/articles/') && !path.startsWith('/en/notaries/')
+          && !path.startsWith('/articles/') && !path.startsWith('/en/articles/') && !path.startsWith('/en/notaries/')
           && !/\.xml\/?$/.test(path);
       },
       customSitemaps: [
         'https://www.notaryzhou.com/articles/sitemap.xml',
+        'https://www.notaryzhou.com/en/articles/sitemap.xml',
         'https://www.notaryzhou.com/en/notaries/sitemap.xml',
       ],
       i18n: {

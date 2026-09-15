@@ -10,7 +10,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check:articles": "astro build && node scripts/check-articles.mjs",
+    "check:articles": "astro build && node scripts/check-articles.mjs && node scripts/check-article-seo.mjs",
     "astro": "astro",
     "notary:service": "node scripts/run-notary-listing-service.mjs",
     "notary:benchmark": "node --expose-gc scripts/benchmark-notary-public-listing.mjs",
