@@ -4,10 +4,16 @@
 
 The remaining scripts support the notary listing service, sitemap pilot selection and benchmarks; they are independent of article publication. Credentials must be injected through GuestSafe into the intended process.
 
+`railway-guestsafe.py` consumes the explicitly imported Railway login bundle and
+injects its access token into the CLI for this project. It emits only selected
+status fields, fails on expired OAuth, and does not implement token refresh or
+read credential files. See [Railway access](../reports/railway-guestsafe.md).
+
 ```text
 scripts/
 ├── serve-static.mjs
 ├── check-articles.mjs
 ├── check-article-seo.mjs
+├── railway-guestsafe.py
 └── notary listing / pilot utilities
 ```

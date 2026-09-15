@@ -34,4 +34,36 @@ After deployment, verify the two topic URLs and both article sitemaps on the can
 
 Implementation note: route-directory documentation is named `_README.md` because Astro publishes ordinary Markdown under `src/pages` as routes. The collection loader separately excludes `README.md` from content.
 
-Publication status: prepared locally. The GitHub connector rejected blob creation with HTTP 403 (Resource not accessible by integration). The user authorized GitHub sign-in to the existing Railway project; the browser is waiting for the user to complete GitHub login. GuestSafe has no project-specific deployment credential. No production deployment has been performed.
+## Production publication
+
+Published on 2026-09-15 through the Railway CLI using the explicitly authorized
+[GuestSafe login consumer](railway-guestsafe.md). The CLI uploaded only a clean
+archive of source commit `4ed5cf2`, based on published `main`
+`8728837bc9fea0cb71634c37ab7d24bdc72dfc62`. Local unpublished booking/backend work
+and private Analytics reports were excluded. GitHub `main` was rechecked before
+upload and had not changed.
+
+- Existing project: `7b6fe9b2-ce31-4559-bade-5ad32b56f7f4`, service `site`
+  (`833774b6-b5f2-4925-a942-047db1cf954d`), environment `production`
+  (`38b82bdf-2bcd-419b-8846-e88465007ebb`).
+- [Deployment 3cc29403](https://railway.com/project/7b6fe9b2-ce31-4559-bade-5ad32b56f7f4/service/833774b6-b5f2-4925-a942-047db1cf954d?id=3cc29403-e31b-47af-be5a-6215a1149423)
+  reached `SUCCESS`. Previous successful deployment recorded before upload:
+  `f96493e6-5928-4103-9525-c2dea2c9d3a4`.
+- Public HTTP verification passed for all 45 article/directory URLs: HTTP 200,
+  no redirects or noindex, matching title/H1/language, self-canonical, expected
+  hreflang and normalized full body text equal to the approved local build.
+- Both article sitemap URL sets exactly match the build; the root sitemap index
+  includes both. Live mobile navigation switches to the corresponding English
+  topic page.
+
+The [machine-readable live verification](global-guide-live-verification.json)
+records all page and sitemap checks. The CLI credential consumer additionally
+passed independent review and fictional-fixture checks for invalid schema,
+missing/expired credentials, target binding, partial-secret output suppression,
+and unavailable deployment responses. These operations-only files and release
+evidence were saved after publication; they are not part of source `4ed5cf2`.
+
+The production website is live. The source branch is still local: the GitHub
+connector rejected writes with HTTP 403, so no remote feature branch, PR or merge
+is claimed. A portable patch and the local commits preserve the release. Direct
+CLI publication does not configure a future GitHub deployment pipeline.
