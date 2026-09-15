@@ -1,4 +1,5 @@
 ---
+// Shared document metadata; the named head slot supports early page-specific setup.
 import { siteConfig } from '../config';
 import { langPath, type Lang } from '../i18n';
 import PasswordGate from '../components/PasswordGate.astro';
@@ -38,6 +39,7 @@ const alternatePaths = Astro.props.alternatePaths ?? (isHomepage ? { zh: '/', en
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <slot name="head" />
     <title>{title}</title>
     <meta name="description" content={description} />
     {import.meta.env.PROD && !siteConfig.isDraft && !Astro.props.noindex && <GoogleAnalytics />}

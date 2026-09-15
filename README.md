@@ -8,7 +8,8 @@ George (GJ) Zhou的双语公证服务官网，服务湾区 Santa Clara / San Mat
 ![中文跨境文件指南](docs/assets/global-guides-mobile.png)
 
 提供普通话上门公证说明、公证员查验，以及附官方来源的中文文件指南。
-FAQ、指南和文章仅发布中文。本次变更见 [发布说明](reports/chinese-only-guides.md)。
+界面支持中英文；FAQ、指南和文章的标题、摘要与正文仅提供中文。
+阅读时可切换界面语言并留在当前文章，见 [发布说明](reports/bilingual-interface-chinese-articles.md)。
 
 ## 技术栈
 
@@ -70,6 +71,7 @@ npm run notary:benchmark
 ### 文章与搜索发现
 
 文章仅保留中文，使用 `/articles/` 与一份 sitemap；英文文章旧址返回 410。
+`?ui=en` 选择英文界面，不改变文章内容或规范网址。
 写作约定见 [文章 README](src/content/articles/README.md)。
 `npm run check:articles` 检查引用、图片、链接、canonical 及英文内容已移除。
 公证员详情页和 sitemap 试点的完整说明见 [搜索发现文档](reports/notary-discovery.md)。
@@ -84,7 +86,7 @@ npm run notary:benchmark
 
 ## 待办
 
-- [ ] 在线预约：Booking 区目前只有邮箱占位。方案为自建（Google Calendar 查忙闲/写事件 + Google Maps 算车程 + Stripe 收款），不使用 Calendly / Cal.com；交互原型见 `public/mockups/booking.html`
+- [ ] 在线预约：目前通过邮箱预约，交互原型见 `public/mockups/booking.html`
 - [ ] NNA 认证、E&O 保险（`config.ts` 中仍为 `Pending`）
 - [ ] Google Business Profile
 

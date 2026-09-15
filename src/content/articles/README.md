@@ -1,6 +1,6 @@
 # Article collection
 
-Public FAQ, guides and articles are Chinese only. Keep article files at `<slug>.md` and public URLs at `/articles/<slug>/`. Do not create an English article directory, English counterparts or translation stubs. The website's other bilingual service and lookup pages do not change this editorial policy.
+Public FAQ, guide and article titles, descriptions and bodies are Chinese only. Keep article files at `<slug>.md` and public URLs at `/articles/<slug>/`. Do not create an English article directory, English counterparts or translation stubs. The interface remains bilingual: `?ui=en` changes navigation, buttons and footer without translating this collection or changing canonical URLs. Appointment and service UI may be English.
 
 Use `lang: zh` where language metadata is explicit; legacy Chinese files default to Chinese. Existing `translationKey` metadata may remain as a stable topic identifier. Preserve original `pubDate`; set `updatedDate` only for substantive revisions. Drafts never enter pages or sitemaps. Avoid mechanical city variants.
 

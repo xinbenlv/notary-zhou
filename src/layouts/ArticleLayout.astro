@@ -1,0 +1,41 @@
+---
+// Chinese canonical editorial pages with a URL-selected bilingual interface.
+import Layout from './Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+interface Props {
+  path: string;
+  title?: string;
+  description?: string;
+  ogImage?: string | null;
+  ogType?: string;
+  noindex?: boolean;
+  jsonLd?: object;
+}
+const path = Astro.props.path.split(/[?#]/)[0];
+---
+<Layout {...Astro.props} path={path} lang="zh">
+  <Fragment slot="head">
+    <script is:inline>
+      document.documentElement.dataset.articleUi = new URLSearchParams(location.search).get('ui') === 'en' ? 'en' : 'zh';
+    </script>
+    <style is:global>
+      :root:not([data-article-ui='en']) [data-article-ui='en'],
+      :root[data-article-ui='en'] [data-article-ui='zh'] { display: none !important; }
+    </style>
+  </Fragment>
+  <div data-article-ui="zh" lang="zh-CN" data-testid="article-interface-nav-zh">
+    <Navbar lang="zh" alternateHref={`${path}?ui=en`} interfaceSwitch />
+  </div>
+  <div data-article-ui="en" lang="en" data-testid="article-interface-nav-en">
+    <Navbar lang="en" alternateHref={`${path}?ui=zh`} interfaceSwitch />
+  </div>
+  <slot />
+  <div data-article-ui="zh" lang="zh-CN" data-testid="article-interface-footer-zh"><Footer lang="zh" /></div>
+  <div data-article-ui="en" lang="en" data-testid="article-interface-footer-en"><Footer lang="en" /></div>
+  <script>
+    import { initArticleInterface } from '../lib/article-interface.mjs';
+    initArticleInterface();
+    window.addEventListener('hashchange', () => initArticleInterface());
+  </script>
+</Layout>

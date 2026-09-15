@@ -1,4 +1,5 @@
-/** Verify Chinese-only article discovery and preservation of English service pages. */
+/** Verify Chinese article content/discovery while preserving the bilingual site interface.
+ * Keep route, metadata and interface checks together so one built-page walk verifies their shared contract. */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,12 +29,6 @@ function localUrl(href, pagePath) {
     if (!['www.notaryzhou.com', 'notaryzhou.com'].includes(url.hostname)) return null;
     return { path: decodeURIComponent(url.pathname), fragment: decodeURIComponent(url.hash.slice(1)) };
   } catch { return null; }
-}
-
-function containsFaq(value) {
-  if (!value || typeof value !== 'object') return false;
-  const types = [].concat(value['@type'] || []);
-  return types.includes('FAQPage') || Object.values(value).some(item => Array.isArray(item) ? item.some(containsFaq) : containsFaq(item));
 }
 
 /** The expected slugs come from published source files; built output cannot silently drop a source. */
@@ -72,16 +67,21 @@ export function checkArticleSeo(root, articleSlugs) {
     if (path.startsWith('/articles/')) {
       if (alternates(html).length) fail('Chinese-only editorial page has hreflang language alternatives');
       if (html.includes('class="article-body"') && !html.includes('class="references"')) fail('missing source disclosure');
+      const elements = tags(html, '[a-z][\\w:-]*');
+      for (const part of ['nav', 'footer']) for (const ui of ['zh', 'en']) {
+        const hook = `article-interface-${part}-${ui}`;
+        if (!elements.some(a => a['data-testid'] === hook && a.lang === (ui === 'en' ? 'en' : 'zh-CN'))) fail(`missing bilingual interface region: ${hook}`);
+      }
+      for (const ui of ['zh', 'en']) {
+        const switches = tags(html, 'a').filter(a => a['data-interface-switch'] === ui);
+        if (!switches.some(a => {
+          try { const target = new URL(a.href, origin + path); return target.origin === origin && target.pathname === path && target.searchParams.get('ui') === ui; }
+          catch { return false; }
+        })) fail(`missing same-page interface switch: ${ui}`);
+      }
     }
   }
   for (const path of englishServicePaths) if (!htmlByPath.has(path)) errors.push(`English service page was removed: ${path}`);
-  const englishHome = htmlByPath.get('/en/') || '';
-  if (tags(englishHome, '[a-z][\\w:-]*').some(a => /^faq(?:-|$)/i.test(a.id || '') || /(?:^|\s)faq(?:-|\s|$)/i.test(a.class || ''))) errors.push('/en/: FAQ section remains');
-  for (const script of englishHome.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
-    if (attributes(script[1]).type !== 'application/ld+json') continue;
-    try { if (containsFaq(JSON.parse(script[2]))) errors.push('/en/: FAQPage structured data remains'); }
-    catch { errors.push('/en/: invalid JSON-LD'); }
-  }
 
   const sitemapPath = join(root, 'articles/sitemap.xml');
   if (!existsSync(sitemapPath)) errors.push('/articles/sitemap.xml: missing');

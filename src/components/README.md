@@ -1,13 +1,17 @@
 # Components
 
-`Navbar` and `Footer` localize the service-site frame. `Navbar.alternateHref` accepts a real counterpart URL; `showLanguageSwitch={false}` hides the switch on Chinese-only editorial pages. English navigation and footer links label the Chinese guides explicitly. `Layout` is under `../layouts`.
+`Navbar` and `Footer` localize the site frame. `Navbar.alternateHref` accepts a counterpart URL; `interfaceSwitch` marks an editorial interface switch. Its menu initialization is idempotent when both locale variants render. `Layout` is under `../layouts`.
 
-Chinese article UI: `ArticlePage` renders metadata/body/CTA; `ArticleIndex` lists Chinese articles; `ApostilleHub` links document-specific guides; `ArticleRelated` adds reading paths; `ArticleReferences` opens cited source disclosures; `ArticleDisclaimer` supplies the notice. These pages do not emit translation hreflang. `KnowledgeHighlights` appears only on the Chinese homepage. English `Booking` retains contact and service details without the FAQ/introduction block; the Chinese introduction links to the article directory.
+Article titles, descriptions and bodies remain Chinese. `ArticlePage`, `ArticleIndex` and `ApostilleHub` use `ArticleLayout` for bilingual navigation/footer on the same canonical URL. `?ui=en` selects English interface text; `?ui=zh` or no query selects Chinese. These are interface choices, not translated articles, so they do not emit article hreflang.
+
+`InterfaceText` takes `zh`/`en` strings for short labels (optional `class`/`testId`). `article-interface.mjs` updates these labels and propagates the interface query on article/glossary links. Article text marked `.article-body` or `data-article-content` stays unchanged. Pure hash citations and external links stay unchanged. For localized CTA destinations, set both `data-interface-href-zh` and `data-interface-href-en`. The helper uses no cookies or storage.
+
+`ArticleRelated` adds reading paths; `ArticleReferences` opens cited disclosures; `ArticleDisclaimer` supplies the notice. `KnowledgeHighlights` links homepages to the guides. Booking preserves appointment contact and service details.
 
 Shared article styles remain in `../styles/global.css`; component-only additions use scoped CSS and logical spacing properties.
 
 ```text
+ArticleLayout → Navbar / Footer / article-interface.mjs
 ArticlePage → ArticleRelated / ArticleDisclaimer / ArticleReferences
-ArticleIndex / ApostilleHub → Chinese discovery
-KnowledgeHighlights → Chinese homepage entry point
+InterfaceText → localized labels around Chinese content
 ```

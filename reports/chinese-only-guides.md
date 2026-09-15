@@ -1,5 +1,10 @@
 # Chinese-only editorial content
 
+Historical withdrawal release. The user's clarification preserves bilingual UI;
+see [the current interface policy](bilingual-interface-chinese-articles.md).
+Removal of English article translations still applies, while the interface
+restrictions recorded below were too broad and are superseded.
+
 On 2026-09-15 the user directed that FAQ, guides and articles be created and
 published only in Chinese. This supersedes the earlier bilingual guide release.
 Global Google Search exposure remains a goal; it does not require publishing

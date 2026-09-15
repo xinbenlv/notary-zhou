@@ -4,8 +4,9 @@
 
 The remaining scripts support the notary listing service, sitemap pilot selection and benchmarks; they are independent of article publication. Credentials must be injected through GuestSafe into the intended process.
 
-Run `node --test tests/article-editorial-removal.test.mjs` for regression fixtures
-covering withdrawn English pages, links, FAQ markup and retained service pages.
+Run `node --test tests/article-*.test.mjs` for regression fixtures covering
+withdrawn English articles, bilingual interface navigation, unchanged Chinese
+content and retained service pages. English appointment UI is permitted.
 
 `railway-guestsafe.py` consumes the explicitly imported Railway login bundle and
 injects its access token into the CLI for this project. It emits only selected

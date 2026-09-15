@@ -1,6 +1,7 @@
 ---
 import { siteConfig } from '../config';
 import type { Lang } from '../i18n';
+import { articleIndexPath } from '../articles';
 
 interface Props {
   lang: Lang;
@@ -24,6 +25,14 @@ const t = {
   },
 }[lang];
 const intro = {
+  en: {
+    heading: 'Before your appointment',
+    explainer: 'Please email us to confirm your document type, location and appointment details.',
+    explainerStrong: 'We will confirm what to bring before your visit.',
+    bringTitle: 'Prepare for your appointment:',
+    bringItems: ['Your complete document', 'Valid identification', 'Your agreed payment method'],
+  },
+  zh: {
   heading: '第一次办理公证？',
   explainer: '公证员相当于一位中立的见证人。我们负责核验您的身份、确认您是自愿签署，并现场见证您在文件上签字。',
   explainerStrong: '请务必等到与我们见面时再签署文件。',
@@ -33,14 +42,15 @@ const intro = {
     '有效的政府签发证件（驾照或护照）',
     '付款方式（现金、Venmo、Zelle 或信用卡）',
   ],
-};
+  },
+}[lang];
 ---
 
 <section id="book" class="booking-section">
   <div class="container">
-    <div class:list={['booking-container', { 'booking-contact-only': lang === 'en' }]}>
+    <div class="booking-container">
       <!-- Info Side -->
-      {lang === 'zh' && <div class="info-side">
+      <div class="info-side">
         <div class="info-graphic">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         </div>
@@ -57,10 +67,10 @@ const intro = {
           </ul>
         </div>
 
-        <a href="/articles/" class="btn btn-green" style="margin-top: 32px; align-self: flex-start;">
-          查看公证知识
+        <a href={articleIndexPath(lang)} class="btn btn-green" style="margin-top: 32px; align-self: flex-start;">
+          {lang === 'zh' ? '查看公证知识' : 'Browse Chinese articles'}
         </a>
-      </div>}
+      </div>
 
       <!-- Calendar Side — Coming Soon -->
       <div class="calendar-side">
@@ -82,7 +92,3 @@ const intro = {
     </div>
   </div>
 </section>
-
-<style>
-  .booking-contact-only { grid-template-columns: minmax(0, 1fr); }
-</style>

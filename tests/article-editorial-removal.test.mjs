@@ -9,7 +9,8 @@ import { checkArticleSeo } from '../scripts/check-article-seo.mjs';
 const origin = 'https://www.notaryzhou.com';
 const slugs = Array.from({ length: 31 }, (_, i) => `guide-${i + 1}`);
 const paths = ['/articles/', '/articles/topics/apostille/', ...slugs.map(slug => `/articles/${slug}/`)];
-const page = (path, extra = '') => `<html lang="${path.startsWith('/en/') ? 'en' : 'zh-CN'}"><head><link href="${origin}${path}" rel="canonical"></head><body><main>${extra}</main></body></html>`;
+const articleInterface = path => ['nav', 'footer'].flatMap(part => ['zh', 'en'].map(ui => `<div data-testid="article-interface-${part}-${ui}" lang="${ui === 'en' ? 'en' : 'zh-CN'}"></div>`)).join('') + ['zh', 'en'].map(ui => `<a data-interface-switch="${ui}" href="${path}?ui=${ui}">${ui}</a>`).join('');
+const page = (path, extra = '', withInterface = true) => `<html lang="${path.startsWith('/en/') ? 'en' : 'zh-CN'}"><head><link href="${origin}${path}" rel="canonical"></head><body>${path.startsWith('/articles/') && withInterface ? articleInterface(path) : ''}<main>${extra}</main></body></html>`;
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'notary-editorial-removal-'));
@@ -23,7 +24,8 @@ function fixture(t) {
 
 test('33 Chinese routes and English service pages remain valid without English editorial output', t => {
   const f = fixture(t);
-  f.write('/en/index.html', page('/en/', '<a href="/articles/guide-1/">中文文章</a><link rel="alternate" hreflang="zh" href="https://www.notaryzhou.com/">'));
+  f.write('/en/index.html', page('/en/', '<a href="/articles/guide-1/?ui=en">Chinese guides</a><link rel="alternate" hreflang="zh" href="https://www.notaryzhou.com/">'));
+  f.write('/articles/guide-1/index.html', page('/articles/guide-1/', '<a href="?ui=en">English interface</a><a href="/articles/?ui=en">All guides</a><h1 lang="zh-CN">中文文章标题</h1>'));
   assert.deepEqual(f.check(), { errors: [], pageCount: 33, articleCount: 31 });
 });
 
@@ -34,6 +36,14 @@ test('English article HTML and the retired sitemap cannot return to the build', 
   const errors = f.check().errors.join('\n');
   assert.match(errors, /Removed English article output was rebuilt: \/en\/articles\/guide-1\/index.html/);
   assert.match(errors, /Removed English article output was rebuilt: \/en\/articles\/sitemap.xml/);
+});
+
+test('Chinese article pages retain a bilingual interface with same-page switches', t => {
+  const f = fixture(t);
+  f.write('/articles/guide-1/index.html', page('/articles/guide-1/', '<a href="/en/">English</a>', false));
+  const errors = f.check().errors.join('\n');
+  assert.match(errors, /missing bilingual interface region: article-interface-nav-en/);
+  assert.match(errors, /missing same-page interface switch: en/);
 });
 
 test('removed links and hreflang are rejected anywhere, including relative and encoded links', t => {
@@ -47,12 +57,10 @@ test('removed links and hreflang are rejected anywhere, including relative and e
   assert.match(errors, /Chinese-only editorial page has hreflang language alternatives/);
 });
 
-test('English FAQ markup and nested FAQPage JSON-LD are rejected', t => {
+test('English homepage FAQ and booking interface are allowed alongside Chinese articles', t => {
   const f = fixture(t);
-  f.write('/en/index.html', page('/en/', '<div class="faq-box">FAQ</div><script type="application/ld+json">{"@graph":[{"@type":["FAQPage"]}]}</script>'));
-  const errors = f.check().errors.join('\n');
-  assert.match(errors, /FAQ section remains/);
-  assert.match(errors, /FAQPage structured data remains/);
+  f.write('/en/index.html', page('/en/', '<div class="faq-box">Frequently asked questions</div><section id="booking"><p class="booking-intro">Book a Mandarin mobile notary appointment.</p></section><script type="application/ld+json">{"@graph":[{"@type":["FAQPage"]}]}</script>'));
+  assert.deepEqual(f.check().errors, []);
 });
 
 test('missing Chinese articles, missing English service pages and stale sitemap URLs fail', t => {

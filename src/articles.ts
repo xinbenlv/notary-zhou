@@ -14,8 +14,15 @@ export type Article = CollectionEntry<'articles'>;
 export const articleSlug = (article: Article) => article.id;
 export const articleKey = (article: Article) => article.data.translationKey ?? articleSlug(article);
 export const articlePath = (article: Article) => `/articles/${articleSlug(article)}/`;
-export const articleIndexPath = (_lang: Lang = 'zh') => '/articles/';
-export const topicPath = (lang: Lang) => `${articleIndexPath(lang)}topics/apostille/`;
+/** UI preference never changes the canonical article or its Chinese content. */
+export const articleInterfacePath = (path: string, lang: Lang = 'zh') => {
+  const url = new URL(path, 'https://www.notaryzhou.com');
+  if (lang === 'en') url.searchParams.set('ui', 'en');
+  else url.searchParams.delete('ui');
+  return `${url.pathname}${url.search}${url.hash}`;
+};
+export const articleIndexPath = (lang: Lang = 'zh') => articleInterfacePath('/articles/', lang);
+export const topicPath = (lang: Lang = 'zh') => articleInterfacePath('/articles/topics/apostille/', lang);
 export const formatDate = (d: Date, lang: Lang = 'zh') => new Intl.DateTimeFormat(
   lang === 'zh' ? 'zh-CN' : 'en-US', { dateStyle: 'long', timeZone: 'UTC' }
 ).format(d);
