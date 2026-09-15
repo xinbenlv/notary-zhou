@@ -1,3 +1,3 @@
 # English routes
 
-English home, service information and public-record pages. `articles/` now includes translated guides, a directory, a document topic hub and its own sitemap. Preserve service scope in English copy. Shared article rendering is in `../../components/`.
+English home, service information, privacy and public-record pages remain available. FAQ, guides and articles are Chinese-only; do not add English editorial routes. Former `/en/articles` URLs return HTTP 410 in the production server. Any link to Chinese guides must state its language.

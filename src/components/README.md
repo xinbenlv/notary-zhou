@@ -1,13 +1,13 @@
 # Components
 
-`Navbar` and `Footer` localize the site frame. `Navbar.alternateHref` accepts a real counterpart URL. `Layout` is under `../layouts`. Existing large homepage/booking components are grouped by user flow; avoid mixing unrelated changes into article work.
+`Navbar` and `Footer` localize the service-site frame. `Navbar.alternateHref` accepts a real counterpart URL; `showLanguageSwitch={false}` hides the switch on Chinese-only editorial pages. English navigation and footer links label the Chinese guides explicitly. `Layout` is under `../layouts`.
 
-Article UI: `ArticlePage` renders metadata/body/CTA; `ArticleIndex` lists one language; `ApostilleHub` links document-specific guides; `ArticleRelated` adds locale-matched reading paths; `ArticleReferences` opens cited source disclosures; `ArticleDisclaimer` supplies the localized notice. `KnowledgeHighlights` links both homepages to the guides.
+Chinese article UI: `ArticlePage` renders metadata/body/CTA; `ArticleIndex` lists Chinese articles; `ApostilleHub` links document-specific guides; `ArticleRelated` adds reading paths; `ArticleReferences` opens cited source disclosures; `ArticleDisclaimer` supplies the notice. These pages do not emit translation hreflang. `KnowledgeHighlights` appears only on the Chinese homepage. English `Booking` retains contact and service details without the FAQ/introduction block; the Chinese introduction links to the article directory.
 
 Shared article styles remain in `../styles/global.css`; component-only additions use scoped CSS and logical spacing properties.
 
 ```text
 ArticlePage → ArticleRelated / ArticleDisclaimer / ArticleReferences
-ArticleIndex / ApostilleHub → localized discovery
-KnowledgeHighlights → homepage entry points
+ArticleIndex / ApostilleHub → Chinese discovery
+KnowledgeHighlights → Chinese homepage entry point
 ```

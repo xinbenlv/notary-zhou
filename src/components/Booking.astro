@@ -9,35 +9,13 @@ interface Props {
 const { lang } = Astro.props;
 const t = {
   en: {
-    heading: 'New to notarization?',
-    explainer:
-      'Think of a notary as an impartial witness. We verify your identity, ensure you are signing willingly, and observe the signing of your document.',
-    explainerStrong: 'Do not sign your document before we meet.',
-    bringTitle: 'What to bring:',
-    bringItems: [
-      'The complete document (unsigned)',
-      "Valid Government-issued ID (Driver's License or Passport)",
-      'Payment (Cash, Venmo, Zelle, or Credit Card)',
-    ],
-    faqCta: 'Read Notary FAQ',
-    selectDay: 'Select a day',
+    selectDay: 'Book an appointment',
     comingSoon: 'Coming Soon',
     comingSoonDesc: 'Online scheduling is coming soon. Meanwhile, please email us at',
     comingSoonDescEnd: 'to book an appointment.',
     mobileOnly: 'Mobile notary service by appointment. We come to your agreed location; there is no walk-in office.',
   },
   zh: {
-    heading: '第一次办理公证？',
-    explainer:
-      '公证员相当于一位中立的见证人。我们负责核验您的身份、确认您是自愿签署，并现场见证您在文件上签字。',
-    explainerStrong: '请务必等到与我们见面时再签署文件。',
-    bringTitle: '请携带：',
-    bringItems: [
-      '完整的文件（尚未签字）',
-      '有效的政府签发证件（驾照或护照）',
-      '付款方式（现金、Venmo、Zelle 或信用卡）',
-    ],
-    faqCta: '查看常见问题',
     selectDay: '选择日期',
     comingSoon: '即将开放',
     comingSoonDesc: '在线预约系统即将上线，现阶段请先发送邮件至',
@@ -45,33 +23,44 @@ const t = {
     mobileOnly: '仅提供预约制上门公证，到双方约定地点办理，不设接待到访客户的办公室。',
   },
 }[lang];
+const intro = {
+  heading: '第一次办理公证？',
+  explainer: '公证员相当于一位中立的见证人。我们负责核验您的身份、确认您是自愿签署，并现场见证您在文件上签字。',
+  explainerStrong: '请务必等到与我们见面时再签署文件。',
+  bringTitle: '请携带：',
+  bringItems: [
+    '完整的文件（尚未签字）',
+    '有效的政府签发证件（驾照或护照）',
+    '付款方式（现金、Venmo、Zelle 或信用卡）',
+  ],
+};
 ---
 
 <section id="book" class="booking-section">
   <div class="container">
-    <div class="booking-container">
+    <div class:list={['booking-container', { 'booking-contact-only': lang === 'en' }]}>
       <!-- Info Side -->
-      <div class="info-side">
+      {lang === 'zh' && <div class="info-side">
         <div class="info-graphic">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         </div>
-        <h2 style="margin-bottom: 16px;">{t.heading}</h2>
-        <p>{t.explainer} <strong>{t.explainerStrong}</strong></p>
+        <h2 style="margin-bottom: 16px;">{intro.heading}</h2>
+        <p>{intro.explainer} <strong>{intro.explainerStrong}</strong></p>
 
         <div class="faq-box">
           <h3>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--brand-terra)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-            {t.bringTitle}
+            {intro.bringTitle}
           </h3>
           <ul style="margin-left: 28px; color: var(--text-muted); font-size: 14px; line-height: 1.8;">
-            {t.bringItems.map((item) => <li>{item}</li>)}
+            {intro.bringItems.map((item) => <li>{item}</li>)}
           </ul>
         </div>
 
-        <a href="#faq" class="btn btn-green" style="margin-top: 32px; align-self: flex-start;">
-          {t.faqCta}
+        <a href="/articles/" class="btn btn-green" style="margin-top: 32px; align-self: flex-start;">
+          查看公证知识
         </a>
-      </div>
+      </div>}
 
       <!-- Calendar Side — Coming Soon -->
       <div class="calendar-side">
@@ -93,3 +82,7 @@ const t = {
     </div>
   </div>
 </section>
+
+<style>
+  .booking-contact-only { grid-template-columns: minmax(0, 1fr); }
+</style>

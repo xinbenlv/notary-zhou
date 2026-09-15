@@ -1,15 +1,14 @@
 ---
-import type { Lang } from '../i18n';
 import { articleIndexPath, topicPath } from '../articles';
-interface Props { lang: Lang }
+interface Props { lang: 'zh' }
 const { lang } = Astro.props;
 ---
 <section class="knowledge-highlights"><div class="container">
-  <h2>{lang === 'zh' ? '文件跨境使用，从这里了解' : 'Preparing documents for use abroad?'}</h2>
-  <p>{lang === 'zh' ? '海牙认证、出生证明、结婚证与个人声明：先了解文件类别和接收方要求，再决定下一步。' : 'Explore apostilles, birth and marriage records, and personal affidavits. Start with the document type and the recipient’s requirements.'}</p>
+  <h2>文件跨境使用，从这里了解</h2>
+  <p>海牙认证、出生证明、结婚证与个人声明：先了解文件类别和接收方要求，再决定下一步。</p>
   <div class="guide-links">
-    <a href={topicPath(lang)}>{lang === 'zh' ? '海牙认证与跨境文件指南 →' : 'Apostille & document guide →'}</a>
-    <a href={articleIndexPath(lang)}>{lang === 'zh' ? '全部公证知识 →' : 'All notary guides →'}</a>
+    <a href={topicPath(lang)}>海牙认证与跨境文件指南 →</a>
+    <a href={articleIndexPath(lang)}>全部公证知识 →</a>
   </div>
 </div></section>
 <style>

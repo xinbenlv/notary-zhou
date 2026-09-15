@@ -5,10 +5,10 @@ George (GJ) Zhou的双语公证服务官网，服务湾区 Santa Clara / San Mat
 
 项目日志见 [MEMORY.md](MEMORY.md)。
 
-![中英文跨境文件指南](docs/assets/global-guides-desktop.png)
+![中文跨境文件指南](docs/assets/global-guides-mobile.png)
 
-提供普通话上门公证说明、公证员查验，以及附官方来源的中英文文件指南。
-本次内容发布与验证见 [发布说明](reports/global-guide-release.md)。
+提供普通话上门公证说明、公证员查验，以及附官方来源的中文文件指南。
+FAQ、指南和文章仅发布中文。本次变更见 [发布说明](reports/chinese-only-guides.md)。
 
 ## 技术栈
 
@@ -69,9 +69,9 @@ npm run notary:benchmark
 
 ### 文章与搜索发现
 
-中英文文章独立地址、相互语言链接、各自 sitemap；首页与文章目录链接海牙认证主题页。
-写作与翻译约定见 [文章 README](src/content/articles/README.md)。
-`npm run check:articles` 构建后检查引用、图片、链接、canonical 与 hreflang。
+文章仅保留中文，使用 `/articles/` 与一份 sitemap；英文文章旧址返回 410。
+写作约定见 [文章 README](src/content/articles/README.md)。
+`npm run check:articles` 检查引用、图片、链接、canonical 及英文内容已移除。
 公证员详情页和 sitemap 试点的完整说明见 [搜索发现文档](reports/notary-discovery.md)。
 
 ## 域名

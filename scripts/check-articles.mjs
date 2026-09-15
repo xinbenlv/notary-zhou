@@ -8,7 +8,7 @@
  *
  * 用法：npm run build && node scripts/check-articles.mjs
  */
-import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIST_ROOT = existsSync('dist/client') ? 'dist/client' : 'dist';
@@ -20,7 +20,7 @@ if (!existsSync(DIST)) {
   process.exit(1);
 }
 
-/** Collect built article bodies in both language trees, excluding directory/topic pages. */
+/** Collect Chinese article bodies, excluding directory/topic pages. */
 const pages = [];
 function walk(dir, prefix = '') {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -31,10 +31,10 @@ function walk(dir, prefix = '') {
   }
 }
 walk(DIST);
-if (existsSync(join(DIST_ROOT, 'en/articles'))) walk(join(DIST_ROOT, 'en/articles'), 'en/');
 
 const problems = [];
 const report = (slug, kind, detail) => problems.push({ slug, kind, detail });
+if (existsSync(join(DIST_ROOT, 'en/articles'))) report('en/articles', '已移除的英文文章目录重新生成', '文章仅以中文发布');
 
 for (const { slug, file } of pages) {
   const html = readFileSync(file, 'utf8');
@@ -77,6 +77,7 @@ function checkSource(dir, prefix = '') {
     const slug = prefix + entry.name.replace(/\.md$/, '');
     const raw = readFileSync(join(dir, entry.name), 'utf8');
     const draft = /^draft:\s*true/m.test(raw);
+    if (prefix.startsWith('en/') || /^lang:\s*['"]?en['"]?\s*$/m.test(raw)) report(slug, '英文文章源文件不符合发布政策', entry.name);
     if (!published.has(slug) && !draft) report(slug, '源文件存在但未生成页面', entry.name);
     if (published.has(slug) && draft) report(slug, '草稿被发布', entry.name);
   }

@@ -4,47 +4,37 @@ import Layout from '../layouts/Layout.astro';
 import Navbar from './Navbar.astro';
 import Footer from './Footer.astro';
 import { apostilleKeys, articleKey, articlePath, articleIndexPath, topicPath } from '../articles';
-import { otherLang, type Lang } from '../i18n';
-interface Props { lang: Lang }
+interface Props { lang: 'zh' }
 const { lang } = Astro.props;
 const articles = await getCollection('articles', ({ data }) => !data.draft && data.lang === lang);
 const guides = apostilleKeys.map(key => articles.find(a => articleKey(a) === key)).filter(Boolean);
-const title = lang === 'zh' ? '海牙认证与跨境文件指南' : 'Apostille & cross-border document guide';
-const description = lang === 'zh'
-  ? '从文件签发地、使用地和接收机构开始，找到出生证明、结婚证、单身声明、同一人声明与委托书的办理指南。'
-  : 'Find a starting point for birth and marriage certificates, single-status affidavits, identity declarations and powers of attorney. Check the issuing jurisdiction and recipient first.';
-const steps = lang === 'zh' ? [
+const title = '海牙认证与跨境文件指南';
+const description = '从文件签发地、使用地和接收机构开始，找到出生证明、结婚证、单身声明、同一人声明与委托书的办理指南。';
+const steps = [
   ['文件在哪里签发？', '记下国家、州或省，以及文件上的签发机构与签字人。'],
   ['交给哪里、哪家机构？', '向接收机构索取现行清单：文件版本、翻译、有效期及认证要求。'],
   ['你手里是哪一种文件？', '出生证明和个人声明是不同类型。选择下方对应指南，再核对其中的官方来源。'],
-] : [
-  ['Where was it issued?', 'Note the country, state or province, issuing office and the official who signed it.'],
-  ['Who will receive it?', 'Ask the recipient for its current checklist: document version, translation, age limits and authentication requirements.'],
-  ['What document do you have?', 'A birth record and a personal affidavit are different document types. Choose the guide below, then check its official sources.'],
 ];
 ---
 <Layout lang={lang} title={`${title} | Notary Zhou`} description={description} path={topicPath(lang)}
-  alternatePaths={{ zh: topicPath('zh'), en: topicPath('en') }}
   jsonLd={{ '@context': 'https://schema.org', '@type': 'CollectionPage', name: title, description,
-    url: `https://www.notaryzhou.com${topicPath(lang)}`, inLanguage: lang === 'zh' ? 'zh-CN' : 'en' }}>
-  <Navbar lang={lang} alternateHref={topicPath(otherLang(lang))} />
+    url: `https://www.notaryzhou.com${topicPath(lang)}`, inLanguage: 'zh-CN' }}>
+  <Navbar lang={lang} showLanguageSwitch={false} />
   <main class="articles-index" data-testid="article-directory"><div class="container">
     <header class="articles-hero">
-      <p class="eyebrow">{lang === 'zh' ? '跨境文件 · 办理前的第一步' : 'CROSS-BORDER DOCUMENTS · START HERE'}</p>
+      <p class="eyebrow">跨境文件 · 办理前的第一步</p>
       <h1>{title}</h1><p>{description}</p>
     </header>
     <ol class="starting-points">{steps.map(([heading, copy]) => <li><h2>{heading}</h2><p>{copy}</p></li>)}</ol>
     <section class="articles-group">
-      <h2>{lang === 'zh' ? '按文件类型继续' : 'Choose your document'}</h2>
+      <h2>按文件类型继续</h2>
       <div class="articles-grid">{guides.map(a => a && <a class="article-card" data-testid="article-card" href={articlePath(a)}>
         {a.data.cover && <img src={a.data.cover} alt={a.data.coverAlt ?? a.data.title} width="1200" height="630" loading="lazy" />}
         <div class="article-card-body"><h3>{a.data.title}</h3><p>{a.data.description}</p></div>
       </a>)}</div>
     </section>
-    <p class="scope-note">{lang === 'zh'
-      ? '这里汇集办理前的参考资讯；各篇标明适用地区。Notary Zhou 的实际公证服务为旧金山湾区三县的普通话上门服务。'
-      : 'These guides provide preparation information and identify the jurisdictions they cover. Notary Zhou’s service is Mandarin-speaking mobile notarization in three San Francisco Bay Area counties.'}</p>
-    <p class="article-back"><a href={articleIndexPath(lang)}>{lang === 'zh' ? '查看全部公证知识 →' : 'Browse all notary guides →'}</a></p>
+    <p class="scope-note">这里汇集办理前的参考资讯；各篇标明适用地区。Notary Zhou 的实际公证服务为旧金山湾区三县的普通话上门服务。</p>
+    <p class="article-back"><a href={articleIndexPath(lang)}>查看全部公证知识 →</a></p>
   </div></main>
   <Footer lang={lang} />
 </Layout>

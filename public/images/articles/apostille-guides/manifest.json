@@ -1,5 +1,5 @@
 {
-  "description": "Original localized article covers with editable SVG sources and progressive JPEG outputs.",
+  "description": "Original Chinese article covers with editable SVG sources and progressive JPEG outputs; English-only variants removed under the Chinese-only editorial policy.",
   "created": "2026-09-15",
   "images": [
     {
@@ -14,21 +14,7 @@
       "purpose": "Show the document routing sequence with the full localized article title",
       "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
       "sectionImages": "Omitted: short procedural sections use text and tables",
-      "visualQc": "Passed: all six JPEG outputs opened; text complete, correct locale, no clipping or collisions, scene reaches edges"
-    },
-    {
-      "article": "src/content/articles/en/apostille-for-china.md",
-      "language": "en-US",
-      "title": "Apostille for China — choose the right U.S. document route",
-      "slot": "cover",
-      "source": "apostille-for-china-en.svg",
-      "file": "apostille-for-china-en.jpg",
-      "width": 1200,
-      "height": 630,
-      "purpose": "Show the document routing sequence with the full localized article title",
-      "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
-      "sectionImages": "Omitted: short procedural sections use text and tables",
-      "visualQc": "Passed: all six JPEG outputs opened; text complete, correct locale, no clipping or collisions, scene reaches edges"
+      "visualQc": "Passed during creation: this JPEG was opened; complete Chinese text, no clipping or collisions, scene reaches edges. Retained artwork unchanged."
     },
     {
       "article": "src/content/articles/birth-certificate-apostille.md",
@@ -42,21 +28,7 @@
       "purpose": "Show the document routing sequence with the full localized article title",
       "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
       "sectionImages": "Omitted: short procedural sections use text and tables",
-      "visualQc": "Passed: all six JPEG outputs opened; text complete, correct locale, no clipping or collisions, scene reaches edges"
-    },
-    {
-      "article": "src/content/articles/en/birth-certificate-apostille.md",
-      "language": "en-US",
-      "title": "U.S. birth certificate apostille — certified copies and the right state",
-      "slot": "cover",
-      "source": "birth-certificate-apostille-en.svg",
-      "file": "birth-certificate-apostille-en.jpg",
-      "width": 1200,
-      "height": 630,
-      "purpose": "Show the document routing sequence with the full localized article title",
-      "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
-      "sectionImages": "Omitted: short procedural sections use text and tables",
-      "visualQc": "Passed: all six JPEG outputs opened; text complete, correct locale, no clipping or collisions, scene reaches edges"
+      "visualQc": "Passed during creation: this JPEG was opened; complete Chinese text, no clipping or collisions, scene reaches edges. Retained artwork unchanged."
     },
     {
       "article": "src/content/articles/marriage-certificate-apostille.md",
@@ -70,21 +42,7 @@
       "purpose": "Show the document routing sequence with the full localized article title",
       "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
       "sectionImages": "Omitted: short procedural sections use text and tables",
-      "visualQc": "Passed: all six JPEG outputs opened; text complete, correct locale, no clipping or collisions, scene reaches edges"
-    },
-    {
-      "article": "src/content/articles/en/marriage-certificate-apostille.md",
-      "language": "en-US",
-      "title": "U.S. marriage certificate apostille — get the right record first",
-      "slot": "cover",
-      "source": "marriage-certificate-apostille-en.svg",
-      "file": "marriage-certificate-apostille-en.jpg",
-      "width": 1200,
-      "height": 630,
-      "purpose": "Show the document routing sequence with the full localized article title",
-      "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
-      "sectionImages": "Omitted: short procedural sections use text and tables",
-      "visualQc": "Passed: all six JPEG outputs opened; text complete, correct locale, no clipping or collisions, scene reaches edges"
+      "visualQc": "Passed during creation: this JPEG was opened; complete Chinese text, no clipping or collisions, scene reaches edges. Retained artwork unchanged."
     }
   ]
 }

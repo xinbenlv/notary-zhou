@@ -7,9 +7,9 @@ const isCrossBorder = apostilleKeys.includes(articleKey(article));
 const related = articles.filter(a => a.id !== article.id && a.data.lang === lang &&
   (isCrossBorder ? apostilleKeys.includes(articleKey(a)) : a.data.category === article.data.category)).slice(0, 4);
 ---
-{(isCrossBorder || related.length > 0) && <aside class="related-guides" aria-label={lang === 'zh' ? '继续阅读' : 'Related guides'}>
-  <h2>{lang === 'zh' ? '继续阅读' : 'Related guides'}</h2>
-  {isCrossBorder && <p><a href={topicPath(lang)}>{lang === 'zh' ? '从这里开始：海牙认证与跨境文件指南 →' : 'Start here: apostille and cross-border document guides →'}</a></p>}
+{(isCrossBorder || related.length > 0) && <aside class="related-guides" aria-label="继续阅读">
+  <h2>继续阅读</h2>
+  {isCrossBorder && <p><a href={topicPath(lang)}>从这里开始：海牙认证与跨境文件指南 →</a></p>}
   <ul>{related.map(a => <li><a href={articlePath(a)}>{a.data.title}</a></li>)}</ul>
 </aside>}
 <style>

@@ -1,17 +1,17 @@
 # Article collection
 
-Chinese files stay at `<slug>.md`; English counterparts live at `en/<slug>.md`. Existing Chinese URLs remain `/articles/<slug>/`; English URLs are `/en/articles/<slug>/`.
+Public FAQ, guides and articles are Chinese only. Keep article files at `<slug>.md` and public URLs at `/articles/<slug>/`. Do not create an English article directory, English counterparts or translation stubs. The website's other bilingual service and lookup pages do not change this editorial policy.
 
-Use `lang: zh|en` and the same `translationKey` on actual translation pairs. Legacy Chinese files default to `zh`, with their filename as translation key. Preserve original `pubDate`; set `updatedDate` only for substantive revisions. Drafts never enter pages or sitemaps. No empty translation stubs or mechanical city variants.
+Use `lang: zh` where language metadata is explicit; legacy Chinese files default to Chinese. Existing `translationKey` metadata may remain as a stable topic identifier. Preserve original `pubDate`; set `updatedDate` only for substantive revisions. Drafts never enter pages or sitemaps. Avoid mechanical city variants.
 
-Every substantive legal/procedural claim needs a local `#ref-*` citation to an exact official source, with a verification date. Use jurisdiction-specific wording; an apostille does not prove document contents or guarantee recipient acceptance. English content does not expand the current Mandarin mobile service area.
+Every substantive legal/procedural claim needs a local `#ref-*` citation to an exact official source, with a verification date. Use jurisdiction-specific wording; an apostille does not prove document contents or guarantee recipient acceptance.
 
-Covers and diagrams live under `public/images/articles/`; translate text-bearing covers. Long articles may exceed 5 KB because the explanation and its source chain should remain one reviewable document. Keep sections focused and citations adjacent.
+Covers and diagrams live under `public/images/articles/`. Preserve Chinese covers and shared text-free illustrations; do not add English-only article artwork. Long articles may exceed 5 KB because the explanation and its source chain should remain one reviewable document. Keep sections focused and citations adjacent.
 
-Run `npm run check:articles` after editing. It validates both languages, rendered citations, images, canonical URLs, reciprocal hreflang, article links and scoped sitemaps.
+Run `npm run check:articles` after editing to validate the published Chinese collection, rendered citations, images, canonical URLs, internal links and sitemap coverage.
 
 ```text
 articles/
-├── <slug>.md       Chinese
-└── en/<slug>.md    English counterparts
+├── <slug>.md       Chinese articles
+└── README.md       Editorial policy; excluded from the collection
 ```

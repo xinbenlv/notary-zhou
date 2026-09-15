@@ -1,15 +1,9 @@
 ---
 import { siteConfig } from '../config';
-import type { Lang } from '../i18n';
-interface Props { lang?: Lang }
+interface Props { lang?: 'zh' }
 const { lang = 'zh' } = Astro.props;
 ---
 <aside class="article-disclaimer" lang={lang}>
-  {lang === 'zh' ? <>
-    <p>本文由 {siteConfig.name} 整理，借助人工智能工具协助检索与校对。发现错误，请联系 <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>。</p>
-    <p>本文提供一般资讯，不构成法律意见。文中的中文术语用于帮助理解，请结合英文原文、签发地规则和接收机构的现行要求核对；个案问题请咨询合资格的专业人士。</p>
-  </> : <>
-    <p>Prepared by {siteConfig.name} with AI assistance for research and editing. Send corrections to <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>.</p>
-    <p>This is general information, not legal advice. Check the original rules for the issuing jurisdiction and the receiving institution’s current requirements. Consult a qualified professional about your circumstances.</p>
-  </>}
+  <p>本文由 {siteConfig.name} 整理，借助人工智能工具协助检索与校对。发现错误，请联系 <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>。</p>
+  <p>本文提供一般资讯，不构成法律意见。文中的中文术语用于帮助理解，请结合英文原文、签发地规则和接收机构的现行要求核对；个案问题请咨询合资格的专业人士。</p>
 </aside>

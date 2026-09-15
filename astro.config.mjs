@@ -33,7 +33,6 @@ export default defineConfig({
       },
       customSitemaps: [
         'https://www.notaryzhou.com/articles/sitemap.xml',
-        'https://www.notaryzhou.com/en/articles/sitemap.xml',
         'https://www.notaryzhou.com/en/notaries/sitemap.xml',
       ],
       i18n: {

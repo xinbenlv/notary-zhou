@@ -6,7 +6,8 @@ const articles = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string(),
-    lang: z.enum(['zh', 'en']).default('zh'),
+    // Editorial policy: FAQ, guides and articles are Chinese-only.
+    lang: z.literal('zh').default('zh'),
     translationKey: z.string().optional(),
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),

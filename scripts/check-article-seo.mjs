@@ -1,56 +1,105 @@
-/** Verify built multilingual discovery: canonical, reciprocal hreflang, links and scoped sitemaps. */
+/** Verify Chinese-only article discovery and preservation of English service pages. */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
-const root = existsSync('dist/client') ? 'dist/client' : 'dist';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 const origin = 'https://www.notaryzhou.com';
-const errors = [];
-const paths = [];
-function walk(dir, prefix) {
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (entry.isDirectory()) walk(join(dir, entry.name), `${prefix}${entry.name}/`);
-    else if (entry.name === 'index.html') paths.push(prefix);
-  }
+const directoryPaths = ['/articles/', '/articles/topics/apostille/'];
+const englishServicePaths = ['/en/', '/en/privacy/', '/en/verify/'];
+const decode = value => value.replace(/&amp;/g, '&').replace(/&#(x[\da-f]+|\d+);/gi, (_, code) => String.fromCodePoint(code[0].toLowerCase() === 'x' ? parseInt(code.slice(1), 16) : Number(code)));
+const attributes = tag => Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*(["'])([\s\S]*?)\2/g)].map(m => [m[1].toLowerCase(), decode(m[3])]));
+const tags = (html, name) => [...html.matchAll(new RegExp(`<${name}\\b[^>]*>`, 'gi'))].map(m => attributes(m[0]));
+const canonical = html => tags(html, 'link').filter(a => a.rel === 'canonical').map(a => a.href);
+const alternates = html => tags(html, 'link').filter(a => a.hreflang);
+const same = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+const retiredPath = path => /^\/en\/articles(?:\/|$)/.test(path);
+
+function filesUnder(dir, prefix = '') {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const path = `${prefix}${entry.name}`;
+    return entry.isDirectory() ? filesUnder(join(dir, entry.name), `${path}/`) : [path];
+  });
 }
-for (const prefix of ['/articles/', '/en/articles/']) walk(join(root, prefix), prefix);
-const htmlByPath = new Map(paths.map(path => [path, readFileSync(join(root, path, 'index.html'), 'utf8')]));
-const canonical = html => html.match(/<link rel="canonical" href="([^"]+)"/)?.[1];
-const alternates = html => new Map([...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/g)].map(m => [m[1], m[2]]));
-let pairs = 0;
-for (const [path, html] of htmlByPath) {
-  const fail = message => errors.push(`${path}: ${message}`);
-  if (canonical(html) !== origin + path) fail('canonical is not the page itself');
-  if (/name="robots" content="[^"]*noindex/.test(html)) fail('published page is noindex');
-  const en = path.startsWith('/en/');
-  if (!html.includes(`<html lang="${en ? 'en' : 'zh-CN'}"`)) fail('document language mismatch');
-  const alts = alternates(html);
-  if (alts.size) {
-    if (alts.get(en ? 'en' : 'zh') !== origin + path) fail('hreflang omits self');
-    for (const [language, url] of alts) {
-      if (!url.startsWith(origin + '/')) { fail('alternate is not an absolute site URL'); continue; }
-      const target = htmlByPath.get(new URL(url).pathname);
-      if (!target || canonical(target) !== url) fail(`alternate missing or noncanonical: ${url}`);
-      if (target && JSON.stringify([...alternates(target)]) !== JSON.stringify([...alts])) fail(`alternate does not reciprocate: ${language}`);
+
+function localUrl(href, pagePath) {
+  try {
+    const url = new URL(href, origin + pagePath);
+    if (!['www.notaryzhou.com', 'notaryzhou.com'].includes(url.hostname)) return null;
+    return { path: decodeURIComponent(url.pathname), fragment: decodeURIComponent(url.hash.slice(1)) };
+  } catch { return null; }
+}
+
+function containsFaq(value) {
+  if (!value || typeof value !== 'object') return false;
+  const types = [].concat(value['@type'] || []);
+  return types.includes('FAQPage') || Object.values(value).some(item => Array.isArray(item) ? item.some(containsFaq) : containsFaq(item));
+}
+
+/** The expected slugs come from published source files; built output cannot silently drop a source. */
+export function checkArticleSeo(root, articleSlugs) {
+  const errors = [];
+  const files = filesUnder(root);
+  const expectedPaths = [...directoryPaths, ...articleSlugs.map(slug => `/articles/${slug}/`)];
+  const htmlFiles = files.filter(file => file.endsWith('.html'));
+  const htmlByPath = new Map(htmlFiles.map(file => [`/${file.replace(/index\.html$/, '')}`, readFileSync(join(root, file), 'utf8')]));
+  const paths = [...htmlByPath.keys()].filter(path => path.startsWith('/articles/'));
+  if (!same(paths, expectedPaths)) errors.push('Chinese article routes differ from published sources plus the two directory pages');
+  if (new Set(expectedPaths).size !== expectedPaths.length) errors.push('Duplicate expected Chinese article routes');
+  for (const file of files) {
+    if (/^en\/articles(?:\/|$)/.test(file)) errors.push(`Removed English article output was rebuilt: /${file}`);
+    if (/sitemap[^/]*\.xml$/.test(file) && /(?:https?:\/\/[^<\s]+)?\/en\/articles(?:\/|<|\s|$)/.test(readFileSync(join(root, file), 'utf8'))) errors.push(`Sitemap still advertises removed English articles: /${file}`);
+  }
+
+  // Inspect every generated HTML page: an English article link in a footer or service page is also a regression.
+  for (const [path, html] of htmlByPath) {
+    const fail = message => errors.push(`${path}: ${message}`);
+    for (const tag of html.matchAll(/<[a-z][^>]*\bhref\s*=\s*[^>]*>/gi)) {
+      const href = attributes(tag[0]).href;
+      const targetUrl = href && localUrl(href, path);
+      if (!targetUrl) continue;
+      if (retiredPath(targetUrl.path)) { fail(`link or hreflang targets removed English article: ${href}`); continue; }
+      if (!targetUrl.path.startsWith('/articles/') || targetUrl.path.endsWith('.xml')) continue;
+      const target = htmlByPath.get(targetUrl.path);
+      if (!target) { fail(`broken article link ${href}`); continue; }
+      if (targetUrl.fragment && !tags(target, '[a-z][\\w:-]*').some(a => a.id === targetUrl.fragment)) fail(`missing linked article fragment ${href}`);
     }
-    if (en && html.includes('class="article-body"')) pairs++;
+    if (!expectedPaths.includes(path) && !englishServicePaths.includes(path)) continue;
+    if (!same(canonical(html), [origin + path])) fail('canonical is not the page itself');
+    if (tags(html, 'meta').some(a => /^(robots|googlebot)$/i.test(a.name || '') && /\bnoindex\b/i.test(a.content || ''))) fail('published page is noindex');
+    const language = path.startsWith('/en/') ? 'en' : 'zh-CN';
+    if (tags(html, 'html')[0]?.lang !== language) fail('document language mismatch');
+    if (path.startsWith('/articles/')) {
+      if (alternates(html).length) fail('Chinese-only editorial page has hreflang language alternatives');
+      if (html.includes('class="article-body"') && !html.includes('class="references"')) fail('missing source disclosure');
+    }
   }
-  const match = html.match(/<article class="article-body"[^>]*>([\s\S]*?)<\/article>/);
-  if (match && !html.includes('class="references"')) fail('missing source disclosure');
-  // Follow internal document links, including source fragments. Ignore SSR routes outside article scope.
-  for (const m of html.matchAll(/href="((?:\/en)?\/articles\/[^"?#]*)(#[^"]+)?"/g)) {
-    const target = htmlByPath.get(m[1]);
-    if (!target) { fail(`broken article link ${m[1]}`); continue; }
-    if (m[2] && !target.includes(`id="${m[2].slice(1)}"`)) fail(`missing linked fragment ${m[1]}${m[2]}`);
+  for (const path of englishServicePaths) if (!htmlByPath.has(path)) errors.push(`English service page was removed: ${path}`);
+  const englishHome = htmlByPath.get('/en/') || '';
+  if (tags(englishHome, '[a-z][\\w:-]*').some(a => /^faq(?:-|$)/i.test(a.id || '') || /(?:^|\s)faq(?:-|\s|$)/i.test(a.class || ''))) errors.push('/en/: FAQ section remains');
+  for (const script of englishHome.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    if (attributes(script[1]).type !== 'application/ld+json') continue;
+    try { if (containsFaq(JSON.parse(script[2]))) errors.push('/en/: FAQPage structured data remains'); }
+    catch { errors.push('/en/: invalid JSON-LD'); }
   }
+
+  const sitemapPath = join(root, 'articles/sitemap.xml');
+  if (!existsSync(sitemapPath)) errors.push('/articles/sitemap.xml: missing');
+  else {
+    const urls = [...readFileSync(sitemapPath, 'utf8').matchAll(/<loc>(.*?)<\/loc>/g)].map(m => decode(m[1]));
+    if (new Set(urls).size !== urls.length || !same(urls, expectedPaths.map(path => origin + path))) errors.push('/articles/sitemap.xml: missing, duplicate or out-of-scope URL');
+  }
+  const indexPath = join(root, 'sitemap-index.xml');
+  if (!existsSync(indexPath) || !readFileSync(indexPath, 'utf8').includes(`${origin}/articles/sitemap.xml`)) errors.push('sitemap index omits Chinese articles');
+  for (const path of ['/README/', '/en/README/']) if (htmlByPath.has(path)) errors.push(`Developer README became a public route: ${path}`);
+  return { errors, pageCount: paths.length, articleCount: articleSlugs.length };
 }
-for (const prefix of ['/articles/', '/en/articles/']) {
-  const xml = readFileSync(join(root, prefix, 'sitemap.xml'), 'utf8');
-  const urls = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
-  const expected = paths.filter(p => p.startsWith(prefix)).map(p => origin + p).sort();
-  if (new Set(urls).size !== urls.length || JSON.stringify(urls.sort()) !== JSON.stringify(expected)) errors.push(`${prefix}sitemap.xml: missing, duplicate or out-of-scope URL`);
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const root = existsSync('dist/client') ? 'dist/client' : 'dist';
+  const source = 'src/content/articles';
+  const articleSlugs = filesUnder(source).filter(file => file.endsWith('.md') && !file.endsWith('README.md') && !/^draft:\s*true\s*$/m.test(readFileSync(join(source, file), 'utf8'))).map(file => file.replace(/\.md$/, ''));
+  const result = checkArticleSeo(root, articleSlugs);
+  if (result.errors.length) { console.error(result.errors.join('\n')); process.exit(1); }
+  console.log(`✓ ${result.pageCount} Chinese article/directory pages (${result.articleCount} articles); canonical, internal links, sitemap and English editorial removal passed`);
 }
-for (const path of ['/README/', '/en/README/']) if (existsSync(join(root, path, 'index.html'))) errors.push(`Developer README became a public route: ${path}`);
-const index = readFileSync(join(root, 'sitemap-index.xml'), 'utf8');
-for (const prefix of ['/articles/', '/en/articles/']) if (!index.includes(`${origin}${prefix}sitemap.xml`)) errors.push(`sitemap index omits ${prefix}`);
-if (!pairs) errors.push('No paired English articles were built');
-if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
-console.log(`✓ ${paths.length} article/directory pages; ${pairs} article translation pairs; canonical, hreflang, internal links and both sitemaps passed`);

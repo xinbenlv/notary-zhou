@@ -1,5 +1,8 @@
 # Bilingual document guide release
 
+Historical release record. The user's later [Chinese-only editorial policy](chinese-only-guides.md)
+supersedes English guide publication; consult that note for current deployment status.
+
 This release adds useful Google Search entry points for Chinese and English readers, while keeping the existing local Mandarin mobile service scope.
 
 ## Content and discovery
