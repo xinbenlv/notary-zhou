@@ -14,8 +14,8 @@ const textOf = (node) =>
     : (node.children ?? []).map(textOf).join('');
 
 export default function rehypeCollapsibleReferences(options = {}) {
-  const headingText = options.heading ?? '参考来源';
-  const label = options.label ?? '参考来源与查证记录';
+  const headings = options.heading ? [options.heading] : ['参考来源', 'References', 'Sources', 'Sources and further reading'];
+
 
   return (tree) => {
     const children = tree.children;
@@ -23,9 +23,11 @@ export default function rehypeCollapsibleReferences(options = {}) {
       (n) =>
         n.type === 'element' &&
         n.tagName === 'h2' &&
-        textOf(n).trim() === headingText
+        headings.includes(textOf(n).trim())
     );
     if (start === -1) return;
+    const english = textOf(children[start]).trim() !== '参考来源';
+    const label = options.label ?? (english ? 'Sources and verification' : '参考来源与查证记录');
 
     // 该节延伸到下一个 h2 或文末
     let end = children.length;
@@ -64,7 +66,7 @@ export default function rehypeCollapsibleReferences(options = {}) {
         ...(count
           ? [
               el('span', { className: ['references-count'] }, [
-                { type: 'text', value: `${count} 条` },
+                { type: 'text', value: english ? `${count} sources` : `${count} 条` },
               ]),
             ]
           : []),

@@ -8,7 +8,7 @@
  *
  * 用法：npm run build && node scripts/check-articles.mjs
  */
-import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIST_ROOT = existsSync('dist/client') ? 'dist/client' : 'dist';
@@ -20,14 +20,21 @@ if (!existsSync(DIST)) {
   process.exit(1);
 }
 
-/** 收集 dist/articles 下所有文章页 */
-const pages = readdirSync(DIST)
-  .filter((n) => statSync(join(DIST, n)).isDirectory())
-  .map((slug) => ({ slug, file: join(DIST, slug, 'index.html') }))
-  .filter((p) => existsSync(p.file));
+/** Collect Chinese article bodies, excluding directory/topic pages. */
+const pages = [];
+function walk(dir, prefix = '') {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const file = join(dir, entry.name);
+    if (entry.isDirectory()) walk(file, `${prefix}${entry.name}/`);
+    else if (entry.name === 'index.html' && readFileSync(file, 'utf8').includes('class="article-body"'))
+      pages.push({ slug: prefix.replace(/\/$/, ''), file });
+  }
+}
+walk(DIST);
 
 const problems = [];
 const report = (slug, kind, detail) => problems.push({ slug, kind, detail });
+if (existsSync(join(DIST_ROOT, 'en/articles'))) report('en/articles', '已移除的英文文章目录重新生成', '文章仅以中文发布');
 
 for (const { slug, file } of pages) {
   const html = readFileSync(file, 'utf8');
@@ -53,7 +60,7 @@ for (const { slug, file } of pages) {
   for (const a of anchors) if (!links.has(a)) report(slug, '参考条目无人引用', `#${a}`);
 
   // 3. 图片文件是否真实存在
-  for (const m of body.matchAll(/src="(\/images\/[^"]+)"/g)) {
+  for (const m of html.matchAll(/src="(\/images\/[^"]+)"/g)) {
     if (!existsSync(join(DIST_ROOT, m[1]))) report(slug, '图片缺失', m[1]);
   }
 
@@ -63,13 +70,19 @@ for (const { slug, file } of pages) {
 
 // 5. 每篇源文件都要有对应的已发布页面（漏掉 draft:true 时能发现）
 const published = new Set(pages.map((p) => p.slug));
-for (const name of readdirSync(SRC).filter((n) => n.endsWith('.md'))) {
-  const slug = name.replace(/\.md$/, '');
-  const raw = readFileSync(join(SRC, name), 'utf8');
-  if (!published.has(slug) && !/^draft:\s*true/m.test(raw)) {
-    report(slug, '源文件存在但未生成页面', name);
+function checkSource(dir, prefix = '') {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) { checkSource(join(dir, entry.name), `${prefix}${entry.name}/`); continue; }
+    if (!entry.name.endsWith('.md') || entry.name === 'README.md') continue;
+    const slug = prefix + entry.name.replace(/\.md$/, '');
+    const raw = readFileSync(join(dir, entry.name), 'utf8');
+    const draft = /^draft:\s*true/m.test(raw);
+    if (prefix.startsWith('en/') || /^lang:\s*['"]?en['"]?\s*$/m.test(raw)) report(slug, '英文文章源文件不符合发布政策', entry.name);
+    if (!published.has(slug) && !draft) report(slug, '源文件存在但未生成页面', entry.name);
+    if (published.has(slug) && draft) report(slug, '草稿被发布', entry.name);
   }
 }
+checkSource(SRC);
 
 if (problems.length === 0) {
   console.log(`✓ ${pages.length} 篇文章全部通过校验`);
