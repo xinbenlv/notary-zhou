@@ -42,5 +42,33 @@ Local verification passed on 2026-09-15:
   treating article content as Chinese-only and grouping interface variants by
   their canonical page where appropriate.
 
-The corrected release is ready locally; production publication and verification
-are pending. Its deployment will use the existing Railway production service.
+## Production release
+
+Published from clean source archive `abe0e74fa8cf14ff35ead640e58e729c689b8f60`
+through the existing Railway `site` service in `production`. Deployment
+[`79fb0360-6c02-48f1-ad2b-f09929047789`](https://railway.com/project/7b6fe9b2-ce31-4559-bade-5ad32b56f7f4/service/833774b6-b5f2-4925-a942-047db1cf954d?id=79fb0360-6c02-48f1-ad2b-f09929047789)
+reached `SUCCESS`, replacing `08fd4df5-e088-4178-96bc-1e14e873c707`.
+An independent review found no blocker and confirmed all 31 Chinese Markdown
+files remain byte-for-byte unchanged from the previous release.
+
+Public verification on 2026-09-15 at 16:39 UTC passed:
+
+- 33/33 Chinese article and directory pages match the approved build, including
+  Chinese body text, bilingual interface regions, canonical URLs and metadata.
+- 6/6 retained service, privacy and verification pages match their expected build.
+- 13/13 retired English translation URLs still return 410 without redirect.
+- 2/2 English-interface query responses retain the same canonical/content, and
+  sitemap coverage matches the 33 Chinese URLs without interface-query entries.
+- Live mobile browser: open the Chinese topic page's menu → switch to English
+  on the same topic path. English navigation, directory labels and footer display
+  correctly while article cards remain Chinese and carry English UI forward.
+
+The [live verification record](bilingual-interface-live-verification.json)
+contains the HTTP and content checks. The report and evidence were saved after
+publication; they are not part of the deployed source commit. Publication used
+the already-renewed GuestSafe credential; no additional login or saving window
+was needed.
+
+The production correction is live. Source commits remain in the local feature
+branch and portable patch; no GitHub push, PR or merge is claimed. Unrelated
+unpublished checkout changes were excluded from the deployment.
