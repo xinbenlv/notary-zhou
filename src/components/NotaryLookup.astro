@@ -1,5 +1,6 @@
 ---
 import type { Lang } from '../i18n';
+import NotaryRecordLinks from './NotaryRecordLinks.astro';
 
 interface Props {
   lang: Lang;
@@ -173,6 +174,8 @@ const clientCopy = {
           </div>
         </section>
       </div>
+
+      <NotaryRecordLinks lang={lang} />
 
       <div class="source-row">
         <div>

@@ -10,6 +10,12 @@ Article titles, descriptions and bodies remain Chinese. `ArticlePage`, `ArticleI
 
 Shared article styles remain in `../styles/global.css`; component-only additions use scoped CSS and logical spacing properties.
 
+`NotaryLookup` includes `NotaryRecordLinks`: three public-record shortcuts rendered
+in the initial HTML of both lookup languages. They work without JavaScript and
+identify records by commission number; inclusion does not imply recommendation,
+current qualification, or affiliation. The selection rationale is in
+[`reports/notary-discovery.md`](../../reports/notary-discovery.md).
+
 ```text
 ArticleLayout → Navbar / Footer / article-interface.mjs
 ArticlePage → ArticleRelated / ArticleDisclaimer / ArticleReferences
