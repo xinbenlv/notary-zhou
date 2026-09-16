@@ -16,14 +16,16 @@
     "notary:benchmark": "node --expose-gc scripts/benchmark-notary-public-listing.mjs",
     "test:notary": "node --test tests/notary-public-listing.test.mjs tests/notary-profile.test.mjs tests/sitemap.test.mjs",
     "test:analytics": "node --test tests/analytics.test.mjs",
-    "test:pricing": "node --experimental-strip-types --test tests/pricing.test.mjs"
+    "test:booking": "node --experimental-strip-types --test tests/pricing.test.mjs tests/schedule.test.mjs tests/doctypes.test.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^10.1.4",
     "@astrojs/sitemap": "^3.7.2",
+    "@astrojs/vue": "^6.0.1",
     "astro": "^6.1.3",
     "pg": "^8.23.0",
-    "remark-cjk-friendly": "^2.3.1"
+    "remark-cjk-friendly": "^2.3.1",
+    "vue": "^3.5.42"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1"

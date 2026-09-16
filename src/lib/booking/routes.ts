@@ -16,6 +16,7 @@ interface RoutesResponse {
     distanceMeters?: number;
     duration?: string;        // "2092s"
     staticDuration?: string;  // 畅通时长
+    polyline?: { encodedPolyline?: string };
   }>;
   error?: { message?: string };
 }
@@ -118,4 +119,47 @@ export async function roundTrip(
   const inbound = await legToOrigin(apiKey, placeId, leaveAt);
 
   return { outbound, inbound };
+}
+
+export interface RoutePreview {
+  /** 畅通时长（分钟），与各时段的预测时长区分开：这只是「大概多远」的基准 */
+  minutes: number;
+  miles: number;
+  /** Google 编码折线，供前端用 Maps JS 画出路线 */
+  polyline: string;
+}
+
+/**
+ * 步骤二的地址核验与路线预览。
+ * 必须走服务端：浏览器密钥只开了 Maps JS 与 Places，没开 Routes
+ * （也不该开——前端能查车程就能推算价格，进而有篡改的余地）。
+ */
+export async function previewRoute(apiKey: string, placeId: string): Promise<RoutePreview> {
+  const inAnHour = new Date(Date.now() + 3_600_000);
+  const res = await fetch(ROUTES_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+      'X-Goog-FieldMask':
+        'routes.staticDuration,routes.distanceMeters,routes.polyline.encodedPolyline',
+    },
+    body: JSON.stringify({
+      origin: { address: ORIGIN_ADDRESS },
+      destination: { placeId },
+      travelMode: 'DRIVE',
+      routingPreference: 'TRAFFIC_AWARE',
+      departureTime: inAnHour.toISOString(),
+    }),
+  });
+  const json = (await res.json()) as RoutesResponse;
+  if (!res.ok || !json.routes?.length) {
+    throw new Error(`Routes API: ${json.error?.message ?? res.status}`);
+  }
+  const r = json.routes[0];
+  return {
+    minutes: Math.round(parseSeconds(r.staticDuration) / 60),
+    miles: Math.round((r.distanceMeters ?? 0) / 1609.34),
+    polyline: r.polyline?.encodedPolyline ?? '',
+  };
 }

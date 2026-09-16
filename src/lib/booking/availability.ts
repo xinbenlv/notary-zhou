@@ -3,11 +3,11 @@
 // 判定依据是**完整占用窗口**（出发 → 服务 → 返回），不是预约时刻本身：
 // 一个 SFO 的单子实际占掉近三小时，若只比对预约时刻就会重复接单。
 
-import { getPool } from './db';
-import { freeBusy } from './calendar';
-import { overlaps, type Interval } from './schedule';
-import { blockWindow } from './pricing';
-import { roundTrip, type Leg } from './routes';
+import { getPool } from './db.ts';
+import { freeBusy } from './calendar.ts';
+import { overlaps, type Interval } from './schedule.ts';
+import { blockWindow } from './pricing.ts';
+import { roundTrip, type Leg } from './routes.ts';
 
 export interface SlotEval {
   startsAt: Date;

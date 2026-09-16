@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
-import { quote, serviceMinutes, type BookingDoc, type FeeRule } from '../../lib/booking/pricing';
-import { candidateSlots, pacificDateStr } from '../../lib/booking/schedule';
-import { evaluateSlots } from '../../lib/booking/availability';
-import { baselineMinutes } from '../../lib/booking/routes';
+import { quote, serviceMinutes, type BookingDoc } from '../../lib/booking/pricing.ts';
+import { ruleFor, needsAct } from '../../lib/booking/doctypes.ts';
+import { candidateSlots, pacificDateStr } from '../../lib/booking/schedule.ts';
+import { evaluateSlots } from '../../lib/booking/availability.ts';
+import { baselineMinutes } from '../../lib/booking/routes.ts';
 
 export const prerender = false;
 
-const FEE_RULES: FeeRule[] = ['standard', 'free', 'imm', 'copy', 'depo'];
 const MAX_DOCS = 20;
 const MAX_SIGNERS_PER_DOC = 10;
 const MAX_COUNT_PER_SIGNER = 10;
@@ -20,10 +20,10 @@ interface QuoteRequest {
 
 /**
  * 校验客户端传来的文件结构。
- * 价格由服务端算，但**计费规则来自客户端选择的文件类型**，所以必须校验：
- * 否则可以伪造一份 rule='free' 的地契把公证费刷成 0。
+ * 关键点：**计费规则不从请求里读**，而是用 typeKey 在目录里查出来。
+ * 否则客户端只要把一份地契标成 rule='free' 就能把公证费刷成 0。
  */
-function parseDocs(raw: unknown): { docs: BookingDoc[] } | { error: string } {
+export function parseDocs(raw: unknown): { docs: BookingDoc[] } | { error: string } {
   if (!Array.isArray(raw) || raw.length === 0) return { error: '至少需要一份文件' };
   if (raw.length > MAX_DOCS) return { error: `文件数不能超过 ${MAX_DOCS}` };
 
@@ -32,14 +32,14 @@ function parseDocs(raw: unknown): { docs: BookingDoc[] } | { error: string } {
     if (typeof d !== 'object' || d === null) return { error: `文件 ${i + 1} 格式错误` };
     const doc = d as Record<string, unknown>;
 
-    const rule = doc.rule;
-    if (typeof rule !== 'string' || !FEE_RULES.includes(rule as FeeRule)) {
-      return { error: `文件 ${i + 1} 的计费类型无效` };
-    }
-    // 公证类型必须由客户明确选定：公证员依法不能替客户选，"不确定"不可下单
+    const typeKey = typeof doc.typeKey === 'string' ? doc.typeKey : '';
+    const rule = ruleFor(typeKey);
+    if (!rule) return { error: `文件 ${i + 1} 的类型无效` };
+
+    // 公证类型必须由客户明确选定：公证员依法不能替客户选，「不确定」不可下单
     const act = doc.act;
-    const needsAct = rule !== 'copy' && rule !== 'depo';
-    if (needsAct && act !== 'ack' && act !== 'jurat') {
+    const wantsAct = needsAct(rule);
+    if (wantsAct && act !== 'ack' && act !== 'jurat') {
       return { error: `文件 ${i + 1} 必须选择「签名确认」或「宣誓」` };
     }
 
@@ -53,14 +53,9 @@ function parseDocs(raw: unknown): { docs: BookingDoc[] } | { error: string } {
         count: Number.isFinite(count) ? Math.min(Math.max(Math.trunc(count), 1), MAX_COUNT_PER_SIGNER) : 1,
       };
     });
-    if (needsAct && parts.length === 0) return { error: `文件 ${i + 1} 需要至少一位签署人` };
+    if (wantsAct && parts.length === 0) return { error: `文件 ${i + 1} 需要至少一位签署人` };
 
-    docs.push({
-      typeKey: typeof doc.typeKey === 'string' ? doc.typeKey.slice(0, 60) : 'other',
-      rule: rule as FeeRule,
-      act: act as BookingDoc['act'],
-      parts,
-    });
+    docs.push({ typeKey, rule, act: act as BookingDoc['act'], parts });
   }
   return { docs };
 }

@@ -91,6 +91,28 @@ sitemap 是发现建议，不能保证 Google 只收录这 100 人或按指定�
 不在线批量请求地理编码、不公开街道地址、不推断服务范围。
 生产方式本地验收：`npm run build` 后 `PORT=8081 npm start`。
 
+### 在线预约
+
+预约页 `/book/`（中文）与 `/en/book/`（英文）是按需渲染的交易流程，`noindex` 且不进 sitemap。
+四步：文件与签署人 → 地点 → 日期与时段 → 确认支付。界面用 Vue（仅这一页加载运行时），
+其余页面仍是纯 Astro。交互原型 `public/mockups/booking.html` 已由正式页面取代，仅作留档。
+
+**金额一律由服务端算。** 页面第一步显示的公证费直接复用 `src/lib/booking/pricing.ts` 的纯函数，
+所以前后端不会各写一套规则；`/api/quote` 仍会整体重算一遍，不采信前端传来的任何价格。
+更关键的是**计费规则不从请求里读**：请求只带 `typeKey`，规则由 `src/lib/booking/doctypes.ts`
+查出来——否则把一份地契标成 `rule: 'free'` 就能把公证费刷成 $0。`npm run test:booking` 守这条线。
+
+接口（均为 POST，`prerender = false`）：
+
+| 路径 | 用途 |
+|------|------|
+| `/api/route-preview` | 第二步：核验 placeId、返回畅通车程与折线。只收 Places 选中的 placeId，不接受自由文本地址 |
+| `/api/quote` | 第三步：一次返回该日各时段的可用性与价格，来源是日历忙闲、数据库占用窗口、Google 对每个时段的路况预测 |
+
+浏览器密钥 `PUBLIC_GOOGLE_MAPS_BROWSER_KEY` 按 referrer 限制，只开了 Maps JS 与 Places；
+Routes 只在服务端用 `GOOGLE_ROUTES_SERVER_KEY` 调用。本机若用 `npm start` 起在别的端口，
+Places 会因 referrer 不在白名单而报 403——这是密钥在正常工作，不是页面坏了。
+
 ## 域名
 
 | 域名 | 用途 |
@@ -101,7 +123,7 @@ sitemap 是发现建议，不能保证 Google 只收录这 100 人或按指定�
 
 ## 待办
 
-- [ ] 在线预约：Booking 区目前只有邮箱占位。方案为自建（Google Calendar 查忙闲/写事件 + Google Maps 算车程 + Stripe 收款），不使用 Calendly / Cal.com；交互原型见 `public/mockups/booking.html`
+- [ ] 在线预约：流程已建好（`/book/`、`/en/book/`），只差 Stripe 收款。首页 Booking 区与导航按钮仍指向邮箱占位，等支付打通后再改指过去
 - [ ] NNA 认证、E&O 保险（`config.ts` 中仍为 `Pending`）
 - [ ] Google Business Profile
 

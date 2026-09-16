@@ -1,0 +1,6 @@
+---
+import BookingPage from '../components/booking/BookingPage.astro';
+// 按需渲染：地图密钥在请求时从环境变量读取，换密钥不必重新构建。
+export const prerender = false;
+---
+<BookingPage lang="zh" />
