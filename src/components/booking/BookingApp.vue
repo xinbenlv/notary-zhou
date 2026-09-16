@@ -16,7 +16,7 @@ declare global {
   interface Window { google?: any; __gmapsReady?: () => void }
 }
 
-const props = defineProps<{ lang: Lang; mapsKey: string; email: string }>();
+const props = defineProps<{ lang: Lang; mapsKey: string; email: string; paymentsEnabled: boolean }>();
 const t = STRINGS[props.lang];
 const ids = ID_TYPES[props.lang];
 const L = (o: { zh: string; en: string }) => (props.lang === 'zh' ? o.zh : o.en);
@@ -633,17 +633,23 @@ async function pay() {
         <span>{{ t.agreeText }}</span>
       </label>
 
-      <div class="nav">
-        <button class="btn ghost" @click="s.step = 3">{{ t.back }}</button>
-        <button class="btn primary" :disabled="!s.agreed" @click="pay">{{ t.payBtn(money(grandCents)) }}</button>
+      <!-- 支付通道未开通时不摆一个按下去会失败的付款按钮，直接给可用的替代路径 -->
+      <div class="payfail" v-if="!paymentsEnabled">
+        <p>{{ t.payUnavailable }}</p>
+        <p>{{ t.payUnavailableCta }}</p>
       </div>
 
-      <div class="payfail" v-if="s.payError">
-        <p>{{ s.payError }}</p>
-        <p v-if="s.payError === t.payUnavailable">{{ t.payUnavailableCta }}</p>
-        <a v-if="s.payError === t.payUnavailable" class="btn primary mail" :href="mailtoHref">{{ t.emailUs }}</a>
+      <div class="nav">
+        <button class="btn ghost" @click="s.step = 3">{{ t.back }}</button>
+        <button v-if="paymentsEnabled" class="btn primary" :disabled="!s.agreed" @click="pay">
+          {{ t.payBtn(money(grandCents)) }}
+        </button>
+        <a v-else class="btn primary mail" :class="{ off: !s.agreed }"
+           :href="s.agreed ? mailtoHref : undefined" :aria-disabled="!s.agreed">{{ t.emailUs }}</a>
       </div>
-      <p class="holdnote" v-else>{{ t.holdNote }}<br />{{ t.holdNote2 }}</p>
+
+      <div class="payfail" v-if="paymentsEnabled && s.payError"><p>{{ s.payError }}</p></div>
+      <p class="holdnote" v-else-if="paymentsEnabled">{{ t.holdNote }}<br />{{ t.holdNote2 }}</p>
     </section>
   </div>
 </template>
@@ -824,7 +830,8 @@ input:focus, select:focus { outline: 2px solid var(--brand-yellow); border-color
 .btn.primary:hover:not(:disabled) { background: var(--brand-green-hover); }
 .btn.primary:disabled { opacity: .35; cursor: not-allowed; }
 .btn.ghost { background: none; border: 1px solid var(--border-soft); color: var(--text-muted); flex: 0 0 auto; padding: 13px 18px; }
-.btn.mail { display: block; text-align: center; text-decoration: none; margin-top: 10px; }
+.btn.mail { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+.btn.mail.off { opacity: .35; pointer-events: none; }
 .linkbtn { border: 0; background: none; color: var(--brand-green); text-decoration: underline; cursor: pointer; font-size: inherit; font-family: inherit; }
 .hint { font-size: 12.5px; color: var(--brand-terra); margin-top: 10px; line-height: 1.6; }
 .holdnote { text-align: center; font-size: 11.5px; color: var(--text-muted); margin-top: 12px; line-height: 1.7; }

@@ -16,6 +16,10 @@ const { lang } = Astro.props;
 const mapsKey =
   process.env.PUBLIC_GOOGLE_MAPS_BROWSER_KEY ?? import.meta.env.PUBLIC_GOOGLE_MAPS_BROWSER_KEY ?? '';
 
+// 没有 Stripe 密钥就不摆付款按钮，第 4 步改为邮件人工确认。
+// 密钥一旦配上，页面自动切回在线支付，不需要改代码。
+const paymentsEnabled = Boolean(process.env.STRIPE_SECRET_KEY);
+
 const t = {
   zh: {
     title: `在线预约 | ${siteConfig.nameZh} ${siteConfig.name}`,
@@ -43,7 +47,13 @@ const path = lang === 'zh' ? '/book/' : '/en/book/';
   <main class="book-main">
     <div class="container">
       <p class="book-lead">{t.lead}</p>
-      <BookingApp client:only="vue" lang={lang} mapsKey={mapsKey} email={siteConfig.email} />
+      <BookingApp
+        client:only="vue"
+        lang={lang}
+        mapsKey={mapsKey}
+        email={siteConfig.email}
+        paymentsEnabled={paymentsEnabled}
+      />
     </div>
   </main>
   <Footer lang={lang} />
