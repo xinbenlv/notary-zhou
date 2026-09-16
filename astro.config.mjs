@@ -27,10 +27,11 @@ export default defineConfig({
     vue(),
     sitemap({
       // /zh/ is a legacy noindex redirect page, keep it out of the sitemap
-      // /zh/ 是历史遗留的 noindex 跳转页；/book 是交易流程，不进搜索
+      // /zh/ 是历史遗留的 noindex 跳转页；/book 是交易流程；/admin/ 是内部结算台，都不进搜索
       filter: (page) => {
         const path = new URL(page).pathname;
         return !path.startsWith('/zh/') && !/^\/(en\/)?book(ed)?\//.test(path)
+          && !path.startsWith('/admin/')
           && !path.startsWith('/articles/') && !path.startsWith('/en/articles/')
           && !path.startsWith('/en/notaries/')
           && !/\.xml\/?$/.test(path);
