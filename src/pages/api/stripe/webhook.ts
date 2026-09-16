@@ -45,6 +45,8 @@ export const POST: APIRoute = async ({ request }) => {
       await onExpired(event.data.object as Record<string, any>);
     } else if (event.type === 'payment_intent.canceled') {
       await onCanceled(event.data.object as Record<string, any>);
+    } else if (event.type === 'payment_intent.succeeded') {
+      await onCaptured(event.data.object as Record<string, any>);
     }
     return new Response('ok', { status: 200 });
   } catch (err) {
@@ -157,4 +159,21 @@ async function onCanceled(pi: Record<string, any>): Promise<void> {
       WHERE id=$2`,
     [pi.cancellation_reason ?? 'stripe_canceled', b.id]);
   await db.query('DELETE FROM slot_holds WHERE booking_id = $1', [b.id]);
+}
+
+/**
+ * 扣款成功。既可能来自我们的管理端，也可能是有人直接在 Stripe 后台点了 Capture ——
+ * 后者不经过我们的代码，所以必须在这里把账记上，否则库里永远停在 authorized。
+ *
+ * 只允许 authorized → completed。取消时的部分扣款同样会触发本事件，
+ * 但那一路随后会把状态写成 cancelled；这里不碰 cancelled/completed，
+ * 免得一条迟到的事件把已取消的单子翻回"已完成"。
+ */
+async function onCaptured(pi: Record<string, any>): Promise<void> {
+  const db = getPool();
+  await db.query(
+    `UPDATE bookings
+        SET status='completed', captured_cents=$1, captured_at=now(), updated_at=now()
+      WHERE payment_intent_id=$2 AND status='authorized'`,
+    [pi.amount_received ?? pi.amount, pi.id]);
 }
