@@ -10,7 +10,8 @@ import { quote, serviceMinutes, blockWindow, type BookingDoc,
   NOTARY_FEE_CENTS, TRAVEL_BASE_CENTS, TRAVEL_PER_MIN_CENTS } from './pricing.ts';
 import { evaluateSlots } from './availability.ts';
 import { baselineMinutes } from './routes.ts';
-import { createCheckoutSession } from './stripe.ts';
+import { createCheckoutSession, getCheckoutSession } from './stripe.ts';
+import { canReleasePendingHold } from './lifecycle.ts';
 
 /** Stripe 要求结账会话至少 30 分钟后过期，所以时段保留也用 30 分钟 */
 export const HOLD_MINUTES = 30;
@@ -155,7 +156,10 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
       bookingId,
       lines,
       successUrl: `${input.origin}${lang === 'en' ? '/en' : ''}/booked/?session={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${input.origin}${lang === 'en' ? '/en' : ''}/book/`,
+      // 返回键不能直接回 /book/：那样客户的占位要留到 35 分钟后才失效，
+      // 他立刻重订会看到自己刚放弃的时段显示"已被占用"，且无从解释。
+      // 绕一层接口，把自己的占位先放掉再回去。
+      cancelUrl: `${input.origin}/api/booking/abandon?b=${bookingId}&lang=${lang}`,
       expiresAt: sessionExpires,
       metadata: { bookingId, startsAt: startsAt.toISOString() },
       locale: lang,
@@ -171,4 +175,52 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
     [session.id, bookingId]);
 
   return { ok: true, url: session.url, bookingId, totalCents: q.totalCents };
+}
+
+/**
+ * 客户从 Stripe 结账页按返回时，放掉他自己的那个占位。
+ *
+ * 只动「确实还没付过钱」的单，并且在放手之前去 Stripe 核对一次会话状态。
+ * 这一步不能省：客户可能在另一个标签页已经付掉了，而 webhook 还没送到——
+ * 此时库里仍是 held、payment_intent_id 仍是空。若就这么放掉，
+ * 随后到达的 onCompleted 会因为「状态不是 held」直接返回，
+ * 结果是钱冻结着、日历上没有这一单、位子还被别人订走了。
+ *
+ * 拿不准就不放：多占 35 分钟只是不方便，放错了是真丢钱。
+ */
+export async function releasePendingHold(bookingId: string): Promise<boolean> {
+  const db = getPool();
+  const { rows } = await db.query(
+    'SELECT id, status, checkout_session_id, payment_intent_id FROM bookings WHERE id = $1',
+    [bookingId],
+  );
+  const b = rows[0];
+  if (!b || !canReleasePendingHold({ status: b.status, paymentIntentId: b.payment_intent_id })) {
+    return false;
+  }
+
+  if (b.checkout_session_id) {
+    try {
+      const session = await getCheckoutSession(b.checkout_session_id);
+      if (!canReleasePendingHold({
+        status: b.status,
+        paymentIntentId: b.payment_intent_id,
+        sessionStatus: session.status,
+        sessionPaymentIntent: session.payment_intent,
+      })) return false;
+    } catch (err) {
+      // 核对不上就不放：多占 35 分钟只是不方便，放错了是真丢钱
+      console.warn(`releasePendingHold: 核对会话失败，保守起见不放 ${bookingId}:`, (err as Error).message);
+      return false;
+    }
+  }
+
+  const { rowCount } = await db.query(
+    `UPDATE bookings SET status='expired', cancel_reason='customer_abandoned', updated_at=now()
+      WHERE id=$1 AND status='held' AND payment_intent_id IS NULL`,
+    [bookingId],
+  );
+  if (!rowCount) return false;
+  await db.query('DELETE FROM slot_holds WHERE booking_id = $1', [bookingId]);
+  return true;
 }
