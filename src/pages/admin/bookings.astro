@@ -1,0 +1,27 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AdminBookings from '../../components/admin/AdminBookings.vue';
+
+// 这一页不读数据库：列表由浏览器带着令牌去调 /api/admin/bookings。
+// 因此它可以照常预渲染，令牌也不必经过服务端——POST 要动钱，
+// 令牌只该留在这台手机上。
+//
+// 整页只有中文，与站点其余部分的双语惯例相反：使用者只有 George 一人。
+---
+<Layout
+  lang="zh"
+  title="结算台"
+  description=""
+  path="/admin/bookings/"
+  ogImage={null}
+  noindex
+>
+  <main class="admin">
+    <AdminBookings client:only="vue" />
+  </main>
+</Layout>
+
+<style>
+  /* 工具页，不挂导航与页脚：路边打开就该直接是那张单子 */
+  .admin { min-height: 100vh; background: var(--bg-alt); }
+</style>
