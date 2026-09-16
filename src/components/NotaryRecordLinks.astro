@@ -1,0 +1,63 @@
+---
+// Crawlable shortcuts to three public records, independent of the lookup script.
+import type { Lang } from '../i18n';
+import { profilePath } from '../lib/notary-profile.mjs';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+// Recorded names from the existing pilot; no current-status or service-area claim.
+const records = [
+  { name: 'Barbara Citty', business: 'BARBARA CITTY NOTARY PUBLIC', city: 'Orange', commission: '2452486' },
+  { name: 'David V. Fuentes', business: 'DAVID V FUENTES NOTARY PUBLIC SERVICES', city: 'Bakersfield', commission: '2559347' },
+  { name: 'Luis A. White Jr.', business: 'LUIS A WHITE NOTARY SERVICES, LLC', city: 'Los Angeles', commission: '2533302' },
+];
+const copy = lang === 'zh' ? {
+  heading: '浏览公开记录',
+  intro: '也可直接打开以下记录，核对姓名、登记商号和委任编号。',
+  commission: '委任编号',
+  action: '查看公开记录（英文）',
+  notice: '此处收录不代表推荐，也不表示与周公证员存在合作关系。请在详情页核对官方数据日期。',
+} : {
+  heading: 'Browse public records',
+  intro: 'Open a record directly to compare the name, listed business, and commission number.',
+  commission: 'Commission',
+  action: 'View public record',
+  notice: 'Inclusion is not a recommendation or an affiliation with Notary Zhou. Check the official source date on each record.',
+};
+---
+
+<section class="record-shortcuts" aria-labelledby={`record-shortcuts-${lang}`} data-testid="notary-record-shortcuts">
+  <h3 id={`record-shortcuts-${lang}`}>{copy.heading}</h3>
+  <p class="shortcuts-intro">{copy.intro}</p>
+  <ul>
+    {records.map(record => <li>
+      <a href={profilePath(record.commission)} data-testid="notary-record-shortcut" data-commission={record.commission}>
+        <strong>{record.name}</strong>
+        <span class="business" lang="en">{record.business}</span>
+        <span class="record-facts">{record.city}, CA · {copy.commission} #{record.commission}</span>
+        <span class="record-action">{copy.action} <span aria-hidden="true">→</span></span>
+      </a>
+    </li>)}
+  </ul>
+  <p class="shortcuts-notice">{copy.notice}</p>
+</section>
+
+<style>
+  .record-shortcuts { padding: 28px 48px; border-block-start: 1px solid var(--border-soft); scroll-margin-block-start: 110px; }
+  h3 { color: var(--brand-green); font-size: 18px; font-weight: 500; }
+  .shortcuts-intro { margin-block: 8px 16px; color: #58645e; font-size: 14px; }
+  ul { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  li { min-width: 0; }
+  a { display: flex; flex-direction: column; gap: 9px; height: 100%; padding: 18px; border: 1px solid var(--border-soft); border-radius: 10px; background: #fffdfa; color: var(--brand-green); text-decoration: none; overflow-wrap: anywhere; }
+  a:hover { border-color: #82987c; background: #f4f4eb; }
+  a:focus-visible { outline: 2px solid #b36343; outline-offset: 4px; }
+  strong { font-size: 17px; font-weight: 500; }
+  .business { font-size: 12px; color: #58645e; }
+  .record-facts { font-size: 12px; color: #58645e; }
+  .record-action { padding-block-start: 6px; margin-block-start: auto; font-size: 13px; }
+  .shortcuts-notice { margin-block-start: 14px; color: #58645e; font-size: 12px; }
+  @media (max-width: 700px) {
+    .record-shortcuts { padding: 24px 20px; }
+    ul { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>

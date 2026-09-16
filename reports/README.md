@@ -18,3 +18,6 @@ migration, CLI consumer and OAuth expiry limitation.
 
 Machine-generated live verification JSON can exceed normal prose file limits
 because each URL retains its independent HTTP, metadata and content checks.
+
+[Notary discovery](notary-discovery.md) records the three-profile keyword pilot
+and its crawlable links from both lookup pages.

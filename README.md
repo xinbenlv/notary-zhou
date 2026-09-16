@@ -74,7 +74,7 @@ npm run notary:benchmark
 `?ui=en` 选择英文界面，不改变文章内容或规范网址。
 写作约定见 [文章 README](src/content/articles/README.md)。
 `npm run check:articles` 检查引用、图片、链接、canonical 及英文内容已移除。
-公证员详情页和 sitemap 试点的完整说明见 [搜索发现文档](reports/notary-discovery.md)。
+查验页含三条记录直达链接。详情页与 sitemap 见 [搜索发现文档](reports/notary-discovery.md)。
 
 ## 域名
 
