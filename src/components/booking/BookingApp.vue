@@ -602,14 +602,14 @@ async function pay() {
     <!-- 第 4 步 · 确认并支付 -->
     <section v-if="s.step === 4 && s.selected">
       <h2>{{ t.s4Title }}</h2>
-      <p class="sub">{{ t.s4Sub }}</p>
+      <p class="sub">{{ paymentsEnabled ? t.s4Sub : t.s4SubNoPay }}</p>
 
       <div class="card sum">
         <div class="line"><span>{{ t.rowTime }}</span><span>{{ prettyDate }} {{ slotTime(s.selected.startsAt) }}</span></div>
         <div class="line"><span>{{ t.rowPlace }}</span><span>{{ s.location === 'park' ? 'Sunnyvale Lakewood Park' : s.address }}</span></div>
         <div class="line"><span>{{ t.rowSigners }}</span><span>{{ s.signers.map(p => p.name).join(' · ') }}</span></div>
         <div class="line" v-for="d in s.docs.filter(x => x.typeKey)" :key="d.id">
-          <span>📄</span><span>{{ typeLabel(d) }}{{ docMeta(d) }}</span>
+          <span>{{ t.rowDocs }}</span><span>{{ typeLabel(d) }}{{ docMeta(d) }}</span>
         </div>
       </div>
 

@@ -79,6 +79,8 @@ export const STRINGS = {
 
     s4Title: '第 4 步 · 确认并支付',
     s4Sub: '请核对信息。下一步在 Stripe 页面填写邮箱与手机号并付款，付款成功即完成预约。',
+    s4SubNoPay: '请核对信息。目前请以邮件方式完成预约，我们会回信确认这个时段。',
+    rowDocs: '文件',
     rowTime: '时间',
     rowPlace: '地点',
     rowSigners: '签署人',
@@ -170,6 +172,8 @@ export const STRINGS = {
 
     s4Title: 'Step 4 · Confirm & pay',
     s4Sub: 'Please review. On the next screen you will enter your email and phone in Stripe and pay; payment confirms the booking.',
+    s4SubNoPay: 'Please review. For now, book by email — we will write back to confirm this slot.',
+    rowDocs: 'Document',
     rowTime: 'Time',
     rowPlace: 'Location',
     rowSigners: 'Signers',
