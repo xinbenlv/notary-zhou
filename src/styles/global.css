@@ -1,10 +1,11 @@
+/* Shared site styles: legacy sections remain together to preserve cascade order; article-specific UI is scoped in components. */
 :root {
   --bg-cream: #FFF8F0;
   --bg-white: #FFFFFF;
   --bg-alt: #F4EFEB;
 
   --text-dark: #111816;
-  --text-muted: #6B726C;
+  --text-muted: #626A64;
   --text-light: #F0F4F2;
 
   --brand-green: #1B3B32;
@@ -489,7 +490,7 @@ nav {
   border: 1px solid var(--border-soft);
 }
 
-.faq-box h4 {
+.faq-box h3 {
   margin-bottom: 8px;
   display: flex;
   align-items: center;

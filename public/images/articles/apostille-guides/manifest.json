@@ -1,0 +1,48 @@
+{
+  "description": "Original Chinese article covers with editable SVG sources and progressive JPEG outputs; English-only variants removed under the Chinese-only editorial policy.",
+  "created": "2026-09-15",
+  "images": [
+    {
+      "article": "src/content/articles/apostille-for-china.md",
+      "language": "zh-CN",
+      "title": "海牙认证是什么？美国文件在中国使用的 Apostille 路线",
+      "slot": "cover",
+      "source": "apostille-for-china-zh.svg",
+      "file": "apostille-for-china-zh.jpg",
+      "width": 1200,
+      "height": 630,
+      "purpose": "Show the document routing sequence with the full localized article title",
+      "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
+      "sectionImages": "Omitted: short procedural sections use text and tables",
+      "visualQc": "Passed during creation: this JPEG was opened; complete Chinese text, no clipping or collisions, scene reaches edges. Retained artwork unchanged."
+    },
+    {
+      "article": "src/content/articles/birth-certificate-apostille.md",
+      "language": "zh-CN",
+      "title": "美国出生证明海牙认证：核证副本、签发州与中国使用要求",
+      "slot": "cover",
+      "source": "birth-certificate-apostille-zh.svg",
+      "file": "birth-certificate-apostille-zh.jpg",
+      "width": 1200,
+      "height": 630,
+      "purpose": "Show the document routing sequence with the full localized article title",
+      "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
+      "sectionImages": "Omitted: short procedural sections use text and tables",
+      "visualQc": "Passed during creation: this JPEG was opened; complete Chinese text, no clipping or collisions, scene reaches edges. Retained artwork unchanged."
+    },
+    {
+      "article": "src/content/articles/marriage-certificate-apostille.md",
+      "language": "zh-CN",
+      "title": "美国结婚证海牙认证：先拿对证明，再办理 Apostille",
+      "slot": "cover",
+      "source": "marriage-certificate-apostille-zh.svg",
+      "file": "marriage-certificate-apostille-zh.jpg",
+      "width": 1200,
+      "height": 630,
+      "purpose": "Show the document routing sequence with the full localized article title",
+      "method": "Original SVG rasterized using Sharp; local fonts and no external assets",
+      "sectionImages": "Omitted: short procedural sections use text and tables",
+      "visualQc": "Passed during creation: this JPEG was opened; complete Chinese text, no clipping or collisions, scene reaches edges. Retained artwork unchanged."
+    }
+  ]
+}

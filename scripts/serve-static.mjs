@@ -108,6 +108,17 @@ const server = createServer(async (req, res) => {
   }
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
 
+  // English editorial pages were withdrawn; allow crawlers to see their removal.
+  if (url.pathname === '/en/articles' || url.pathname.startsWith('/en/articles/')) {
+    res.writeHead(410, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+      'X-Robots-Tag': 'noindex',
+    });
+    res.end(req.method === 'HEAD' ? undefined : 'This English guide has been removed. Chinese guides: https://www.notaryzhou.com/articles/');
+    return;
+  }
+
   // Retire the previous full-directory sitemaps after moving to a small pilot.
   if (url.pathname === '/notary-sitemap.xml') {
     res.writeHead(301, { Location: '/en/notaries/sitemap.xml', 'Cache-Control': 'public, max-age=300' }).end();

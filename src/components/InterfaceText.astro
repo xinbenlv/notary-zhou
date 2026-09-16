@@ -1,0 +1,6 @@
+---
+// Small interface labels only; article titles, descriptions and bodies stay Chinese.
+interface Props { zh: string; en: string; class?: string; testId?: string }
+const { zh, en, class: className, testId } = Astro.props;
+---
+<span class={className} data-interface-zh={zh} data-interface-en={en} lang="zh-CN" data-testid={testId}>{zh}</span>

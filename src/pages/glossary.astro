@@ -1,7 +1,6 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import Navbar from '../components/Navbar.astro';
-import Footer from '../components/Footer.astro';
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+import InterfaceText from '../components/InterfaceText.astro';
 import { siteConfig } from '../config';
 import { glossary, glossaryGroups, type GlossaryGroup } from '../glossary';
 
@@ -42,12 +41,11 @@ const jsonLd = {
 };
 ---
 
-<Layout lang="zh" title={title} description={description} path={path} jsonLd={jsonLd}>
-  <Navbar lang="zh" />
+<ArticleLayout title={title} description={description} path={path} jsonLd={jsonLd}>
   <main class="articles-index">
     <div class="container">
       <header class="articles-hero">
-        <h1>公证术语表</h1>
+        <h1><InterfaceText zh="公证术语表" en="Notary glossary" /></h1>
         <p>
           文件上的英文术语，往往在中文里没有严格对应的词。这里按场景列出常见术语的中英对照与释义，注明加州法条依据，并链到展开细说的文章。
         </p>
@@ -60,7 +58,7 @@ const jsonLd = {
         <section class="articles-group" id={g.key}>
           <h2>{g.meta.label}</h2>
           <p class="glossary-intro">{g.meta.intro}</p>
-          <dl class="glossary-list">
+          <dl class="glossary-list" lang="zh-CN" data-article-content>
             {g.terms.map((t) => (
               <div class="glossary-item">
                 <dt>
@@ -80,8 +78,7 @@ const jsonLd = {
         </section>
       ))}
 
-      <p class="article-back"><a href="/articles/">← 返回公证知识</a></p>
+      <p class="article-back"><a href="/articles/"><InterfaceText zh="← 返回公证知识" en="← All articles" /></a></p>
     </div>
   </main>
-  <Footer lang="zh" />
-</Layout>
+</ArticleLayout>

@@ -2,10 +2,13 @@ import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 const articles = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/articles' }),
+  loader: glob({ pattern: ['**/*.md', '!**/README.md'], base: './src/content/articles' }),
   schema: z.object({
     title: z.string(),
     description: z.string(),
+    // Editorial policy: FAQ, guides and articles are Chinese-only.
+    lang: z.literal('zh').default('zh'),
+    translationKey: z.string().optional(),
     pubDate: z.coerce.date(),
     updatedDate: z.coerce.date().optional(),
     category: z.enum(['basics', 'china-use', 'family', 'pitfalls', 'real-estate', 'estate']),
@@ -13,6 +16,8 @@ const articles = defineCollection({
     topicId: z.number(),
     cover: z.string().optional(),
     coverAlt: z.string().optional(),
+    coverWidth: z.number().int().positive().default(1200),
+    coverHeight: z.number().int().positive().default(630),
     draft: z.boolean().default(false),
   }),
 });

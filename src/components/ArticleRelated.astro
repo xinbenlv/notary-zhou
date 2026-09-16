@@ -1,0 +1,23 @@
+---
+import { articleKey, articlePath, apostilleKeys, topicPath, type Article } from '../articles';
+import InterfaceText from './InterfaceText.astro';
+interface Props { article: Article; articles: Article[] }
+const { article, articles } = Astro.props;
+const lang = article.data.lang;
+const isCrossBorder = apostilleKeys.includes(articleKey(article));
+const related = articles.filter(a => a.id !== article.id && a.data.lang === lang &&
+  (isCrossBorder ? apostilleKeys.includes(articleKey(a)) : a.data.category === article.data.category)).slice(0, 4);
+---
+{(isCrossBorder || related.length > 0) && <aside class="related-guides" aria-labelledby="related-guides-heading">
+  <h2 id="related-guides-heading"><InterfaceText zh="继续阅读" en="Related articles" /></h2>
+  {isCrossBorder && <p><a href={topicPath(lang)}><InterfaceText zh="从这里开始：海牙认证与跨境文件指南 →" en="Start here: apostille & cross-border document guides →" /></a></p>}
+  <ul>{related.map(a => <li><a href={articlePath(a)} lang="zh-CN" data-article-content>{a.data.title}</a></li>)}</ul>
+</aside>}
+<style>
+  .related-guides { margin-block: 40px; padding: 24px; background: var(--bg-alt); border-radius: 16px; }
+  h2 { font-size: 22px; margin-block-end: 16px; }
+  ul { padding-inline-start: 20px; }
+  li { margin-block: 10px; }
+  a { color: var(--brand-green); text-decoration: underline; text-underline-offset: 3px; }
+  p { margin-block-end: 16px; }
+</style>

@@ -1,0 +1,43 @@
+---
+import { getCollection } from 'astro:content';
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+import InterfaceText from './InterfaceText.astro';
+import { articleCategories, articlePath, articleIndexPath, topicPath, formatDate, type ArticleCategory } from '../articles';
+interface Props { lang: 'zh' }
+const { lang } = Astro.props;
+const articles = (await getCollection('articles', ({ data }) => !data.draft && data.lang === lang))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf() || a.id.localeCompare(b.id));
+const groups = Object.entries(articleCategories).map(([key, meta]) => ({
+  key: key as ArticleCategory, meta, items: articles.filter(a => a.data.category === key),
+})).filter(g => g.items.length);
+const title = '公证与跨境文件指南';
+const description = '中文解读海牙认证、出生证明、结婚证、单身声明和美国公证。按签发地与使用地厘清步骤，每篇附官方来源。';
+---
+<ArticleLayout title={`${title} | Notary Zhou`} description={description} path={articleIndexPath(lang)}>
+  <main class="articles-index" data-testid="article-directory"><div class="container">
+    <header class="articles-hero">
+      <h1><InterfaceText zh={title} en="Notary & cross-border document guides" /></h1>
+      <p><InterfaceText zh={description} en="Browse our Chinese-language articles on notarization and cross-border documents, with official sources and clearly stated jurisdiction limits." /></p>
+      <div class="guide-entry">
+        <a href={topicPath(lang)}><InterfaceText zh="海牙认证与跨境文件：按文件类型开始 →" en="Apostille & cross-border documents: choose your document →" /></a>
+        <a href="/glossary/"><InterfaceText zh="公证术语表 · 英中对照 →" en="Notary glossary · English terms with Chinese explanations →" /></a>
+      </div>
+    </header>
+    {groups.map(g => <section class="articles-group">
+      <h2><InterfaceText zh={g.meta.zh} en={g.meta.en} /></h2><div class="articles-grid">
+        {g.items.map(a => <a class="article-card" data-testid="article-card" href={articlePath(a)}>
+          {a.data.cover && <img src={a.data.cover} alt={a.data.coverAlt ?? a.data.title} loading="lazy" width="1200" height="630" />}
+          <div class="article-card-body"><span class="article-card-tag"><InterfaceText zh={g.meta.zh} en={g.meta.en} /></span>
+            <h3 lang="zh-CN" data-article-content>{a.data.title}</h3><p lang="zh-CN" data-article-content>{a.data.description}</p>
+            <span class="article-card-date"><InterfaceText zh={formatDate(a.data.updatedDate ?? a.data.pubDate, 'zh')} en={formatDate(a.data.updatedDate ?? a.data.pubDate, 'en')} /></span>
+          </div>
+        </a>)}
+      </div>
+    </section>)}
+  </div></main>
+</ArticleLayout>
+<style>
+  h1 { text-wrap: balance; }
+  .guide-entry { display: grid; gap: 16px; margin-block-start: 28px; }
+  .guide-entry a { color: var(--brand-green); text-decoration: underline; text-underline-offset: 4px; }
+</style>

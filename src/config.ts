@@ -1,3 +1,4 @@
+// Public website copy, service scope and statutory fee display; no transaction pricing logic.
 export const siteConfig = {
   name: 'Notary Zhou',
   nameZh: '周公证员',
@@ -21,10 +22,10 @@ export const siteConfig = {
   copyrightYear: 2026,
 
   owner: {
-    nameEn: 'George Zhou',
+    nameEn: 'George (GJ) Zhou',
     // 中文语境统一用英文名，保护中文名隐私
     nameZhDisplay: 'George (GJ) Zhou',
-    fullNameEn: 'George (Guojin) Zhou',
+    fullNameEn: 'George (GJ) Zhou',
   },
 
   serviceAreas: ['Santa Clara', 'San Mateo', 'Alameda'],
@@ -33,8 +34,8 @@ export const siteConfig = {
   // feesLastVerified; the statute controls if amended)
   feeStatuteUrl:
     'https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=GOV&sectionNum=8211#:~:text=fifteen%20dollars',
-  feesLastVerified: 'August 2026',
-  feesLastVerifiedZh: '2026 年 8 月',
+  feesLastVerified: 'September 15, 2026',
+  feesLastVerifiedZh: '2026 年 9 月 15 日',
   fees: [
     {
       en: 'Acknowledgment',
@@ -44,9 +45,9 @@ export const siteConfig = {
     },
     {
       en: 'Jurat (including oath or affirmation)',
-      zh: '宣誓书公证（含宣誓）',
-      feeEn: '$15 per signature',
-      fee: '$15 per signature 每个签名',
+      zh: '宣誓书公证（含宣誓或郑重确认）',
+      feeEn: '$15 for an oath or affirmation to one person and execution of the jurat',
+      fee: '$15 for an oath or affirmation to one person and execution of the jurat 对一人主持宣誓或郑重确认并出具 jurat，共 $15',
     },
     {
       en: 'Certified copy of a Power of Attorney',
