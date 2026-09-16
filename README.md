@@ -98,6 +98,45 @@ npm run notary:benchmark
 Routes 只在服务端用 `GOOGLE_ROUTES_SERVER_KEY` 调用。本机若用 `npm start` 起在别的端口，
 Places 会因 referrer 不在白名单而报 403——这是密钥在正常工作，不是页面坏了。
 
+### 预授权、到期与巡检
+
+收款用**预授权**：结账时只冻结，公证完成后再按实际金额扣（`capture_method=manual`）。
+卡的授权**正好 7 天**（实测 `capture_before` = 创建后 7.0000 天），`MAX_ADVANCE_DAYS=7`
+与 `MIN_NOTICE_HOURS=48` 都是从这个数推出来的，不是排期口味。
+
+**只收银行卡，靠的是 payment method configuration，不是 `payment_method_types`。**
+只写 `payment_method_types: ['card']` 挡不住 Link：会话接口回报 `["card"]`，
+结账页却照样渲染 `link_instant_debit` 与 `link_klarna`（前者还带"返现 US$5"的角标）。
+Stripe 文档把这些算作 card 的一部分——"card ... supported through many networks,
+card brands, and select Link funding sources"。而银行扣款不支持预授权，
+`us_bank_account` 配 `capture_method=manual` 会被直接拒绝，7 天授权的前提就不成立了。
+所以用一个只开 card 的配置，把 ID 放在 `STRIPE_PAYMENT_METHOD_CONFIGURATION`：
+
+| 变量 | 说明 |
+|------|------|
+| `STRIPE_PAYMENT_METHOD_CONFIGURATION` | `pmc_...`，配置里只开 card，其余全关。**不设**会退回旧写法并打警告，Link 的银行/Klarna 通道会重新出现 |
+
+换 Stripe 账号时要在新账号里重建这个配置——它不是代码，跟着账号走。
+
+**`expired` 是两种情况，靠 `payment_intent_id` 区分：**
+
+| 情形 | `payment_intent_id` | `cancel_reason` | 损失 |
+|------|--------------------|-----------------|------|
+| 结账没完成 / 客户按了返回 | `NULL` | `checkout_expired`、`customer_abandoned` | 无，什么都没发生 |
+| 付了钱、授权到期 | 非空 | `authorization_expired:*` | **一笔该收的钱没收到** |
+
+`payment_intent.canceled` 这一个事件同时承载「有人主动取消」和「授权到期自动释放」，
+判定在 `src/lib/booking/lifecycle.ts`，由 `tests/lifecycle.test.mjs` 守住。
+
+**巡检**：`POST /api/admin/watch`（只认 `x-admin-token` 请求头）查出快到期的授权、
+已到期没收到的钱、卡在 `held` 的单、没处理成功的 webhook，并顺手清掉过期的 `slot_holds`。
+`.github/workflows/booking-watch.yml` 每 6 小时打一次，`ok=false` 就让工作流失败——
+仓库里没有邮件服务，借 GitHub 的失败通知把人叫醒就够了。需要在仓库 Secrets 配
+`NOTARY_ADMIN_TOKEN`（与线上 `ADMIN_TOKEN` 相同）。
+
+> 调这个接口必须显式带 `Content-Type: application/json`。Astro 默认开着 CSRF origin 检查，
+> 没有同源 Origin 的表单类 POST 会被挡成 403 `Cross-site POST form submissions are forbidden`。
+
 ## 域名
 
 | 域名 | 用途 |

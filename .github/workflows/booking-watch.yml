@@ -35,9 +35,13 @@ jobs:
             exit 1
           fi
 
-          # 令牌只走请求头，不进 URL：URL 会留在访问日志里
+          # 令牌只走请求头，不进 URL：URL 会留在访问日志里。
+          # Content-Type 必须显式声明 application/json：Astro 默认开着 CSRF origin
+          # 检查，会把没有同源 Origin 的表单类 POST 一律挡成 403
+          # （"Cross-site POST form submissions are forbidden"）——实测过。
           http=$(curl -sS -X POST \
             -H "x-admin-token: ${ADMIN_TOKEN}" \
+            -H "Content-Type: application/json" \
             -o body.json -w '%{http_code}' \
             --max-time 60 \
             "https://www.notaryzhou.com/api/admin/watch")
