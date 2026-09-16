@@ -118,7 +118,7 @@ export interface PaymentIntent {
   amount: number;
   amount_capturable: number;
   amount_received: number;
-  latest_charge?: string;
+  latest_charge?: unknown;
 }
 
 export const getCheckoutSession = (id: string) =>
@@ -129,6 +129,12 @@ export const getCheckoutSession = (id: string) =>
  * 扣款。amountCents 可低于授权额，余额自动释放；**一笔授权只能扣一次**，
  * 所以当天若签名处变多，必须另开一笔，不能指望再 capture 一次。
  */
+/** 取 PaymentIntent，展开 latest_charge 以便读授权到期时刻 capture_before */
+export const getPaymentIntent = (id: string) =>
+  stripeFetch<PaymentIntent & {
+    latest_charge?: { payment_method_details?: { card?: { capture_before?: number } } };
+  }>(`/payment_intents/${encodeURIComponent(id)}?expand[]=latest_charge`);
+
 export const capturePaymentIntent = (id: string, amountCents: number) =>
   stripeFetch<PaymentIntent>(`/payment_intents/${encodeURIComponent(id)}/capture`,
     { amount_to_capture: amountCents }, `capture:${id}:${amountCents}`);

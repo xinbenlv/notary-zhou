@@ -75,6 +75,7 @@ const s = reactive({
   quoteError: '',
   agreed: false,
   payError: '',
+  paying: false,
 });
 
 // ── 第 1 步：文件与签署人 ─────────────────────────────────────
@@ -364,22 +365,40 @@ const mailtoHref = computed(() => {
   return `mailto:${props.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
 });
 
+
 async function pay() {
+  if (!s.selected || s.paying) return;
   s.payError = '';
-  if (!s.selected) return;
+  s.paying = true;
   try {
     const res = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...quotePayload.value, startsAt: s.selected.startsAt }),
+      body: JSON.stringify({
+        ...quotePayload.value,
+        startsAt: s.selected.startsAt,
+        address: s.location === 'mobile' ? s.address : null,
+        signers: s.signers.map((x) => ({ name: x.name, idType: x.idType })),
+        lang: props.lang,
+      }),
     });
     const j = await res.json().catch(() => ({}));
-    if (res.ok && j.url) { window.location.href = j.url; return; }
-    // 报价在服务端重算——对不上说明时段或路况变了，必须让客户重选
-    s.payError = j.code === 'slot_taken' || j.code === 'price_changed' ? t.priceExpired : t.payUnavailable;
-    if (j.code === 'slot_taken' || j.code === 'price_changed') { s.step = 3; loadQuote(); }
+    if (res.ok && j.url) { window.location.href = j.url; return; }   // 跳转不返回，故意不清 paying
+
+    // 价格与可用性都在服务端重算：对不上说明时段被占或路况变了，必须让客户重选
+    if (j.code === 'slot_taken' || j.code === 'routes_failed') {
+      s.payError = t.priceExpired;
+      s.step = 3;
+      loadQuote();
+    } else if (j.code === 'zero_total') {
+      s.payError = t.zeroTotal;
+    } else {
+      s.payError = t.payUnavailable;
+    }
   } catch {
     s.payError = t.payUnavailable;
+  } finally {
+    s.paying = false;
   }
 }
 </script>
@@ -646,14 +665,17 @@ async function pay() {
 
       <div class="nav">
         <button class="btn ghost" @click="s.step = 3">{{ t.back }}</button>
-        <button v-if="paymentsEnabled" class="btn primary" :disabled="!s.agreed" @click="pay">
-          {{ t.payBtn(money(grandCents)) }}
+        <button v-if="paymentsEnabled" class="btn primary" :disabled="!s.agreed || s.paying" @click="pay">
+          {{ s.paying ? t.paying : t.payBtn(money(grandCents)) }}
         </button>
         <a v-else class="btn primary mail" :class="{ off: !s.agreed }"
            :href="s.agreed ? mailtoHref : undefined" :aria-disabled="!s.agreed">{{ t.emailUs }}</a>
       </div>
 
-      <div class="payfail" v-if="paymentsEnabled && s.payError"><p>{{ s.payError }}</p></div>
+      <div class="payfail" v-if="paymentsEnabled && s.payError">
+        <p>{{ s.payError }}</p>
+        <a v-if="s.payError !== t.priceExpired" class="btn primary mail" :href="mailtoHref">{{ t.emailUs }}</a>
+      </div>
       <p class="holdnote" v-else-if="paymentsEnabled">{{ t.holdNote }}<br />{{ t.holdNote2 }}</p>
     </section>
   </div>

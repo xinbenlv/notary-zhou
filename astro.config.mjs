@@ -30,7 +30,7 @@ export default defineConfig({
       // /zh/ 是历史遗留的 noindex 跳转页；/book 是交易流程，不进搜索
       filter: (page) => {
         const path = new URL(page).pathname;
-        return !path.startsWith('/zh/') && !/^\/(en\/)?book\//.test(path)
+        return !path.startsWith('/zh/') && !/^\/(en\/)?book(ed)?\//.test(path)
           && !path.startsWith('/articles/') && !path.startsWith('/en/notaries/')
           && !/\.xml\/?$/.test(path);
       },

@@ -23,7 +23,7 @@ export async function bookedWindows(from: Date, to: Date): Promise<Interval[]> {
   const db = getPool();
   const { rows } = await db.query<{ blocked_from: Date; blocked_to: Date }>(
     `SELECT blocked_from, blocked_to FROM bookings
-      WHERE status IN ('held','paid','completed')
+      WHERE status IN ('held','authorized','paid','completed')
         AND blocked_to > $1 AND blocked_from < $2
      UNION ALL
      SELECT blocked_from, blocked_to FROM slot_holds
