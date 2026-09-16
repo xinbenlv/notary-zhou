@@ -88,6 +88,11 @@ export interface CheckoutSession { id: string; url: string; payment_intent: stri
 export async function createCheckoutSession(args: CheckoutArgs): Promise<CheckoutSession> {
   return stripeFetch<CheckoutSession>('/checkout/sessions', {
     mode: 'payment',
+    // 只收银行卡。整套「预授权 7 天内扣款」的推算是按卡网络的规则做的：
+    // ACH 压根不支持预授权，Klarna 是 28 天、Cash App 是 7 天，各有各的窗口。
+    // 混进来会让 MAX_ADVANCE_DAYS=7 这个前提对某些付款方式不成立。
+    // 想放开就删掉这一行，但要先确认那种付款方式的授权有效期。
+    payment_method_types: ['card'],
     success_url: args.successUrl,
     cancel_url: args.cancelUrl,
     expires_at: Math.floor(args.expiresAt.getTime() / 1000),
