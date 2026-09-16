@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { completeBooking, cancelBooking, releaseBooking, pendingBookings, planCancel } from '../../../lib/booking/settle.ts';
 import { getPool } from '../../../lib/booking/db.ts';
+import { expiredAuthorizations } from '../../../lib/booking/watch.ts';
+import { captureUrgency } from '../../../lib/booking/lifecycle.ts';
 
 export const prerender = false;
 
@@ -30,9 +32,19 @@ export const GET: APIRoute = async ({ request }) => {
       `SELECT id, starts_at, notary_fee_cents, travel_fee_cents, total_cents
          FROM bookings WHERE status IN ('authorized','held')`);
     const plans = new Map(rows.map((r: any) => [r.id, planCancel(r as any)]));
+    // 授权已经到期、钱没收到的单子单独列出来：它们不再需要"取消/扣款"这类操作，
+    // 需要的是有人知道这笔钱丢了。混在 pending 里会被当成还能处理的单而划过去。
+    const expiredUncaptured = await expiredAuthorizations();
     return json({
-      pending: list.map((b) => ({ ...b, cancelNow: plans.get(b.id) ?? null })),
-      note: 'hoursToCapture 是预授权剩余有效期；到期资金自动释放，这一单就白做了。',
+      pending: list.map((b) => ({
+        ...b,
+        // ok / warn / critical / expired —— 比单看小时数更容易一眼分出轻重
+        urgency: captureUrgency(b.captureBefore ? new Date(b.captureBefore) : null).level,
+        cancelNow: plans.get(b.id) ?? null,
+      })),
+      expiredUncaptured,
+      note: 'hoursToCapture 是预授权剩余有效期；到期资金自动释放，这一单就白做了。'
+        + ' expiredUncaptured 里的单子已经到期，钱没收到，只能另行向客户收取。',
     });
   } catch (err) {
     return json({ error: (err as Error).message }, 500);

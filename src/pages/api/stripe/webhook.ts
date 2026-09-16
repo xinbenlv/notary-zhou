@@ -4,6 +4,7 @@ import { getPool } from '../../../lib/booking/db.ts';
 import { releaseBooking, bookingIdForPaymentIntent } from '../../../lib/booking/settle.ts';
 import { createEvent, deleteEvent } from '../../../lib/booking/calendar.ts';
 import { ARRIVE_EARLY_MIN } from '../../../lib/booking/pricing.ts';
+import { classifyCancellation, shouldDropCalendarEvents } from '../../../lib/booking/lifecycle.ts';
 
 export const prerender = false;
 
@@ -51,10 +52,29 @@ export const POST: APIRoute = async ({ request }) => {
     } else if (event.type === 'charge.refunded') {
       await onRefunded(event.data.object as Record<string, any>);
     }
+    // 之前失败过、这次重试成功了：销掉那条失败记录，否则告警会一直亮着
+    await db.query(
+      'UPDATE webhook_failures SET resolved_at = now() WHERE event_id = $1 AND resolved_at IS NULL',
+      [event.id],
+    ).catch(() => {});
     return new Response('ok', { status: 200 });
   } catch (err) {
-    // 处理失败就把幂等记录撤掉，否则 Stripe 重试会被当成"已处理"而静默跳过
+    // 幂等记录照撤，否则 Stripe 重试会被当成"已处理"而静默跳过
     await db.query('DELETE FROM processed_events WHERE event_id = $1', [event.id]).catch(() => {});
+    // 但失败本身必须留痕。Stripe 重试约三天后就放弃，而"放弃"不会产生任何事件——
+    // 没有这张表，一单卡在 held、钱还冻结着、日历上没有它，谁都不会知道。
+    // payload 存的是解析后的事件（验签已经过了，这里不再需要原始字节），
+    // 留着是为了 Stripe 放弃之后还能手工补救。
+    await db.query(
+      `INSERT INTO webhook_failures (event_id, type, last_error, payload)
+       VALUES ($1,$2,$3,$4)
+       ON CONFLICT (event_id) DO UPDATE
+         SET attempts       = webhook_failures.attempts + 1,
+             last_failed_at = now(),
+             last_error     = EXCLUDED.last_error,
+             resolved_at    = NULL`,
+      [event.id, event.type, (err as Error).message.slice(0, 500), JSON.stringify(event)],
+    ).catch((e) => console.error('recording webhook failure failed:', (e as Error).message));
     console.error(`stripe webhook ${event.type} failed:`, (err as Error).message);
     return new Response('handler failed', { status: 500 });
   }
@@ -134,34 +154,68 @@ async function onExpired(session: Record<string, any>): Promise<void> {
   const db = getPool();
   const bookingId: string | undefined = session.client_reference_id ?? session.metadata?.bookingId;
   if (!bookingId) return;
-  await db.query("UPDATE bookings SET status='expired', updated_at=now() WHERE id=$1 AND status='held'", [bookingId]);
+  // cancel_reason 区分两种 expired：这条是"结账没完成，从来没付过钱"，
+  // 与"付了钱、授权到期"完全不同（后者钱是真的丢了），运营上必须分得开。
+  await db.query(
+    `UPDATE bookings SET status='expired', cancel_reason='checkout_expired', updated_at=now()
+      WHERE id=$1 AND status='held'`, [bookingId]);
   await db.query('DELETE FROM slot_holds WHERE booking_id = $1', [bookingId]);
 }
 
 /**
- * 撤销预授权（在 Stripe 后台点 Cancel，或授权到期自动释放）。
- * 订单和日历必须跟着释放，否则钱已经退回客户、时段却还占着。
- * 授权到期同样走这个事件，所以过期的单子不会永远挂在日历上。
+ * 预授权被撤销。**同一个事件承载两件相反的事**，必须先分清是哪一件：
+ *
+ *   - 有人主动撤销（客户取消、我们自己取消、后台点 Cancel）——这一单没发生；
+ *   - 7 天授权到期，Stripe 自动释放资金——这一单**基本已经做完了**。
+ *
+ * 后者之所以几乎总是"已完成"，是因为下单时就预授权，而预约必须落在 7 天内
+ * （MAX_ADVANCE_DAYS=7），所以授权到期时预约时刻早就过去了。原先两种情况
+ * 一律按"取消"处理：删掉三个日历事件、标成 cancelled——等于把一场真实履约
+ * 连同它唯一的凭证一起抹掉，而且没有任何人会被告知。
+ *
+ * 判定交给 lifecycle.ts 的纯函数，日历删除只针对**尚未发生**的预约。
  */
 async function onCanceled(pi: Record<string, any>): Promise<void> {
   const db = getPool();
   const { rows } = await db.query(
-    `SELECT id, status, event_id_service, event_id_outbound, event_id_return
+    `SELECT id, status, starts_at, capture_before,
+            event_id_service, event_id_outbound, event_id_return
        FROM bookings WHERE payment_intent_id = $1`, [pi.id]);
   if (!rows.length) return;
   const b = rows[0];
-  if (b.status === 'completed') return;          // 已扣款的不该出现在这里，别误删
+  // 已扣款、已退款都是终态，别让一条迟到的取消事件把它们改写了
+  if (b.status === 'completed' || b.status === 'refunded') return;
 
-  const calendarId = process.env.BOOKING_CALENDAR_ID!;
-  for (const id of [b.event_id_service, b.event_id_outbound, b.event_id_return]) {
-    if (id) await deleteEvent(calendarId, id);   // 已删的返回 410，deleteEvent 视为成功
+  const verdict = classifyCancellation({
+    reason: pi.cancellation_reason,
+    captureBefore: b.capture_before,
+  });
+
+  // 只删还没发生的预约。已经发生过的，日历事件就是履约记录——
+  // 授权到期时尤其不能删：钱已经没了，再把凭证也删掉就什么都不剩了。
+  const dropEvents = shouldDropCalendarEvents(b.starts_at);
+  if (dropEvents) {
+    const calendarId = process.env.BOOKING_CALENDAR_ID!;
+    for (const id of [b.event_id_service, b.event_id_outbound, b.event_id_return]) {
+      if (id) await deleteEvent(calendarId, id); // 已删的返回 410，deleteEvent 视为成功
+    }
+    await db.query(
+      `UPDATE bookings SET status=$1, cancelled_at=now(), cancel_reason=$2,
+              event_id_service=NULL, event_id_outbound=NULL, event_id_return=NULL, updated_at=now()
+        WHERE id=$3`,
+      [verdict.kind, verdict.why, b.id]);
+  } else {
+    await db.query(
+      `UPDATE bookings SET status=$1, cancelled_at=now(), cancel_reason=$2, updated_at=now()
+        WHERE id=$3`,
+      [verdict.kind, verdict.why, b.id]);
   }
-  await db.query(
-    `UPDATE bookings SET status='cancelled', cancelled_at=now(), cancel_reason=$1,
-            event_id_service=NULL, event_id_outbound=NULL, event_id_return=NULL, updated_at=now()
-      WHERE id=$2`,
-    [pi.cancellation_reason ?? 'stripe_canceled', b.id]);
   await db.query('DELETE FROM slot_holds WHERE booking_id = $1', [b.id]);
+
+  if (verdict.kind === 'expired') {
+    // 这条日志是运营信号，不是调试信息：一笔本该收到的钱没收到。
+    console.error(`[booking] 预授权到期未扣款 booking=${b.id} pi=${pi.id} reason=${verdict.why}`);
+  }
 }
 
 /**

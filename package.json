@@ -16,7 +16,7 @@
     "notary:benchmark": "node --expose-gc scripts/benchmark-notary-public-listing.mjs",
     "test:notary": "node --test tests/notary-public-listing.test.mjs tests/notary-profile.test.mjs tests/sitemap.test.mjs",
     "test:analytics": "node --test tests/analytics.test.mjs",
-    "test:booking": "node --experimental-strip-types --test tests/pricing.test.mjs tests/schedule.test.mjs tests/doctypes.test.mjs tests/stripe.test.mjs tests/settle.test.mjs"
+    "test:booking": "node --experimental-strip-types --test tests/pricing.test.mjs tests/schedule.test.mjs tests/doctypes.test.mjs tests/stripe.test.mjs tests/settle.test.mjs tests/lifecycle.test.mjs tests/watch.test.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^10.1.4",

@@ -1,0 +1,67 @@
+# 预约系统巡检。
+#
+# 存在的理由：预授权 7 天后到期，资金自动释放，而这件事**不产生任何通知**——
+# Stripe 不会告诉我们，客户不会告诉我们，日历上也看不出来。等发现时钱已经没了。
+# 同理，webhook 重试三天后被放弃时也没有任何事件。
+#
+# 通知手段刻意选了"让这个工作流失败"：仓库里没有邮件服务，而 GitHub 对
+# 失败的定时任务本来就会给仓库所有者发邮件。为了一件每周可能发生一次的事
+# 去接一套邮件基础设施不划算。
+#
+# 需要在仓库 Secrets 里配 NOTARY_ADMIN_TOKEN（与线上 ADMIN_TOKEN 相同）。
+name: booking watch
+
+on:
+  schedule:
+    # 每 6 小时一次。授权窗口 7 天、告警阈值 48 小时，
+    # 这个频率保证到期前至少被提醒 8 次，也扛得住 GitHub 定时任务的延迟。
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 巡检预约与支付状态
+        env:
+          ADMIN_TOKEN: ${{ secrets.NOTARY_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ADMIN_TOKEN}" ]; then
+            echo "::error::未配置 NOTARY_ADMIN_TOKEN，巡检无法进行"
+            exit 1
+          fi
+
+          # 令牌只走请求头，不进 URL：URL 会留在访问日志里
+          http=$(curl -sS -X POST \
+            -H "x-admin-token: ${ADMIN_TOKEN}" \
+            -o body.json -w '%{http_code}' \
+            --max-time 60 \
+            "https://www.notaryzhou.com/api/admin/watch")
+
+          if [ "$http" != "200" ]; then
+            echo "::error::巡检接口返回 HTTP $http"
+            cat body.json
+            exit 1
+          fi
+
+          swept=$(jq -r '.sweptSlotHolds // 0' body.json)
+          echo "已清理过期时段保留：${swept} 行" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$(jq -r '.ok' body.json)" = "true" ]; then
+            echo "无告警。" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          {
+            echo ""
+            echo "## 需要处理"
+            jq -r '.alerts[]? | "- " + .' body.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          jq -r '.alerts[]? | "::error::" + .' body.json
+          # 非 0 退出 → 工作流失败 → GitHub 给仓库所有者发邮件
+          exit 1
