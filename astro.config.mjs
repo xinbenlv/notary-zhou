@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
 import sitemap from '@astrojs/sitemap';
+import vue from '@astrojs/vue';
 import remarkCjkFriendly from 'remark-cjk-friendly';
 import rehypeCollapsibleReferences from './src/plugins/rehype-collapsible-references.mjs';
 
@@ -22,13 +23,16 @@ export default defineConfig({
     rehypePlugins: [rehypeCollapsibleReferences],
   },
   integrations: [
+    // 只有 /book 的预约向导用 Vue；其余页面仍是纯 Astro，不会带上运行时
+    vue(),
     sitemap({
       // /zh/ is a legacy noindex redirect page, keep it out of the sitemap
       // /zh/ 是历史遗留的 noindex 跳转页；/book 是交易流程，不进搜索
       filter: (page) => {
         const path = new URL(page).pathname;
-        return !path.startsWith('/zh/') && !path.startsWith('/book')
-          && !path.startsWith('/articles/') && !path.startsWith('/en/articles/') && !path.startsWith('/en/notaries/')
+        return !path.startsWith('/zh/') && !/^\/(en\/)?book(ed)?\//.test(path)
+          && !path.startsWith('/articles/') && !path.startsWith('/en/articles/')
+          && !path.startsWith('/en/notaries/')
           && !/\.xml\/?$/.test(path);
       },
       customSitemaps: [

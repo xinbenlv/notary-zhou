@@ -1,0 +1,76 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Navbar from '../Navbar.astro';
+import Footer from '../Footer.astro';
+import { siteConfig } from '../../config';
+import type { Lang } from '../../i18n';
+import BookingApp from './BookingApp.vue';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+// 运行时优先：这样在 Railway 上换密钥不必重新构建（页面本身是 SSR 的）。
+// 构建期的 import.meta.env 只作为本地 `astro dev` 的兜底。
+const mapsKey =
+  process.env.PUBLIC_GOOGLE_MAPS_BROWSER_KEY ?? import.meta.env.PUBLIC_GOOGLE_MAPS_BROWSER_KEY ?? '';
+
+// 没有 Stripe 密钥就不摆付款按钮，第 4 步改为邮件人工确认。
+// 密钥一旦配上，页面自动切回在线支付，不需要改代码。
+const paymentsEnabled = Boolean(process.env.STRIPE_SECRET_KEY);
+
+const t = {
+  zh: {
+    title: `在线预约 | ${siteConfig.nameZh} ${siteConfig.name}`,
+    description: '在线预约加州公证上门服务：选择文件与签署人、地点与时段，系统按实际往返车程报价。',
+    lead: '四步完成预约：文件与签署人、地点、时段、支付。交通费按您所选时段的实际往返车程估算，付款前即锁定。',
+  },
+  en: {
+    title: `Book online | ${siteConfig.name}`,
+    description: 'Book a California mobile notary online: choose documents and signers, location and time slot, priced from the actual round-trip drive time.',
+    lead: 'Four steps: documents and signers, location, time slot, payment. The travel fee is estimated from the real round-trip drive time for the slot you pick, and is locked in before you pay.',
+  },
+}[lang];
+
+const path = lang === 'zh' ? '/book/' : '/en/book/';
+---
+
+<Layout
+  lang={lang}
+  title={t.title}
+  description={t.description}
+  path={path}
+  noindex
+>
+  <Navbar lang={lang} />
+  <main class="book-main">
+    <div class="container">
+      <p class="book-lead">{t.lead}</p>
+      <BookingApp
+        client:only="vue"
+        lang={lang}
+        mapsKey={mapsKey}
+        email={siteConfig.email}
+        paymentsEnabled={paymentsEnabled}
+      />
+    </div>
+  </main>
+  <Footer lang={lang} />
+</Layout>
+
+<style>
+  .book-main {
+    padding-top: calc(var(--nav-height) + 40px);
+    padding-bottom: 64px;
+    background: var(--bg-alt);
+    min-height: 70vh;
+  }
+  .book-lead {
+    max-width: 460px;
+    margin: 0 auto 24px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }
+</style>
