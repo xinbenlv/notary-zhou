@@ -9,11 +9,24 @@ export const TIMEZONE = 'America/Los_Angeles';
 /** 可预约的整点（太平洋时间）。12 点后跳到 14 点是留出午休。 */
 export const SLOT_HOURS = [9, 10, 11, 12, 14, 15, 16, 17, 18];
 
-/** 最短提前量：至少要够最远服务半径的车程 + 准备时间 */
-export const MIN_NOTICE_HOURS = 3;
+/**
+ * 最短提前量 48 小时。
+ * 除了留出备料时间，它还让每一单在**下单那一刻**都落在退款政策的第一档
+ * （>48h 全额）——也就是说，此时取消永远可以直接撤销预授权，不必部分扣款。
+ */
+export const MIN_NOTICE_HOURS = 48;
 
-/** 最多可预约到多少天以后 */
-export const MAX_ADVANCE_DAYS = 60;
+/**
+ * 最多可预约到多少天以后。
+ *
+ * **这个数不能超过 7，否则收款会静默失效。** 网上刷卡的预授权只保留 7 天
+ * （Visa / Mastercard / Amex / Discover 同为 7 天），到期资金自动释放、
+ * PaymentIntent 变成 canceled——预约还在日历上，钱却已经没了。
+ * Stripe 的「延长授权」能到 30 天，但需要 IC+ 计费方案，且 Amex 与 Discover
+ * 只对酒店／租车类商户开放，公证不在其中，所以不能依赖。
+ * 要放宽到 7 天以上，必须先改成「存卡 + 临近日期再补授权」，不能只改这个常量。
+ */
+export const MAX_ADVANCE_DAYS = 7;
 
 /** 某一时刻在指定时区的偏移毫秒数（东为正） */
 function zoneOffsetMs(at: Date, timeZone = TIMEZONE): number {

@@ -10,6 +10,7 @@ import {
   docActs, docFeeCents, notaryFeeCents, serviceMinutes, totalActs, waivedActs,
   NOTARY_FEE_CENTS, type BookingDoc,
 } from '../../lib/booking/pricing.ts';
+import { MIN_NOTICE_HOURS, MAX_ADVANCE_DAYS } from '../../lib/booking/schedule.ts';
 import { STRINGS, ID_TYPES, GROUP_LABELS, RULE_TAGS, ACTS, ACT_HINTS, type Lang } from './strings.ts';
 
 declare global {
@@ -67,7 +68,7 @@ const s = reactive({
   addrError: '',
   addrBusy: false,
   suggestions: [] as Array<{ id: string; text: string }>,
-  dateStr: pacificDay(2),
+  dateStr: pacificDay(Math.ceil(MIN_NOTICE_HOURS / 24)),
   slots: [] as Slot[],
   selected: null as Slot | null,
   quoteLoading: false,
@@ -338,8 +339,11 @@ const prettyDate = computed(() =>
   new Intl.DateTimeFormat(LOCALE(), { timeZone: TIMEZONE, month: 'long', day: 'numeric', weekday: 'short' })
     .format(new Date(`${s.dateStr}T20:00:00Z`)));
 
-const minDate = pacificDay(0);
-const maxDate = pacificDay(60);
+// 与服务端同源：候选时段由 candidateSlots 用这两个常量过滤，
+// 日期选择器只是提前把不可能的日子灰掉，避免用户白等一次查询。
+const MIN_DAYS = Math.ceil(MIN_NOTICE_HOURS / 24);
+const minDate = pacificDay(MIN_DAYS);
+const maxDate = pacificDay(MAX_ADVANCE_DAYS);
 
 // ── 第 4 步：确认 ───────────────────────────────────────────
 const grandCents = computed(() => s.selected?.totalCents ?? 0);
@@ -573,6 +577,7 @@ async function pay() {
 
       <label class="f" for="day">{{ t.dateLabel }}</label>
       <input id="day" type="date" v-model="s.dateStr" :min="minDate" :max="maxDate" />
+      <p class="chiphint">{{ t.dateWindow(MIN_NOTICE_HOURS, MAX_ADVANCE_DAYS) }}</p>
 
       <p class="muted sm" v-if="s.quoteLoading">{{ t.slotsLoading }}</p>
       <p class="hint" v-else-if="s.quoteError">

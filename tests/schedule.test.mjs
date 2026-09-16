@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   pacificTime, pacificDateStr, pacificHour, overlaps, candidateSlots, SLOT_HOURS,
+  MIN_NOTICE_HOURS, MAX_ADVANCE_DAYS,
 } from '../src/lib/booking/schedule.ts';
 
 test('夏令时期间（PDT, UTC-7）9 点 = 16:00Z', () => {
@@ -45,17 +46,31 @@ test('区间重叠：端点相接不算重叠', () => {
                         iv('2026-09-10T16:30Z', '2026-09-10T17:00Z')), true, '完全包含');
 });
 
-test('候选时段排除过近的（最短提前量）', () => {
-  const now = new Date('2026-09-10T16:00:00Z');   // 太平洋 9:00
-  const slots = candidateSlots('2026-09-10', now);
-  const hours = slots.map((s) => pacificHour(s));
-  assert.ok(!hours.includes(9), '当前时刻不可约');
-  assert.ok(!hours.includes(11), '3 小时提前量内不可约');
-  assert.ok(hours.includes(12), '刚好 3 小时后可约');
+test('候选时段排除过近的（最短提前量 48 小时）', () => {
+  const now = new Date('2026-09-10T16:00:00Z');   // 太平洋 9:00 周四
+  assert.equal(candidateSlots('2026-09-10', now).length, 0, '当天不可约');
+  assert.equal(candidateSlots('2026-09-11', now).length, 0, '次日不可约');
+
+  // 48 小时后正好是 9/12 太平洋 9:00
+  const hours = candidateSlots('2026-09-12', now).map((s) => pacificHour(s));
+  assert.ok(hours.includes(9), '刚好 48 小时后可约');
+  assert.ok(!hours.includes(8), '48 小时之前的时段不出现');
   assert.ok(hours.includes(18));
 });
 
-test('候选时段排除过远的（最长提前期）', () => {
+test('候选时段排除过远的（最长提前期 7 天）', () => {
   const now = new Date('2026-09-10T16:00:00Z');
-  assert.equal(candidateSlots('2027-06-01', now).length, 0, '超过 60 天不开放');
+  const last = candidateSlots('2026-09-17', now).map((s) => pacificHour(s));
+  assert.ok(last.includes(9), '第 7 天上午仍在窗口内');
+  assert.ok(!last.includes(10), '超过 7×24 小时的时段被排除');
+  assert.equal(candidateSlots('2026-09-18', now).length, 0, '第 8 天完全不开放');
+});
+
+// 这条守的是收款，不是排期：预授权 7 天到期后资金自动释放，
+// 预约却还留在日历上。放宽窗口必须连带改成「存卡 + 临近再授权」。
+test('最长提前期不得超过预授权有效期（7 天）', () => {
+  assert.ok(MAX_ADVANCE_DAYS <= 7,
+    `MAX_ADVANCE_DAYS=${MAX_ADVANCE_DAYS} 超过了刷卡预授权的 7 天有效期`);
+  assert.ok(MIN_NOTICE_HOURS >= 48,
+    '最短提前量低于 48 小时会让新单直接落进部分扣款的退款档');
 });
