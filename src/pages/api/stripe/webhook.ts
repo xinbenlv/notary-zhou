@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { verifyWebhook, getPaymentIntent } from '../../../lib/booking/stripe.ts';
 import { getPool } from '../../../lib/booking/db.ts';
-import { createEvent } from '../../../lib/booking/calendar.ts';
+import { createEvent, deleteEvent } from '../../../lib/booking/calendar.ts';
 import { ARRIVE_EARLY_MIN } from '../../../lib/booking/pricing.ts';
 
 export const prerender = false;
@@ -43,6 +43,8 @@ export const POST: APIRoute = async ({ request }) => {
       await onCompleted(event.data.object as Record<string, any>);
     } else if (event.type === 'checkout.session.expired') {
       await onExpired(event.data.object as Record<string, any>);
+    } else if (event.type === 'payment_intent.canceled') {
+      await onCanceled(event.data.object as Record<string, any>);
     }
     return new Response('ok', { status: 200 });
   } catch (err) {
@@ -129,4 +131,30 @@ async function onExpired(session: Record<string, any>): Promise<void> {
   if (!bookingId) return;
   await db.query("UPDATE bookings SET status='expired', updated_at=now() WHERE id=$1 AND status='held'", [bookingId]);
   await db.query('DELETE FROM slot_holds WHERE booking_id = $1', [bookingId]);
+}
+
+/**
+ * 撤销预授权（在 Stripe 后台点 Cancel，或授权到期自动释放）。
+ * 订单和日历必须跟着释放，否则钱已经退回客户、时段却还占着。
+ * 授权到期同样走这个事件，所以过期的单子不会永远挂在日历上。
+ */
+async function onCanceled(pi: Record<string, any>): Promise<void> {
+  const db = getPool();
+  const { rows } = await db.query(
+    `SELECT id, status, event_id_service, event_id_outbound, event_id_return
+       FROM bookings WHERE payment_intent_id = $1`, [pi.id]);
+  if (!rows.length) return;
+  const b = rows[0];
+  if (b.status === 'completed') return;          // 已扣款的不该出现在这里，别误删
+
+  const calendarId = process.env.BOOKING_CALENDAR_ID!;
+  for (const id of [b.event_id_service, b.event_id_outbound, b.event_id_return]) {
+    if (id) await deleteEvent(calendarId, id);   // 已删的返回 410，deleteEvent 视为成功
+  }
+  await db.query(
+    `UPDATE bookings SET status='cancelled', cancelled_at=now(), cancel_reason=$1,
+            event_id_service=NULL, event_id_outbound=NULL, event_id_return=NULL, updated_at=now()
+      WHERE id=$2`,
+    [pi.cancellation_reason ?? 'stripe_canceled', b.id]);
+  await db.query('DELETE FROM slot_holds WHERE booking_id = $1', [b.id]);
 }
