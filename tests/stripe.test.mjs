@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 
-import { verifyWebhook, formEncode, WEBHOOK_TOLERANCE_SEC } from '../src/lib/booking/stripe.ts';
+import { verifyWebhook, formEncode, WEBHOOK_TOLERANCE_SEC , checkoutSessionParams } from '../src/lib/booking/stripe.ts';
 
 const SECRET = 'whsec_testsecret_do_not_use';
 const BODY = JSON.stringify({ id: 'evt_1', type: 'checkout.session.completed', data: { object: { id: 'cs_1' } } });
@@ -86,4 +86,79 @@ test('表单编码：嵌套对象与数组按 Stripe 的写法展开', () => {
 
 test('表单编码跳过 undefined —— Stripe 把空串当作显式清空', () => {
   assert.deepEqual(formEncode({ a: 1, b: undefined, c: null, d: '' }), ['a=1', 'd=']);
+});
+
+// ── 只收银行卡 ────────────────────────────────────────────────
+//
+// 背景（实测，不是推测）：只写 payment_method_types:['card'] 挡不住 Link。
+// 会话接口回报 ["card"]，而结账页照样渲染出 link_instant_debit 与 link_klarna
+// 两个可选项，前者还挂着"返现 US$5"的角标把人往银行扣款上引。
+// 银行扣款不支持预授权——us_bank_account 配 capture_method=manual 会被 Stripe
+// 直接拒绝——而整个 2–7 天预约窗口都建立在"卡的 7 天授权"这个前提上。
+// 唯一能真正关掉的开关是 payment method configuration，且它与
+// payment_method_types 互斥，所以两者只能二选一。
+
+const args = () => ({
+  bookingId: 'bk_test',
+  lines: [{ name: '公证费', amountCents: 1500 }],
+  successUrl: 'https://x.test/booked/',
+  cancelUrl: 'https://x.test/api/booking/abandon?b=bk_test&lang=zh',
+  expiresAt: new Date('2026-09-16T12:30:00Z'),
+  metadata: { bookingId: 'bk_test' },
+  locale: 'zh',
+});
+
+const withPmc = (value, fn) => {
+  const had = Object.prototype.hasOwnProperty.call(process.env, 'STRIPE_PAYMENT_METHOD_CONFIGURATION');
+  const prev = process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION;
+  if (value === undefined) delete process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION;
+  else process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION = value;
+  try { return fn(); }
+  finally {
+    if (had) process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION = prev;
+    else delete process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION;
+  }
+};
+
+test('配了 payment method configuration 时用它，且不再传 payment_method_types', () => {
+  withPmc('pmc_cardonly', () => {
+    const p = checkoutSessionParams(args());
+    assert.equal(p.payment_method_configuration, 'pmc_cardonly');
+    // 两者互斥：同时传 Stripe 会报 "You may only specify one of these parameters"
+    assert.equal('payment_method_types' in p, false);
+  });
+});
+
+test('没配时退回 card-only 的老写法，不能什么都不限', () => {
+  withPmc(undefined, () => {
+    const p = checkoutSessionParams(args());
+    assert.deepEqual(p.payment_method_types, ['card']);
+    assert.equal('payment_method_configuration' in p, false);
+  });
+});
+
+test('空字符串等同于没配，不能把空值当成一个配置 ID 发出去', () => {
+  withPmc('   ', () => {
+    const p = checkoutSessionParams(args());
+    assert.deepEqual(p.payment_method_types, ['card']);
+    assert.equal('payment_method_configuration' in p, false);
+  });
+});
+
+test('无论哪条分支，预授权模式都必须保持 manual', () => {
+  for (const v of ['pmc_cardonly', undefined]) {
+    const p = withPmc(v, () => checkoutSessionParams(args()));
+    assert.equal(p.payment_intent_data.capture_method, 'manual',
+      '改成自动扣款会让三档退款政策和零手续费取消全部失效');
+  }
+});
+
+test('取消链接指向 abandon 接口，客户按返回时才放得掉自己的占位', () => {
+  const p = withPmc('pmc_cardonly', () => checkoutSessionParams(args()));
+  assert.match(String(p.cancel_url), /\/api\/booking\/abandon\?b=bk_test/);
+});
+
+test('会话过期时刻按秒传给 Stripe，不是毫秒', () => {
+  const p = withPmc('pmc_cardonly', () => checkoutSessionParams(args()));
+  assert.equal(p.expires_at, Math.floor(new Date('2026-09-16T12:30:00Z').getTime() / 1000));
 });

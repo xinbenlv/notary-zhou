@@ -82,17 +82,40 @@ export interface CheckoutArgs {
 export interface CheckoutSession { id: string; url: string; payment_intent: string | null; expires_at: number }
 
 /**
+ * 只收银行卡用的 payment method configuration（pmc_...）。
+ *
+ * 为什么不能只靠 `payment_method_types: ['card']`：实测下来那一行**挡不住 Link**。
+ * 会话接口确实回报 payment_method_types=["card"]，但结账页照样渲染出
+ * `link_instant_debit` 与 `link_klarna` 两个可选项，前者还挂着"返现 US$5"的角标
+ * 主动把人往银行扣款那条路上引。原因在 Stripe 文档里写着：card 这个类型
+ * "supported through many networks, card brands, and **select Link funding sources**"
+ * ——Link 的这些资金来源在 Stripe 眼里就属于 card，列 card 自然排除不掉它们。
+ *
+ * 而银行扣款根本不支持预授权：拿 us_bank_account 建 capture_method=manual 的
+ * PaymentIntent 会被直接拒绝（"`capture_method=manual` is not supported by
+ * payment method type `us_bank_account`"）。一旦客户走 Link 的银行通道付款，
+ * 「7 天内扣款」这个前提就不成立了，而整个 2–7 天的预约窗口都建立在它上面。
+ *
+ * 唯一能真正关掉的开关是 payment method configuration（文档原话：Link 只能
+ * 在各个 payment method configuration 里逐个关闭），它与 payment_method_types
+ * 互斥，所以配置了就用它、并且不再传 payment_method_types。
+ * 用"白名单"（配置里只开 card）而不是 excluded_payment_method_types 的黑名单：
+ * Stripe 会自己加新的付款方式，黑名单挡不住还没出现的那些。
+ */
+const cardOnlyConfiguration = (): string | null =>
+  process.env.STRIPE_PAYMENT_METHOD_CONFIGURATION?.trim() || null;
+
+/**
  * 建结账会话。**capture_method=manual**：只预授权、不扣款，
  * 公证完成后再按实际金额 capture（可少于授权额，余额自动释放）。
  */
-export async function createCheckoutSession(args: CheckoutArgs): Promise<CheckoutSession> {
-  return stripeFetch<CheckoutSession>('/checkout/sessions', {
+export function checkoutSessionParams(args: CheckoutArgs): Record<string, unknown> {
+  const pmc = cardOnlyConfiguration();
+  return {
     mode: 'payment',
-    // 只收银行卡。整套「预授权 7 天内扣款」的推算是按卡网络的规则做的：
-    // ACH 压根不支持预授权，Klarna 是 28 天、Cash App 是 7 天，各有各的窗口。
-    // 混进来会让 MAX_ADVANCE_DAYS=7 这个前提对某些付款方式不成立。
-    // 想放开就删掉这一行，但要先确认那种付款方式的授权有效期。
-    payment_method_types: ['card'],
+    ...(pmc
+      ? { payment_method_configuration: pmc }
+      : { payment_method_types: ['card'] }),
     success_url: args.successUrl,
     cancel_url: args.cancelUrl,
     expires_at: Math.floor(args.expiresAt.getTime() / 1000),
@@ -114,7 +137,18 @@ export async function createCheckoutSession(args: CheckoutArgs): Promise<Checkou
         product_data: { name: l.name, description: l.description },
       },
     })),
-  }, `checkout:${args.bookingId}`);
+  };
+}
+
+export async function createCheckoutSession(args: CheckoutArgs): Promise<CheckoutSession> {
+  if (!cardOnlyConfiguration()) {
+    // 没配就退回原来的写法：仍然只声明 card，但 Link 的银行/Klarna 通道会漏进来。
+    // 这里不硬失败——挡掉一笔可能有问题的付款，好过让所有人都下不了单。
+    console.warn('[booking] STRIPE_PAYMENT_METHOD_CONFIGURATION 未设置：'
+      + '结账页可能出现 Link 的银行扣款选项，那条路不支持预授权');
+  }
+  return stripeFetch<CheckoutSession>('/checkout/sessions',
+    checkoutSessionParams(args), `checkout:${args.bookingId}`);
 }
 
 export interface PaymentIntent {
@@ -127,8 +161,12 @@ export interface PaymentIntent {
 }
 
 export const getCheckoutSession = (id: string) =>
-  stripeFetch<CheckoutSession & { payment_status: string; customer_details?: { email?: string; phone?: string } }>(
-    `/checkout/sessions/${encodeURIComponent(id)}`);
+  stripeFetch<CheckoutSession & {
+    /** open | complete | expired —— 判断客户是否已经付过，别用 payment_status */
+    status: string;
+    payment_status: string;
+    customer_details?: { email?: string; phone?: string };
+  }>(`/checkout/sessions/${encodeURIComponent(id)}`);
 
 /**
  * 扣款。amountCents 可低于授权额，余额自动释放；**一笔授权只能扣一次**，
