@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { completeBooking, cancelBooking, pendingBookings, planCancel } from '../../../lib/booking/settle.ts';
+import { completeBooking, cancelBooking, releaseBooking, pendingBookings, planCancel } from '../../../lib/booking/settle.ts';
 import { getPool } from '../../../lib/booking/db.ts';
 
 export const prerender = false;
@@ -62,7 +62,12 @@ export const POST: APIRoute = async ({ request }) => {
       const reason = typeof body.reason === 'string' && body.reason ? body.reason : 'admin_cancel';
       return json(await cancelBooking(id, reason));
     }
-    return json({ error: "action 必须是 'complete' 或 'cancel'" }, 400);
+    if (body.action === 'release') {
+      // 逃生口：钱已在 Stripe 那边处理完，这里只把时段和日历放掉
+      const reason = typeof body.reason === 'string' && body.reason ? body.reason : 'admin_release';
+      return json(await releaseBooking(id, reason));
+    }
+    return json({ error: "action 必须是 'complete'、'cancel' 或 'release'" }, 400);
   } catch (err) {
     return json({ error: (err as Error).message }, 400);
   }

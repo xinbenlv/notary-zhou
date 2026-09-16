@@ -164,3 +164,28 @@ export async function pendingBookings(limit = 50): Promise<PendingBooking[]> {
     locationKind: r.location_kind, address: r.address, serviceMinutes: r.service_minutes,
   }));
 }
+
+/**
+ * 把订单从日程上摘下来，不碰钱。
+ * 用于已在 Stripe 那边结清（整笔退款、或人工处理）的单子——它们不该继续占着时段。
+ * 未来的日历事件一并删掉；已经发生过的预约保留事件，那是履约记录。
+ */
+export async function releaseBooking(id: string, reason: string, now: Date = new Date()): Promise<SettleResult> {
+  const b = await load(id);
+  if (b.status === 'refunded') return { bookingId: id, status: 'refunded', capturedCents: 0, releasedCents: 0 };
+  if (new Date(b.starts_at) > now) await dropEvents(b);
+
+  await getPool().query(
+    `UPDATE bookings SET status='refunded', cancelled_at=now(), cancel_reason=$1,
+            event_id_service=NULL, event_id_outbound=NULL, event_id_return=NULL, updated_at=now()
+      WHERE id=$2`, [reason.slice(0, 200), id]);
+  await getPool().query('DELETE FROM slot_holds WHERE booking_id = $1', [id]);
+  return { bookingId: id, status: 'refunded', capturedCents: 0, releasedCents: 0 };
+}
+
+/** 按 payment_intent 反查订单号，webhook 用 */
+export async function bookingIdForPaymentIntent(piId: string): Promise<string | null> {
+  const { rows } = await getPool().query<{ id: string }>(
+    'SELECT id FROM bookings WHERE payment_intent_id = $1', [piId]);
+  return rows[0]?.id ?? null;
+}

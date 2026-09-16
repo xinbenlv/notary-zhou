@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { verifyWebhook, getPaymentIntent } from '../../../lib/booking/stripe.ts';
 import { getPool } from '../../../lib/booking/db.ts';
+import { releaseBooking, bookingIdForPaymentIntent } from '../../../lib/booking/settle.ts';
 import { createEvent, deleteEvent } from '../../../lib/booking/calendar.ts';
 import { ARRIVE_EARLY_MIN } from '../../../lib/booking/pricing.ts';
 
@@ -47,6 +48,8 @@ export const POST: APIRoute = async ({ request }) => {
       await onCanceled(event.data.object as Record<string, any>);
     } else if (event.type === 'payment_intent.succeeded') {
       await onCaptured(event.data.object as Record<string, any>);
+    } else if (event.type === 'charge.refunded') {
+      await onRefunded(event.data.object as Record<string, any>);
     }
     return new Response('ok', { status: 200 });
   } catch (err) {
@@ -176,4 +179,16 @@ async function onCaptured(pi: Record<string, any>): Promise<void> {
         SET status='completed', captured_cents=$1, captured_at=now(), updated_at=now()
       WHERE payment_intent_id=$2 AND status='authorized'`,
     [pi.amount_received ?? pi.amount, pi.id]);
+}
+
+/**
+ * 整笔退款。在 Stripe 后台退了款，时段却还占着日程——这条路径不补上，
+ * 退过款的预约会一直挡住别人。部分退款（补偿性质）不释放，服务仍然算数。
+ */
+async function onRefunded(charge: Record<string, any>): Promise<void> {
+  if (!charge.refunded) return;                       // 只认整笔退款
+  const piId: string | undefined = charge.payment_intent;
+  if (!piId) return;
+  const bookingId = await bookingIdForPaymentIntent(piId);
+  if (bookingId) await releaseBooking(bookingId, 'stripe_refund');
 }
